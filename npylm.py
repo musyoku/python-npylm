@@ -14,7 +14,7 @@ def main():
 
 	# VPYLMから長さkの単語が生成される確率p(k|vpylm)の推定結果の棄却期間.
 	# ギブスイテレーションがこの回数以下の場合はポアソン補正を行わない.
-	npylm.set_burn_in_period_for_pk_vpylm(2)
+	npylm.set_burn_in_period_for_pk_vpylm(4)
 
 	npylm.prepare_for_training()
 	max_epoch = 1000
