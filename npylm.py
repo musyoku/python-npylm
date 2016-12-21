@@ -40,8 +40,8 @@ def main():
 		)
 		if epoch > 1:
 			npylm.dump_lambda()
-		if epoch % 10 == 0:
-			npylm.show_random_segmentation_result(30)
+		if epoch % 5 == 0:
+			npylm.show_random_segmentation_result(50)
 
 if __name__ == "__main__":
 	main()
