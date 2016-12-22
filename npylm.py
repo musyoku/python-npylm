@@ -38,7 +38,7 @@ def main():
 		# 割と重い処理になる
 		ppl = 0
 		if epoch > 1:
-			ppl = npylm.compute_perplexity()
+			# ppl = npylm.compute_perplexity()
 			pass
 
 		elapsed_time = time.time() - start_time
@@ -52,7 +52,7 @@ def main():
 		)
 		# 推定されたlambdaを表示する場合
 		if epoch > 1:
-			npylm.dump_lambda()
+			# npylm.dump_lambda()
 			pass
 
 		# 分割結果を表示
