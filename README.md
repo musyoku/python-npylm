@@ -18,9 +18,17 @@ NPYLMの実装に興味がある方は[実装方法](http://musyoku.github.io/20
 
 ## 依存関係
 
-`libboost_python.so`に依存します。
+Boost 1.62の環境でビルドしているため、`libboost_python.so.1.62.0`に依存します。
 
 ない場合はインストールしておきます。
+
+b2の場合
+```
+sudo ./b2 install -j4 --with-python
+sudo ldconfig
+```
+
+apt-getの場合
 
 ```
 sudo apt-get install libboost-python-dev
