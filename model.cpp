@@ -1,9 +1,7 @@
-#include <boost/format.hpp>
 #include <boost/python.hpp>
 #include <boost/format.hpp>
 #include "npylm/core/npylm.h"
 #include "npylm/core/vocab.h"
-#include "npylm/core/chartype.h"
 #include "npylm/lattice/trigram.h"
 #include "npylm/util.h"
 
