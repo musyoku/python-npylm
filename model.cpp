@@ -212,11 +212,13 @@ public:
 	}
 	double compute_perplexity(){
 		double ppl = 0;
+		int num_lines = _dataset.size();
+		vector<int> segments;					
 		for(int data_index = 0;data_index < num_lines;data_index++){
 			wstring &sentence = _dataset[data_index];
 			_lattice->perform_blocked_gibbs_sampling(sentence, segments);
 			vector<wstring> words = split_sentence_into_words(sentence, segments);
-			vector<id> token_ids = convert_words_to_token_ids(words, _vocab);
+			vector<id> token_ids = convert_words_to_token_ids(words);
 			double log_p = _npylm->log2_Pw(token_ids) / token_ids.size();
 			ppl += log_p;
 		}

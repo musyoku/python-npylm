@@ -27,7 +27,7 @@ def main():
 		start_time = time.time()
 
 		# パラメータの更新
-		npylm.perform_gibbs_sampling(False)
+		npylm.perform_gibbs_sampling()
 
 		# ハイパーパラメータの推定
 		npylm.sample_pitman_yor_hyperparameters()
@@ -35,9 +35,11 @@ def main():
 		npylm.update_pk_vpylm()
 
 		# 訓練データのパープレキシティの計算
+		# 割と重い処理になる
 		ppl = 0
-		if True:
+		if epoch > 1:
 			ppl = npylm.compute_perplexity()
+			pass
 
 		elapsed_time = time.time() - start_time
 		print "Epoch {} - {} lps - {} ppl - {} nodes (vpylm) - {} depth (vpylm) - {} nodes (hpylm)".format(
@@ -54,8 +56,6 @@ def main():
 			pass
 
 		# 分割結果を表示
-		# ビタビアルゴリズムではなくForward filtering-Backward samplingの結果
-		# そのため分割が確率的に変わる
 		npylm.show_random_segmentation_result(10)
 
 if __name__ == "__main__":
