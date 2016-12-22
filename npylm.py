@@ -34,16 +34,24 @@ def main():
 		npylm.sample_lambda()
 		npylm.update_pk_vpylm()
 
+		# 訓練データのパープレキシティの計算
+		ppl = 0
+		if True:
+			ppl = npylm.compute_perplexity()
+
 		elapsed_time = time.time() - start_time
-		print "Epoch {} - {} lps - {} nodes (vpylm) - {} depth (vpylm) - {} nodes (hpylm)".format(
+		print "Epoch {} - {} lps - {} ppl - {} nodes (vpylm) - {} depth (vpylm) - {} nodes (hpylm)".format(
 			epoch, 
 			num_lines / elapsed_time,
+			ppl,
 			npylm.get_num_nodes_of_vpylm(),
 			npylm.get_depth_of_vpylm(),
 			npylm.get_num_nodes_of_hpylm()
 		)
+		# 推定されたlambdaを表示する場合
 		if epoch > 1:
 			npylm.dump_lambda()
+			pass
 
 		# 分割結果を表示
 		# ビタビアルゴリズムではなくForward filtering-Backward samplingの結果
