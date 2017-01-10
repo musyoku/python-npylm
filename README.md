@@ -50,9 +50,15 @@ make install
 
 すると`model.so`が修正され実行可能になります。
 
+Late 2012、Mid 2014、Late 2016で動作確認しています。
+
 ## Ubuntuの場合
 
 `model.linux.so`を`model.so`にリネームします。
+
+ビルド環境はUbuntu 16.04 64bit Core-i7です。
+
+Macの場合と違って実行できない場合があります。
 
 # 学習
 
