@@ -17,6 +17,17 @@ python::list list_from_vector(vector<T> &vec){
 	 }
 	 return list;
 }
+
+template<class T1,class T2>
+python::dict dict_from_map(unordered_map<T1,T2> &map_){  
+	 python::dict py_dict;
+	 typename unordered_map<T1,T2>::const_iterator it;
+	 for(it = map_.begin(); it != map_.end(); ++it){
+		  py_dict[it->first]=it->second;        
+	 }
+	 return py_dict;  
+}
+
 // Pythonラッパー
 class PyNPYLM{
 private:
@@ -28,6 +39,7 @@ private:
 	vector<wstring> _dataset;
 	bool _is_npylm_ready;
 	bool _is_training_ready;
+	bool _always_use_new_segmentation;	// サンプリングした新分割を常に使用してモデルを更新するかどうか
 	unordered_map<int, vector<int>> _old_segments_for_data;	// 古い単語分割
 	unordered_map<id, int> _words_from_segmentation;			// 単語分割で得られた語彙集合
 	vector<int> _rand_indices;
@@ -51,6 +63,7 @@ public:
 		_lattice = new TrigramLattice(_npylm, _vocab);
 		_is_npylm_ready = false;
 		_is_training_ready = false;
+		_always_use_new_segmentation = true;
 	}
 	// lambdaの事前分布
 	void init_lambda(double alpha, double beta){
@@ -63,9 +76,11 @@ public:
 	// ポアソン補正時のp(k|VPYLM)の推定を棄却する期間
 	// 1イテレーション目はそもそも単語確率を求めないのでポアソン補正を行わない
 	// 2イテレーション目はp(k|VPYLM)の精度が良くない
-	// だいたい2〜4くらいを指定すればよい
 	void set_burn_in_period_for_pk_vpylm(int period){
 		_npylm->_burn_in_period_for_pk_vpylm = period;
+	}
+	void set_always_use_new_segmentation(bool flag){
+		_always_use_new_segmentation = flag;
 	}
 	int get_num_lines(){
 		return _dataset.size();
@@ -96,13 +111,13 @@ public:
 		c_printf("[*]%s\n", (boost::format("g0 <- %lf") % g0).str().c_str());
 		_is_npylm_ready = true;
 	}
-	vector<wstring> split_sentence_into_words(wstring &sentence, vector<int> &segments){
+	void split_sentence_into_words(wstring &sentence, vector<int> &segments, vector<wstring> &words){
+		words.clear();
 		int num_pieces_in_segments = accumulate(segments.begin(), segments.end(), 0);
 		if(num_pieces_in_segments != sentence.size()){
 			c_printf("[r]%s [*]%s %d != %d\n", "エラー:", "不正な分割です.", num_pieces_in_segments, sentence.size());
 			exit(1);
 		}
-		vector<wstring> words;
 		int pointer = 0;
 		for(int i = 0;i < segments.size();i++){
 			int segment_length = segments[i];
@@ -110,21 +125,21 @@ public:
 			words.push_back(word);
 			pointer += segment_length;
 		}
-		return words;
 	}
-	vector<id> convert_words_to_token_ids(vector<wstring> &words){
-		vector<id> token_ids;
-		token_ids.push_back(_vocab->get_bos_id());
-		token_ids.push_back(_vocab->get_bos_id());		// 3-gramなので2回
+	void convert_words_to_token_ids(vector<wstring> &words, vector<id> &token_ids, int bos_padding = 2){
+		token_ids.clear();
+		for(int i = 0;i < bos_padding;i++){
+			token_ids.push_back(_vocab->get_bos_id());
+		}
 		for(int i = 0;i < words.size();i++){
 			token_ids.push_back(_vocab->add_string(words[i]));
 		}
 		token_ids.push_back(_vocab->get_eos_id());
-		return token_ids;
 	}
 	void show_segmentation_result_for_sentence(wstring &sentence, vector<int> &segments){
 		_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
-		vector<wstring> words = split_sentence_into_words(sentence, segments);
+		vector<wstring> words;
+		split_sentence_into_words(sentence, segments, words);
 		for(int i = 0;i < words.size();i++){
 			wcout << words[i] << L" / ";
 		}
@@ -161,11 +176,18 @@ public:
 			exit(1);
 		}
 		int num_lines = get_num_lines();
-		vector<int> segments;									// 分割の一時保存用
+		vector<int> segments;		// 分割の一時保存用
+		vector<wstring> words;		// 分割された単語列の一時保存用
+		vector<wstring> old_words;	// 古い分割
+		vector<id> token_ids;		// 分割されたトークンID列の一時保存用
+		vector<id> old_token_ids;	// 古い分割
 		shuffle(_rand_indices.begin(), _rand_indices.end(), Sampler::mt);		// データをシャッフル
-		_words_from_segmentation.clear();					// 語彙集合をリセット
+		_words_from_segmentation.clear();	// 語彙集合をリセット
 		// モデルパラメータを更新
 		for(int step = 0;step < num_lines;step++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
+			}
 			show_progress(step, num_lines);
 			// 訓練データを一つ取り出す
 			int data_index = _rand_indices[step];
@@ -176,19 +198,38 @@ public:
 				// 最初は<bos>,<eos>を除く全ての文字列が1単語としてモデルに追加される
 				segments.clear();
 				segments.push_back(sentence.size());
+				split_sentence_into_words(sentence, segments, words);
+				convert_words_to_token_ids(words, token_ids, 2);	// token_idsにはbosとeosが含まれる
 			}else{
 				// 古い分割をモデルから削除
-				vector<wstring> old_words = split_sentence_into_words(sentence, itr_segments->second);
-				vector<id> old_token_ids = convert_words_to_token_ids(old_words);
+				split_sentence_into_words(sentence, itr_segments->second, old_words);
+				convert_words_to_token_ids(old_words, old_token_ids, 2);
 				for(int token_t_index = 2;token_t_index < old_token_ids.size();token_t_index++){
 					_npylm->remove_customer_at_timestep(old_token_ids, token_t_index);
 				}
 				// 新しい分割を取得
 				_lattice->perform_blocked_gibbs_sampling(sentence, segments);
+				split_sentence_into_words(sentence, segments, words);
+				convert_words_to_token_ids(words, token_ids, 2);	// token_idsにはbosとeosが含まれる
+
+				// 以前の分割結果と現在の分割結果の確率を求める
+				// 本来は分割を一定数サンプリングして平均をとるべき
+				if(_always_use_new_segmentation == false){
+					double old_ps = _npylm->Ps(old_token_ids);
+					double new_ps = _npylm->Ps(token_ids);
+					if(new_ps < old_ps){
+						// 新しい分割の方が確率が低い場合、比率のベルヌーイ試行でどちらを採用するか決める.
+						double bernoulli = new_ps / old_ps;
+						double r = Sampler::uniform(0, 1);
+						if(r > bernoulli){
+							// 新しい分割を捨てて古いものに差し替える
+							token_ids = old_token_ids;
+							segments = itr_segments->second;
+						}
+					}
+				}
 			}
 			// 新しい分割結果をモデルに追加
-			vector<wstring> words = split_sentence_into_words(sentence, segments);
-			vector<id> token_ids = convert_words_to_token_ids(words);	// token_idsにはbosとeosが含まれる
 			for(int token_t_index = 2;token_t_index < token_ids.size();token_t_index++){
 				_npylm->add_customer_at_timestep(token_ids, token_t_index);
 				if(token_t_index != token_ids.size() - 1){
@@ -204,19 +245,21 @@ public:
 		}
 
 		// 不要な単語IDを辞書から除去
-		map<id, bool> flags;
+		unordered_map<id, bool> flags;
 		_npylm->set_active_tokens(flags);
 		_vocab->remove_unused_token_ids(flags);
 	}
 	double compute_perplexity(){
 		double ppl = 0;
 		int num_lines = _dataset.size();
-		vector<int> segments;					
+		vector<int> segments;	
+		vector<wstring> words;		
+		vector<id> token_ids;		
 		for(int data_index = 0;data_index < num_lines;data_index++){
 			wstring &sentence = _dataset[data_index];
 			_lattice->perform_blocked_gibbs_sampling(sentence, segments);
-			vector<wstring> words = split_sentence_into_words(sentence, segments);
-			vector<id> token_ids = convert_words_to_token_ids(words);
+			split_sentence_into_words(sentence, segments, words);
+			convert_words_to_token_ids(words, token_ids, 2);
 			double log_p = _npylm->log2_Pw(token_ids) / token_ids.size();
 			ppl += log_p;
 		}
@@ -261,6 +304,48 @@ public:
 	int get_num_customers_of_hpylm(){
 		return _npylm->_hpylm->get_num_customers();
 	}
+	int get_num_words(){
+		return _npylm->_hpylm->_root->_arrangement.size();
+	}
+	python::dict get_frequent_words(int threshold){
+		unordered_map<wstring, int> count_for_id;
+		for(auto &elem: _npylm->_hpylm->_root->_arrangement){
+			id token_id = elem.first;
+			if(token_id == _vocab->get_eos_id()){
+				continue;
+			}
+			vector<int> &table = elem.second;
+			double count = std::accumulate(table.begin(), table.end(), 0);	// テーブルの客数が出現頻度
+			if(count < threshold){
+				continue;
+			}
+			wstring word = _vocab->token_id_to_string(token_id);
+			count_for_id[word] = count;
+		}
+		return dict_from_map(count_for_id);
+	}
+	unordered_map<id, vector<int>> & get_unigram_arrangement(){
+		return _npylm->_hpylm->_root->_arrangement;
+	}
+	void get_segmented_dataset(vector<vector<id>> &dataset){
+		dataset.clear();
+		vector<int> segments;
+		vector<wstring> words;
+		vector<id> token_ids;
+		int num_lines = get_num_lines();
+		for(int data_index = 0;data_index < num_lines;data_index++){
+			wstring &sentence = _dataset[data_index];
+			_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
+			split_sentence_into_words(sentence, segments, words);
+			convert_words_to_token_ids(words, token_ids, 1);
+			dataset.push_back(token_ids);
+			if(data_index == 0 || data_index % 100 == 99 || data_index == _dataset.size() - 1){
+				c_printf("\r[*]%s", (boost::format("データセットを単語分割しています ... (%d / %d)") % (data_index + 1) % _dataset.size()).str().c_str());
+				fflush(stdout);
+			}
+		}
+		cout << endl;
+	}
 };
 
 BOOST_PYTHON_MODULE(model){
@@ -283,5 +368,6 @@ BOOST_PYTHON_MODULE(model){
 	.def("get_num_nodes_of_vpylm", &PyNPYLM::get_num_nodes_of_vpylm)
 	.def("set_max_word_length", &PyNPYLM::set_max_word_length)
 	.def("set_burn_in_period_for_pk_vpylm", &PyNPYLM::set_burn_in_period_for_pk_vpylm)
+	.def("set_always_use_new_segmentation", &PyNPYLM::set_always_use_new_segmentation)
 	.def("update_pk_vpylm", &PyNPYLM::update_pk_vpylm);
 }

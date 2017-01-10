@@ -13,15 +13,20 @@ def main():
 	npylm.set_max_word_length(args.max_word_length)		# 可能な単語の最大長
 	npylm.init_lambda(1, 1)				# lambdaの事前分布（ガンマ分布）のハイパーパラメータ
 
-	# VPYLMから長さkの単語が生成される確率p(k|vpylm)の推定結果の棄却期間.
-	# ギブスイテレーションがこの回数以下の場合は単語0-gram確率のポアソン補正を行わない.
+	# VPYLMから長さkの単語が生成される確率p(k|vpylm)の推定結果の棄却期間
+	# ギブスイテレーションがこの回数以下の場合は単語0-gram確率のポアソン補正を行わない
 	# 1イテレーション目は文章が丸ごと1つの単語としてモデルに追加されるので単語確率を求めることがない
-	# 2イテレーション目はp(k|VPYLM)の精度が悪いので棄却
-	# それ以降はお好み
-	npylm.set_burn_in_period_for_pk_vpylm(4)
+	# 2イテレーション目はp(k|VPYLM)の精度が悪いので棄却したほうが精度が高かったがそうでない場合もあるのでとりあえず1を指定して様子見するのがよい
+	npylm.set_burn_in_period_for_pk_vpylm(1)
+
+	# NPYLMでは通常、新しい分割結果をもとに単語nグラムモデルを更新する
+	# Trueを渡すと通常の動作
+	# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に受理しない動作になる
+	# Falseの方が切りすぎない分割結果になるが切りすぎなさすぎることもある
+	npylm.set_always_use_new_segmentation(False)
 
 	npylm.prepare_for_training()
-	max_epoch = 1000
+	max_epoch = 500
 	num_lines = npylm.get_num_lines()
 	for epoch in xrange(1, max_epoch):
 		start_time = time.time()
@@ -57,6 +62,9 @@ def main():
 
 		# 分割結果を表示
 		npylm.show_random_segmentation_result(10)
+
+	# 完了後に分割結果を表示
+	npylm.show_random_segmentation_result(100)
 
 if __name__ == "__main__":
 	main()
