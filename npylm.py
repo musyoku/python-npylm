@@ -2,16 +2,11 @@
 import argparse, sys, time
 import model
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--text", type=str, help="訓練用のテキストファイル.")
-parser.add_argument("-l", "--max_word_length", type=int, default=15, help="可能な単語の最大長.")
-args = parser.parse_args()
-
-def main():
+def main(args):
 	npylm = model.npylm()
 	npylm.load_textfile(args.text)
 	npylm.set_max_word_length(args.max_word_length)		# 可能な単語の最大長
-	npylm.init_lambda(1, 1)				# lambdaの事前分布（ガンマ分布）のハイパーパラメータ
+	npylm.init_lambda(1, 1)		# lambdaの事前分布（ガンマ分布）のハイパーパラメータ
 
 	# VPYLMから長さkの単語が生成される確率p(k|vpylm)の推定結果の棄却期間
 	# ギブスイテレーションがこの回数以下の場合は単語0-gram確率のポアソン補正を行わない
@@ -21,7 +16,7 @@ def main():
 
 	# NPYLMでは通常、新しい分割結果をもとに単語nグラムモデルを更新する
 	# Trueを渡すと通常の動作
-	# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に受理しない動作になる
+	# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に確率的に受理しない動作になる
 	# Falseの方が切りすぎない分割結果になるが切りすぎなさすぎることもある
 	npylm.set_always_use_new_segmentation(False)
 
@@ -67,4 +62,7 @@ def main():
 	npylm.show_random_segmentation_result(100)
 
 if __name__ == "__main__":
-	main()
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-t", "--text", type=str, help="訓練用のテキストファイル.")
+	parser.add_argument("-l", "--max_word_length", type=int, default=15, help="可能な単語の最大長.")
+	main(parser.parse_args())
