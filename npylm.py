@@ -58,7 +58,8 @@ def main(args):
 		# 分割結果をランダムに表示
 		npylm.show_random_segmentation_result(10)
 		# 分割結果をテキストファイルに保存
-		npylm.save_segmentation_result(args.output_textfile)
+		if args.output_textfile:
+			npylm.save_segmentation_result(args.output_textfile)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
