@@ -1,5 +1,6 @@
 #include <boost/python.hpp>
 #include <boost/format.hpp>
+#include <fstream>
 #include "npylm/core/npylm.h"
 #include "npylm/core/vocab.h"
 #include "npylm/lattice/trigram.h"
@@ -158,6 +159,21 @@ public:
 			wstring &sentence = _dataset[data_index];
 			show_segmentation_result_for_sentence(sentence, segments);
 		}
+	}
+	void save_segmentation_result(string filename = "segmentation.txt"){
+		wofstream ofs(filename, ios::binary);
+		vector<int> segments;
+		for(int data_index = 0;data_index < _dataset.size();data_index++){
+			wstring &sentence = _dataset[data_index];
+			_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
+			vector<wstring> words;
+			split_sentence_into_words(sentence, segments, words);
+			for(int i = 0;i < words.size();i++){
+				ofs << words[i] << L" ";
+			}
+			ofs << "\n";
+		}
+		ofs.close();
 	}
 	void prepare_for_training(){
 		if(_is_npylm_ready == false){
@@ -369,5 +385,6 @@ BOOST_PYTHON_MODULE(model){
 	.def("set_max_word_length", &PyNPYLM::set_max_word_length)
 	.def("set_burn_in_period_for_pk_vpylm", &PyNPYLM::set_burn_in_period_for_pk_vpylm)
 	.def("set_always_use_new_segmentation", &PyNPYLM::set_always_use_new_segmentation)
+	.def("save_segmentation_result", &PyNPYLM::save_segmentation_result)
 	.def("update_pk_vpylm", &PyNPYLM::update_pk_vpylm);
 }

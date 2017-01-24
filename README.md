@@ -52,6 +52,8 @@ make install
 
 Late 2012、Mid 2014、Late 2016で動作確認しています。
 
+おそらくi7モデルならどのMacbookでも動くと思います。
+
 ## Ubuntuの場合
 
 `model.linux.so`を`model.so`にリネームします。
