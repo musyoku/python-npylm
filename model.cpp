@@ -164,6 +164,9 @@ public:
 		wofstream ofs(filename, ios::binary);
 		vector<int> segments;
 		for(int data_index = 0;data_index < _dataset.size();data_index++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
+			}
 			wstring &sentence = _dataset[data_index];
 			_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
 			vector<wstring> words;
