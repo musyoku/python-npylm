@@ -50,9 +50,9 @@ make install
 
 すると`model.so`が修正され実行可能になります。
 
-Late 2012、Mid 2014、Late 2016で動作確認しています。
+Late 2012、Mid 2014、Late 2016、2016（Touch Barモデル）で動作確認しています。
 
-おそらくi7モデルならどのMacbookでも動くと思います。
+おそらくi7搭載機ならどのMacbookでも動くと思います。
 
 ## Ubuntuの場合
 
