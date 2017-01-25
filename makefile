@@ -6,6 +6,9 @@ model: ## NPYLMのビルド
 
 install: ## Macで.soファイルを修正する
 	sudo install_name_tool -change libboost_python.dylib /usr/local/lib/libboost_python.dylib model.so
+	sudo install_name_tool -change libboost_serialization.dylib /usr/local/lib/libboost_serialization.dylib model.so
+	sudo install_name_tool -change libboost_filesystem.dylib /usr/local/lib/libboost_filesystem.dylib model.so
+	sudo install_name_tool -change libboost_system.dylib /usr/local/lib/libboost_system.dylib model.so
 
 .PHONY: help
 help:
