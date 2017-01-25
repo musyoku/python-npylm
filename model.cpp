@@ -5,7 +5,6 @@
 #include "npylm/core/vocab.h"
 #include "npylm/lattice/trigram.h"
 #include "npylm/util.h"
-
 using namespace boost;
 
 template<class T>
