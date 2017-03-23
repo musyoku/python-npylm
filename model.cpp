@@ -1,11 +1,28 @@
 #include <boost/python.hpp>
 #include <boost/format.hpp>
 #include <fstream>
-#include "npylm/core/npylm.h"
-#include "npylm/core/vocab.h"
-#include "npylm/lattice/trigram.h"
-#include "npylm/util.h"
+#include "core/npylm.h"
+#include "core/vocab.h"
+#include "core/lattice.h"
 using namespace boost;
+
+vector<wstring> split(const wstring &s, char delim){
+    vector<wstring> elems;
+    wstring item;
+    for(char ch: s){
+        if (ch == delim){
+            if (!item.empty())
+                elems.push_back(item);
+            item.clear();
+        }
+        else{
+            item += ch;
+        }
+    }
+    if (!item.empty())
+        elems.push_back(item);
+    return elems;
+}
 
 template<class T>
 python::list list_from_vector(vector<T> &vec){  
@@ -33,13 +50,13 @@ class PyNPYLM{
 private:
 	HPYLM* _hpylm;
 	VPYLM* _vpylm;
-	NPYLM3* _npylm;
+	NPYLM* _npylm;
 	TrigramLattice* _lattice;
 	Vocab* _vocab;
 	vector<wstring> _dataset;
 	bool _is_npylm_ready;
 	bool _is_training_ready;
-	bool _always_use_new_segmentation;	// サンプリングした新分割を常に使用してモデルを更新するかどうか
+	bool _always_use_new_segmentation;	// サンプリングした新しい分割を常に使用してモデルを更新するかどうか
 	unordered_map<int, vector<int>> _old_segments_for_data;	// 古い単語分割
 	unordered_map<id, int> _words_from_segmentation;			// 単語分割で得られた語彙集合
 	vector<int> _rand_indices;
@@ -59,7 +76,7 @@ public:
 		_hpylm = new HPYLM(3);
 		_vpylm = new VPYLM();
 		_vocab = new Vocab();
-		_npylm = new NPYLM3(_hpylm, _vpylm, _vocab);
+		_npylm = new NPYLM(_hpylm, _vpylm, _vocab);
 		_lattice = new TrigramLattice(_npylm, _vocab);
 		_is_npylm_ready = false;
 		_is_training_ready = false;
