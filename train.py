@@ -15,18 +15,17 @@ def main(args):
 	trainer.set_lambda_prior(4, 1)		# lambdaの事前分布（ガンマ分布）のハイパーパラメータ
 
 	# テキストファイルの追加
-	train_split_ratio = 0.9		# 何割の文を学習ようにするか
 	if args.input_dir is not None:
 		assert os.path.exists(args.input_dir)
 		files = os.listdir(args.input_dir)
 		for filename in files:
 			if filename.endswith(".txt"):
 				print "loading", filename
-				trainer.add_textfile(args.input_dir + "/" + filename, train_split_ratio)
+				trainer.add_textfile(args.input_dir + "/" + filename, args.train_split_ratio)
 	elif args.input_filename is not None:
 		assert os.path.exists(args.input_filename)
 		print "loading", args.input_filename
-		trainer.add_textfile(args.input_filename, train_split_ratio)
+		trainer.add_textfile(args.input_filename, args.train_split_ratio)
 	else:
 		raise Exception()
 
@@ -85,4 +84,5 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--input-filename", type=str, default=None, help="訓練用のテキストファイル.")
 	parser.add_argument("-m", "--model-dir", type=str, default="out", help="モデル保存用ディレクトリ.")
 	parser.add_argument("-l", "--max-word-length", type=int, default=16, help="可能な単語の最大長.")
+	parser.add_argument("-t", "--train-split-ratio", type=float, default=0.8, help="テキストデータの何割を学習に用いるか.")
 	main(parser.parse_args())
