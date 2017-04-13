@@ -83,6 +83,6 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-i", "--input-dir", type=str, default=None, help="訓練用のテキストファイルが入っているディレクトリ.")
 	parser.add_argument("-f", "--input-filename", type=str, default=None, help="訓練用のテキストファイル.")
-	parser.add_argument("-m", "--model-dir", type=str, default=None, help="モデル保存用ディレクトリ.")
+	parser.add_argument("-m", "--model-dir", type=str, default="out", help="モデル保存用ディレクトリ.")
 	parser.add_argument("-l", "--max-word-length", type=int, default=16, help="可能な単語の最大長.")
 	main(parser.parse_args())
