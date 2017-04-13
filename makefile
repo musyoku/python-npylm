@@ -1,15 +1,14 @@
 CC = g++
-CFLAGS = -I`python -c 'from distutils.sysconfig import *; print get_python_inc()'` -std=c++11 -L/usr/local/lib -lboost_serialization -lboost_python -lpython2.7 -O0 -g
-CFLAGS_SO = -I`python -c 'from distutils.sysconfig import *; print get_python_inc()'` -shared -fPIC -std=c++11 -L/usr/local/lib -lboost_python -lpython2.7 -O2
+INCLUDE = -I`python -c 'from distutils.sysconfig import *; print get_python_inc()'`
+BOOST = -lboost_python -lpython2.7 -lboost_serialization
+CFLAGS = -std=c++11 -L/usr/local/lib -O3
+CFLAGS_SO = -shared -fPIC -std=c++11 -L/usr/local/lib -O3 
 
 install: ## NPYLMのビルド
-	$(CC) model.cpp -o model.so $(CFLAGS_SO)
+	$(CC) npylm.cpp -o npylm.so $(INCLUDE) $(CFLAGS_SO) $(BOOST)
 
-fix: ## Macで.soファイルを修正する
-	sudo install_name_tool -change libboost_python.dylib /usr/local/lib/libboost_python.dylib model.so
-
-test: ## LLDB用.
-	$(CC) test.cpp $(CFLAGS)
+test: ## LLDB用
+	$(CC) test/test.cpp $(CFLAGS) $(INCLUDE) $(BOOST)
 
 .PHONY: help
 help:
