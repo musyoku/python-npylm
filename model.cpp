@@ -293,7 +293,7 @@ public:
 		int* num_words_of_k = new int[max_word_length + 1];	// 1つ余分に確保しておき、k > max_word_lengthの確率をすべてそこに格納
 		for(int i = 0;i <= max_word_length;i++){
 			pk_vpylm[i] = 0;
-			num_words_of_k[i] = 1;	// 下駄を履かせる
+			num_words_of_k[i] = 0;
 		}
 		wchar_t* wrapped_character_ids = new wchar_t[max_word_length + 2];
 		int k;
@@ -445,7 +445,6 @@ public:
 		}
 		delete[] wrapped_character_ids;
 	}
-	// VPYLMの文全体のパープレキシティ
 	double compute_perplexity_train(){
 		return _compute_perplexity(_dataset_train);
 	}
