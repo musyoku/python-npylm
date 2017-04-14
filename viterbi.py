@@ -57,13 +57,11 @@ def main(args):
 
 		elapsed_time = time.time() - start_time
 		total_time += elapsed_time
-		ppl = trainer.compute_perplexity_test()
-		print "Epoch {} / {} - {} min - {} sentences/sec - {} ppl - {} min total".format(
+		print "Epoch {} / {} - {} min - {} sentences/sec - {} min total".format(
 			epoch,
 			max_epoch,
 			int(elapsed_time / 60),
 			int(num_sentences_train / elapsed_time),
-			ppl,
 			int(total_time / 60)
 		)
 		if epoch > 1:
@@ -75,23 +73,19 @@ def main(args):
 			# 文字種ごとのλ
 			trainer.dump_lambda()
 			# Forward filtering-Backward samplingによる分割を表示
-			print "forward-backward:"
-			trainer.show_sampled_segmentation_train(5)
-			print "forward-backward:"
-			trainer.show_sampled_segmentation_test(5)
+			# trainer.show_sampled_segmentation_train(5)
+			# trainer.show_sampled_segmentation_test(5)
 			# ビタビアルゴリズムによる分割を表示
-			print "viterbi:"
 			trainer.show_viterbi_segmentation_train(5)
-			print "viterbi:"
 			trainer.show_viterbi_segmentation_test(5)
 		# 保存
-		trainer.save(args.model_dir)
+		trainer.save(args.model_dir + "/npylm.model")
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-i", "--input-dir", type=str, default=None, help="訓練用のテキストファイルが入っているディレクトリ.")
 	parser.add_argument("-f", "--input-filename", type=str, default=None, help="訓練用のテキストファイル.")
-	parser.add_argument("-m", "--model-dir", type=str, default="out", help="モデル保存用ディレクトリ.")
+	parser.add_argument("-m", "--model-dir", type=str, default="out", help="モデルディレクトリ.")
 	parser.add_argument("-l", "--max-word-length", type=int, default=16, help="可能な単語の最大長.")
 	parser.add_argument("-t", "--train-split-ratio", type=float, default=0.8, help="テキストデータの何割を学習に用いるか.")
 	main(parser.parse_args())

@@ -9,7 +9,6 @@ using namespace std;
 // ＿人人人人人人人人人人人人人人人人人人人人人人人人人人人人＿
 // ＞　Latticeでは文字のインデックスtが1から始まることに注意　＜
 // ￣Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y￣
-// 論文に合わせています
 
 namespace npylm {
 	namespace lattice {
@@ -583,7 +582,9 @@ namespace npylm {
 			viterbi_argmax_backward_k_and_j_to_eos(sentence, t, 1, k, j);
 			assert(k <= _max_word_length);
 			segments.push_back(k);
+			sum += k;
 			if(j == 0 && k == t){	// 文章すべてが1単語になる場合
+				assert(sum == sentence->size());
 				return;
 			}
 			assert(k > 0 && j > 0);
@@ -593,11 +594,14 @@ namespace npylm {
 			assert(i >= 0);
 			assert(i <= _max_word_length);
 			t -= k;
-			sum += k;
 			sum += j;
 			sum += i;
 			k = j;
 			j = i;
+			if(i == 0){
+				assert(sum == sentence->size());
+				return;
+			}
 			segments.push_back(i);
 			while(t > 0){
 				i = _viterbi_backward[t][k][j];
@@ -614,6 +618,7 @@ namespace npylm {
 			}
 			assert(t == 0);
 			assert(sum == sentence->size());
+			assert(segments.size() > 0);
 			reverse(segments.begin(), segments.end());
 		}
 		// ビタビアルゴリズムによる分割

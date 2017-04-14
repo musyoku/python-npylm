@@ -5,8 +5,8 @@ using namespace std;
 
 namespace npylm{
 	namespace sampler{
-		int seed = chrono::system_clock::now().time_since_epoch().count();
-		// int seed = 1;
+		// int seed = chrono::system_clock::now().time_since_epoch().count();
+		int seed = 1;
 		mt19937 mt(seed);
 		double gamma(double a, double b){
 			gamma_distribution<double> distribution(a, 1.0 / b);

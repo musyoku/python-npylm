@@ -24,10 +24,10 @@ void show_progress(int step, int total){
 		else if (i == pos) cout << ">";
 		else cout << " ";
 	}
-	cout << "] " << int(progress * 100.0);
+	cout << "] " << int(progress * 100.0) << "%";
 	cout.flush();
 	if(step == total){
-		cout << endl;
+		cout << "\r";
 	}
 }
 
@@ -348,13 +348,14 @@ public:
 		int* old_segments = new int[_max_sentence_length + 3];
 		int num_old_segments;
 		// モデルパラメータを更新
-		for(int step = 0;step < num_sentences;step++){
+		for(int step = 1;step <= num_sentences;step++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return;		
 			}
 			show_progress(step, num_sentences);
 			// 訓練データを一つ取り出す
-			int data_index = _rand_indices_train[step];
+			int data_index = _rand_indices_train[step - 1];
+			assert(data_index < _dataset_train.size());
 			Sentence* sentence = _dataset_train[data_index];
 			// モデルに追加されているかチェック
 			if(_added_npylm_train[data_index] == true){
@@ -443,22 +444,27 @@ public:
 	}
 	// VPYLMの文全体のパープレキシティ
 	double compute_perplexity_train(){
-		return _compute_perplexity(_dataset_train, false);
+		return _compute_perplexity(_dataset_train);
 	}
 	double compute_perplexity_test(){
-		return _compute_perplexity(_dataset_test, true);
+		return _compute_perplexity(_dataset_test);
 	}
-	double _compute_perplexity(vector<Sentence*> &dataset, bool resample){
+	double _compute_perplexity(vector<Sentence*> &dataset){
+		if(dataset.size() == 0){
+			return -1;
+		}
 		double ppl = 0;
 		int num_sentences = dataset.size();
 		vector<int> segments;		// 分割の一時保存用
 		for(int data_index = 0;data_index < num_sentences;data_index++){
-			Sentence* sentence = dataset[data_index];
-			if(resample){
-				_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
-				sentence->split(segments);
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
 			}
-			ppl += _npylm->compute_log_Pw(sentence) / (double)sentence->get_num_segments();
+			Sentence* sentence = dataset[data_index]->copy();
+			_lattice->viterbi_decode(sentence, segments);
+			sentence->split(segments);
+			ppl += _npylm->compute_log_Pw(sentence) / ((double)sentence->get_num_segments() - 2);
+			delete sentence;
 		}
 		ppl = exp(-ppl / num_sentences);
 		return ppl;
@@ -474,6 +480,9 @@ public:
 		assert(num_to_show < rand_indices.size());
 		vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
+			}
 			int data_index = rand_indices[n];
 			Sentence* sentence = dataset[data_index]->copy();
 			_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
@@ -493,6 +502,9 @@ public:
 		assert(num_to_show < rand_indices.size());
 		vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
+			}
 			int data_index = rand_indices[n];
 			Sentence* sentence = dataset[data_index]->copy();
 			_lattice->viterbi_decode(sentence, segments);
@@ -539,7 +551,8 @@ public:
 		wcout << L"	漢字+カタカナ:	" << _npylm->_lambda_for_type[8] << endl;
 		wcout << L"	その他:		" << _npylm->_lambda_for_type[9] << endl;
 	}
-	void save(string filename){
+	void save(string dir){
+		string filename = dir + "/npylm.model";
 		std::ofstream ofs(filename);
 		boost::archive::binary_oarchive oarchive(ofs);
 		oarchive << *_npylm;
@@ -588,11 +601,15 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("set_lambda_prior", &PyTrainer::set_lambda_prior)
 	.def("show_sampled_segmentation_train", &PyTrainer::show_sampled_segmentation_train)
 	.def("show_sampled_segmentation_test", &PyTrainer::show_sampled_segmentation_test)
+	.def("show_viterbi_segmentation_train", &PyTrainer::show_viterbi_segmentation_train)
+	.def("show_viterbi_segmentation_test", &PyTrainer::show_viterbi_segmentation_test)
 	.def("dump_hpylm", &PyTrainer::dump_hpylm)
 	.def("dump_vpylm", &PyTrainer::dump_vpylm)
 	.def("dump_Pk_vpylm", &PyTrainer::dump_Pk_vpylm)
 	.def("dump_lambda", &PyTrainer::dump_lambda)
 	.def("perform_gibbs_sampling", &PyTrainer::perform_gibbs_sampling)
+	.def("compute_perplexity_train", &PyTrainer::compute_perplexity_train)
+	.def("compute_perplexity_test", &PyTrainer::compute_perplexity_test)
 	.def("sample_lambda", &PyTrainer::sample_lambda)
 	.def("sample_pitman_yor_hyperparameters", &PyTrainer::sample_pitman_yor_hyperparameters)
 	.def("update_Pk_vpylm", &PyTrainer::update_Pk_vpylm);

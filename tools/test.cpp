@@ -1168,12 +1168,14 @@ void test_npylm_update_pk_vpylm(){
 	model->update_Pk_vpylm();
 }		
 void test_npylm_perform_gibbs_sampling(){
-	string filename = "dataset/test.txt";
+	string filename = "dataset/alice/alice.txt";
 	PyTrainer* model = new PyTrainer();
-	model->_max_word_length = 20;
+	model->_max_word_length = 30;
 	model->add_textfile(filename, 0.95);
 	model->compile();
 	model->_always_accept_new_segmentation = true;
+	double ppl = model->compute_perplexity_test();
+	cout << ppl << endl;
 	// for(int i = 0;i < 50;i++){
 	// 	model->pretrain_vpylm();
 	// 	cout << model->vpylm_compute_perplexity_train() << " ppl(train) - ";
