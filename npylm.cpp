@@ -464,23 +464,41 @@ public:
 		return ppl;
 	}
 	void show_sampled_segmentation_train(int num_to_show){
-		_show_sampled_segmentation(num_to_show, _dataset_train, _rand_indices_train, false);
+		_show_sampled_segmentation(num_to_show, _dataset_train, _rand_indices_train);
 	}
 	void show_sampled_segmentation_test(int num_to_show){
 		shuffle(_rand_indices_test.begin(), _rand_indices_test.end(), sampler::mt);
-		_show_sampled_segmentation(num_to_show, _dataset_test, _rand_indices_test, true);
+		_show_sampled_segmentation(num_to_show, _dataset_test, _rand_indices_test);
 	}
-	void _show_sampled_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices, bool resample){
+	void _show_sampled_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
 		assert(num_to_show < rand_indices.size());
 		vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
 			int data_index = rand_indices[n];
-			Sentence* sentence = dataset[data_index];
-			if(resample){
-				_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
-				sentence->split(segments);
-			}
+			Sentence* sentence = dataset[data_index]->copy();
+			_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
+			sentence->split(segments);
 			sentence->dump_words();
+			delete sentence;
+		}
+	}
+	void show_viterbi_segmentation_train(int num_to_show){
+		_show_viterbi_segmentation(num_to_show, _dataset_train, _rand_indices_train);
+	}
+	void show_viterbi_segmentation_test(int num_to_show){
+		shuffle(_rand_indices_test.begin(), _rand_indices_test.end(), sampler::mt);
+		_show_viterbi_segmentation(num_to_show, _dataset_test, _rand_indices_test);
+	}
+	void _show_viterbi_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
+		assert(num_to_show < rand_indices.size());
+		vector<int> segments;		// 分割の一時保存用
+		for(int n = 0;n < num_to_show;n++){
+			int data_index = rand_indices[n];
+			Sentence* sentence = dataset[data_index]->copy();
+			_lattice->viterbi_decode(sentence, segments);
+			sentence->split(segments);
+			sentence->dump_words();
+			delete sentence;
 		}
 	}
 	void dump_hpylm(){

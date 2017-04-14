@@ -42,6 +42,10 @@ namespace npylm{
 			delete[] _start;
 			delete[] _word_ids;
 		}
+		Sentence* copy(){
+			Sentence* sentence = new Sentence(_sentence_str);
+			return sentence;
+		}
 		int size(){
 			return _sentence_str.size();
 		}

@@ -48,7 +48,7 @@ namespace npylm {
 		double**** _pw_h;		// キャッシュ
 		double* _log_z;			// 正規化定数
 		double* _backward_sampling_table;
-		int** _viterbi_backward;
+		int*** _viterbi_backward;
 		int _max_word_length;
 		int _max_sentence_length;
 		Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length){
@@ -61,11 +61,15 @@ namespace npylm {
 			_log_z = new double[size];
 			assert(_log_z != NULL);
 			// ビタビアルゴリズム用
-			_viterbi_backward = new int*[size];
+			_viterbi_backward = new int**[size];
 			assert(_viterbi_backward != NULL);
 			for(int t = 0;t < size;t++){
-				_viterbi_backward[t] = new int[_max_word_length + 1];
+				_viterbi_backward[t] = new int*[_max_word_length + 1];
 				assert(_viterbi_backward[t] != NULL);
+				for(int k = 0;k < _max_word_length + 1;k++){
+					_viterbi_backward[t][k] = new int[_max_word_length + 1];
+					assert(_viterbi_backward[t][k] != NULL);
+				}
 			}
 			// 後ろ向きアルゴリズムでkとjをサンプリングするときの確率表
 			_backward_sampling_table = new double[_max_word_length * _max_word_length];
@@ -111,6 +115,9 @@ namespace npylm {
 			lattice::delete_alpha(_normalized_alpha, size, _max_word_length);
 			for(int t = 0;t < size;t++){
 				delete[] _substring_word_id_cache[t];
+				for(int k = 0;k < _max_word_length + 1;k++){
+					delete[] _viterbi_backward[t][k];
+				}
 				delete[] _viterbi_backward[t];
 			}
 			delete[] _substring_word_id_cache;
@@ -465,7 +472,7 @@ namespace npylm {
 				double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				_alpha[t][k][0] = log(pw_h);
-				_viterbi_backward[t][k] = 0;
+				_viterbi_backward[t][k][0] = 0;
 				return;
 			}
 			// i=0に相当
@@ -479,9 +486,8 @@ namespace npylm {
 				assert(pw_h > 0);
 				assert(_alpha[t - k][j][0] != 0);
 				_alpha[t][k][j] = log(pw_h) + _alpha[t - k][j][0];
-				assert(_alpha[t][k][j] > 0);
-				_pw_h[t][k][j][0] = pw_h;
-				_viterbi_backward[t][k] = 0;
+				assert(_alpha[t][k][j] <= 0);
+				_viterbi_backward[t][k][j] = 0;
 				return;
 			}
 			// それ以外の場合は周辺化
@@ -507,7 +513,7 @@ namespace npylm {
 			}
 			assert(argmax > 0);
 			_alpha[t][k][j] = max_log_p;
-			_viterbi_backward[t][k] = argmax;
+			_viterbi_backward[t][k][j] = argmax;
 		}
 		void viterbi_forward(Sentence* sentence){
 			for(int t = 1;t <= sentence->size();t++){
@@ -583,23 +589,28 @@ namespace npylm {
 			assert(k > 0 && j > 0);
 			assert(j <= _max_word_length);
 			segments.push_back(j);
-			// cout << "<- " << k << endl;
-			// cout << "<- " << j << endl;
+			int i = _viterbi_backward[t][k][j];
+			assert(i >= 0);
+			assert(i <= _max_word_length);
 			t -= k;
 			sum += k;
+			sum += j;
+			sum += i;
 			k = j;
+			j = i;
+			segments.push_back(i);
 			while(t > 0){
-				if(t == 1){
-					k = 1;
-				}else{
-					k = _viterbi_backward[t][k];
-					assert(k > 0);
-					assert(k <= _max_word_length);
+				i = _viterbi_backward[t][k][j];
+				assert(i >= 0);
+				assert(i <= _max_word_length);
+				if(i != 0){
+					segments.push_back(i);
 				}
-				segments.push_back(k);
 				// cout << "<- " << k << endl;
 				t -= k;
-				sum += k;
+				k = j;
+				j = i;
+				sum += i;
 			}
 			assert(t == 0);
 			assert(sum == sentence->size());
@@ -619,16 +630,18 @@ namespace npylm {
 					}
 				}
 				for(int k = 0;k < _max_word_length;k++){
-					_viterbi_backward[t][k] = -1;
+					for(int j = 0;j < _max_word_length;j++){
+						_viterbi_backward[t][k][j] = -1;
+					}
 				}
 			}
 			#endif
 
 			_alpha[0][0][0] = 0;
 			_log_z[0] = 0;
-			for(int i = 0;i < size;i++){
-				for(int j = 0;j < _max_word_length + 1;j++){
-					_substring_word_id_cache[i][j] = 0;
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+					_substring_word_id_cache[t][k] = 0;
 				}
 			}
 			this->viterbi_forward(sentence);

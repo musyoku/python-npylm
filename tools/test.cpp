@@ -1197,8 +1197,8 @@ void test_npylm_perform_gibbs_sampling(){
 			model->sample_lambda();
 			model->sample_pitman_yor_hyperparameters();
 		}
-		model->show_sampled_segmentation_train(10);
-		model->show_sampled_segmentation_test(10);
+		model->show_viterbi_segmentation_train(10);
+		model->show_viterbi_segmentation_test(10);
 		model->dump_hpylm();
 		model->dump_vpylm();
 		cout << model->get_acceptance_ratio_of_new_segmentation();

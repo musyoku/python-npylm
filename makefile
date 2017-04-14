@@ -1,7 +1,7 @@
 CC = g++
 INCLUDE = -I`python -c 'from distutils.sysconfig import *; print get_python_inc()'`
 BOOST = -lboost_python -lpython2.7 -lboost_serialization
-CFLAGS = -std=c++11 -L/usr/local/lib -O0 -g
+CFLAGS = -std=c++11 -L/usr/local/lib -O3
 CFLAGS_SO = -shared -fPIC -std=c++11 -L/usr/local/lib -O3 
 
 install: ## NPYLMのビルド
