@@ -113,63 +113,6 @@ void test_hash(){
 	exit(0);
 }
 
-// void test_train(){
-// 	string dirname = "out";
-// 	PyTrainer* model = new PyTrainer();
-// 	model->load_textfile("dataset/alice/alice.txt", 1300);
-// 	model->set_max_word_length(16);
-// 	model->init_lambda(1, 1);
-// 	model->set_always_use_new_segmentation(true);
-// 	model->compile();
-// 	printf("# of sentences (train): %d\n", model->get_num_sentences_train());
-// 	printf("# of sentences (test): %d\n", model->get_num_sentences_test());
-
-// 	for(int epoch = 1;epoch < 10000;epoch++){
-// 		auto start = std::chrono::system_clock::now();
-// 		model->perform_gibbs_sampling();
-// 		model->sample_pitman_yor_hyperparameters();
-// 		model->sample_lambda();
-// 		model->update_Pk_vpylm();
-// 		auto end = std::chrono::system_clock::now();
-// 		auto diff = end - start;
-// 		double elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(diff).count();
-// 		cout << model->get_num_sentences_train() / elapsed_time << " sentences/sec" << endl;
-// 		// cout << model->compute_perplexity_train() << ", " << model->compute_log_Pdataset_train() << endl;
-// 		// cout << model->compute_perplexity_test() << ", " << model->compute_log_Pdataset_test() << endl;
-// 		if(epoch % 5 == 0){
-// 			model->show_random_segmentation_result_test(10);
-// 		}
-// 	}
-// 	printf("# of nodes: %d\n", model->_vpylm->get_num_nodes());
-// 	printf("# of customers: %d\n", model->_vpylm->get_num_customers());
-// 	printf("# of tables: %d\n", model->_vpylm->get_num_tables());
-// 	printf("stop count: %d\n", model->_vpylm->get_sum_stop_counts());
-// 	printf("pass count: %d\n", model->_vpylm->get_sum_pass_counts());
-// 	model->save(dirname);
-// 	model->load(dirname);
-// 	printf("# of nodes: %d\n", model->_vpylm->get_num_nodes());
-// 	printf("# of customers: %d\n", model->_vpylm->get_num_customers());
-// 	printf("# of tables: %d\n", model->_vpylm->get_num_tables());
-// 	printf("stop count: %d\n", model->_vpylm->get_sum_stop_counts());
-// 	printf("pass count: %d\n", model->_vpylm->get_sum_pass_counts());
-
-// 	model->remove_all_data();
-// 	printf("# of nodes: %d\n", model->_vpylm->get_num_nodes());
-// 	printf("# of customers: %d\n", model->_vpylm->get_num_customers());
-// 	printf("# of tables: %d\n", model->_vpylm->get_num_tables());
-// 	printf("stop count: %d\n", model->_vpylm->get_sum_stop_counts());
-// 	printf("pass count: %d\n", model->_vpylm->get_sum_pass_counts());
-// 	delete model;
-// }
-
-void test_train2(){
-	string dirname = "out";
-	PyTrainer* model = new PyTrainer();
-	model->add_textfile("dataset/alice/alice.txt", 0.9);
-	model->compile();
-	delete model;
-}
-
 void bow_eow(wchar_t const* character_ids, int char_t_start, int char_t_end, wchar_t* wrapped_character_ids){
 	wrapped_character_ids[0] = ID_BOW;
 	int i = 0;
@@ -1168,7 +1111,7 @@ void test_npylm_update_pk_vpylm(){
 	model->update_Pk_vpylm();
 }		
 void test_npylm_perform_gibbs_sampling(){
-	string filename = "dataset/alice/alice.txt";
+	string filename = "dataset/kemono.txt";
 	PyTrainer* model = new PyTrainer();
 	model->_max_word_length = 30;
 	model->add_textfile(filename, 0.95);
@@ -1255,7 +1198,7 @@ void test_npylm_pw(){
 	delete model;
 }
 void test_npylm_viterbi(){
-	string filename = "dataset/beluga/sanderland.txt";
+	string filename = "dataset/kemono.txt";
 	PyNPYLM* npylm = new PyNPYLM("out");
 	wifstream ifs(filename.c_str());
 	wstring str;
@@ -1264,6 +1207,30 @@ void test_npylm_viterbi(){
 		python::list words = npylm->parse(str);
 	}
 	delete npylm;
+}
+void test_train(){
+	string filename = "dataset/alice/alice.txt";
+	PyTrainer* model = new PyTrainer();
+	model->_max_word_length = 16;
+	model->add_textfile(filename, 0.8);
+	model->_always_accept_new_segmentation = true;
+	for(int i = 0;i < 3;i++){
+		auto start = std::chrono::system_clock::now();
+		model->perform_gibbs_sampling();
+		auto end = std::chrono::system_clock::now();
+		auto diff = end - start;
+		if(i > 0){
+			model->_always_accept_new_segmentation = true;
+			model->update_Pk_vpylm();
+			model->sample_lambda();
+			model->sample_pitman_yor_hyperparameters();
+		}
+		model->show_viterbi_segmentation_train(10);
+		model->show_viterbi_segmentation_test(10);
+		model->dump_hpylm();
+		model->dump_vpylm();
+	}
+	delete model;
 }
 int main(int argc, char *argv[]){
 	// 日本語周り
@@ -1275,8 +1242,6 @@ int main(int argc, char *argv[]){
 	wcout.imbue(ctype_default);
 	wcin.imbue(ctype_default);
 
-
-	// test2();
 	// test_vpylm_compute_Pw_given_h();
 	// test_vpylm_compute_Pw_substr();
 	// test_npylm_compute_g0_of_substring();
@@ -1296,12 +1261,12 @@ int main(int argc, char *argv[]){
 	// test_npylm_perform_gibbs_sampling();
 	// test_npylm_pw();
 	// test_npylm_save_load();
-	test_npylm_viterbi();
-	exit(0);
+	// test_npylm_viterbi();
+	// exit(0);
 
 	// test_wchar();
-	for(int i = 0;i < 2;i++){
-		test_npylm_perform_gibbs_sampling();
+	for(int i = 0;i < 3;i++){
+		test_train();
 		// test_train2();
 	}
 }

@@ -38,6 +38,7 @@ namespace npylm {
 				delete[] alpha[t];
 			}
 			delete[] alpha;
+			alpha = NULL;
 		}
 	}
 	class Lattice {
@@ -64,6 +65,7 @@ namespace npylm {
 			_log_z = NULL;
 			_backward_sampling_table = NULL;
 			_viterbi_backward = NULL;
+			_substring_word_id_cache = NULL;
 		}
 		~Lattice(){
 			delete[] _word_ids;
@@ -128,6 +130,7 @@ namespace npylm {
 		void _delete_cache(){
 			if(_log_z != NULL){
 				delete[] _log_z;
+				_log_z = NULL;
 			}
 			int size = _max_sentence_length + 1;
 			lattice::delete_alpha(_alpha, size, _max_word_length);
@@ -135,20 +138,36 @@ namespace npylm {
 			if(_substring_word_id_cache != NULL){
 				for(int t = 0;t < size;t++){
 					delete[] _substring_word_id_cache[t];
+				}
+				delete[] _substring_word_id_cache;
+				_substring_word_id_cache = NULL;
+			}
+			if(_viterbi_backward != NULL){
+				for(int t = 0;t < size;t++){
 					for(int k = 0;k < _max_word_length + 1;k++){
 						delete[] _viterbi_backward[t][k];
 					}
 					delete[] _viterbi_backward[t];
 				}
-			}
-			if(_substring_word_id_cache != NULL){
-				delete[] _substring_word_id_cache;
-			}
-			if(_viterbi_backward != NULL){
 				delete[] _viterbi_backward;
+				_viterbi_backward = NULL;
 			}
 			if(_backward_sampling_table != NULL){
 				delete[] _backward_sampling_table;
+				_backward_sampling_table = NULL;
+			}
+			if(_pw_h != NULL){
+				for(int t = 0;t < size;t++){
+					for(int k = 0;k < _max_word_length + 1;k++){
+						for(int j = 0;j < _max_word_length + 1;j++){
+							delete[] _pw_h[t][k][j];
+						}
+						delete[] _pw_h[t][k];
+					}
+					delete[] _pw_h[t];
+				}
+				delete[] _pw_h;
+				_pw_h = NULL;
 			}
 		}
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k){
