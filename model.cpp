@@ -26,9 +26,6 @@ void show_progress(int step, int total){
 	}
 	cout << "] " << int(progress * 100.0) << "%";
 	cout.flush();
-	if(step == total){
-		cout << "\r";
-	}
 }
 
 class PyTrainer{

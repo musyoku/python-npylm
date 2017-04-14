@@ -58,7 +58,7 @@ def main(args):
 		elapsed_time = time.time() - start_time
 		total_time += elapsed_time
 		ppl = trainer.compute_perplexity_test()
-		print "Epoch {} / {} - {} min - {} sentences/sec - {} ppl - {} min total".format(
+		print "\r\033[2KEpoch {} / {} - {} min - {} sentences/sec - {} ppl - {} min total".format(
 			epoch,
 			max_epoch,
 			int(elapsed_time / 60),
