@@ -1,8 +1,8 @@
 #include <unordered_set>
 #include <boost/functional/hash.hpp>
 #include <chrono>
-#include "core/hash.h"
-#include "npylm.cpp"
+#include "src/hash.h"
+#include "model.cpp"
 using namespace std;
 
 void test_wchar(){
@@ -1254,6 +1254,17 @@ void test_npylm_pw(){
 	}
 	delete model;
 }
+void test_npylm_viterbi(){
+	string filename = "dataset/beluga/sanderland.txt";
+	PyNPYLM* npylm = new PyNPYLM("out");
+	wifstream ifs(filename.c_str());
+	wstring str;
+	assert(ifs.fail() == false);
+	while (getline(ifs, str) && !str.empty()){
+		python::list words = npylm->parse(str);
+	}
+	delete npylm;
+}
 int main(int argc, char *argv[]){
 	// 日本語周り
 	setlocale(LC_CTYPE, "");
@@ -1282,9 +1293,10 @@ int main(int argc, char *argv[]){
 	// test_lattice_perform_blocked_gibbs_sampling();
 	// test_npylm_update_pk_vpylm();
 	// test_npylm_remove_all_data();
-	test_npylm_perform_gibbs_sampling();
+	// test_npylm_perform_gibbs_sampling();
 	// test_npylm_pw();
 	// test_npylm_save_load();
+	test_npylm_viterbi();
 	exit(0);
 
 	// test_wchar();

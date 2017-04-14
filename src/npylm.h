@@ -44,39 +44,25 @@ namespace npylm{
 		// 計算高速化用
 		double* _hpylm_parent_pw_cache;
 		wchar_t* _character_ids;
+		bool _is_ready;
 		NPYLM(){
-			_hpylm = NULL;
-			_vpylm = NULL;
-			_pk_vpylm = NULL;
-			_lambda_for_type = NULL;
-			_hpylm_parent_pw_cache = NULL;
-			_character_ids = NULL;
-		}
-		NPYLM(int max_word_length, int max_sentence_length, double vpylm_g0){
-			_max_word_length = max_word_length;
-			_max_sentence_length = max_sentence_length;
 			_hpylm = new HPYLM(3);	// 3-gram以外を指定すると動かないので注意
-			_vpylm = new VPYLM(max_sentence_length);
-			_vpylm->set_g0(vpylm_g0);
-			_pk_vpylm = new double[max_word_length + 2]; 			// kが1スタート、かつk > max_word_length用の領域も必要なので+2
-			for(int k = 1;k < max_word_length + 2;k++){
-				_pk_vpylm[k] = 0;
-			}
+			_vpylm = new VPYLM();
 			_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
 			_hpylm_parent_pw_cache = new double[3];					// 3-gram
+			_pk_vpylm = NULL;
 			_character_ids = NULL;
-			_init_cache(max_sentence_length);
+			_is_ready = false;
 			set_lambda_prior(4, 1);
+		}
+		NPYLM(int max_word_length, int max_sentence_length, double g0){
+			NPYLM();
+			_init_cache(max_sentence_length, max_word_length);
+			_vpylm->set_g0(g0);
 		}
 		~NPYLM(){
 			if(_hpylm_parent_pw_cache != NULL){
 				delete[] _hpylm_parent_pw_cache;
-			}
-			if(_pk_vpylm != NULL){
-				delete[] _pk_vpylm;
-			}
-			if(_character_ids != NULL){
-				delete[] _character_ids;
 			}
 			if(_lambda_for_type != NULL){
 				delete[] _lambda_for_type;
@@ -87,12 +73,30 @@ namespace npylm{
 			if(_vpylm != NULL){
 				delete _vpylm;
 			}
+			_delete_cache();
 		}
-		void _init_cache(int max_sentence_length){
+		void _init_cache(int max_word_length, int max_sentence_length){
+			_delete_cache();
+			_max_sentence_length = max_sentence_length;
+			_max_word_length = max_word_length;
+			_character_ids = new wchar_t[max_sentence_length + 2]; 	// <bow>と<eow>を含める
+			_pk_vpylm = new double[max_word_length + 2]; 			// kが1スタート、かつk > max_word_length用の領域も必要なので+2
+			for(int k = 1;k < max_word_length + 2;k++){
+				_pk_vpylm[k] = 0;
+			}
+			_vpylm->_init_cache(max_sentence_length);
+			_is_ready = true;
+		}
+		void _delete_cache(){
 			if(_character_ids != NULL){
 				delete[] _character_ids;
 			}
-			_character_ids = new wchar_t[max_sentence_length + 2]; 	// <bow>と<eow>を含める
+			if(_pk_vpylm != NULL){
+				delete[] _pk_vpylm;
+			}
+		}
+		void set_vpylm_g0(double g0){
+			_vpylm->set_g0(g0);
 		}
 		void set_lambda_prior(double a, double b){
 			_lambda_a = a;

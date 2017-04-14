@@ -5,7 +5,7 @@ CFLAGS = -std=c++11 -L/usr/local/lib -O3
 CFLAGS_SO = -shared -fPIC -std=c++11 -L/usr/local/lib -O3 
 
 install: ## NPYLMのビルド
-	$(CC) npylm.cpp -o npylm.so $(INCLUDE) $(CFLAGS_SO) $(BOOST)
+	$(CC) model.cpp -o model.so $(INCLUDE) $(CFLAGS_SO) $(BOOST)
 
 test: ## LLDB用
 	$(CC) tools/test.cpp $(CFLAGS) $(INCLUDE) $(BOOST)

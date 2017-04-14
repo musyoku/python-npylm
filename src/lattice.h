@@ -28,6 +28,9 @@ namespace npylm {
 			}
 		}
 		void delete_alpha(double*** &alpha, int size, int max_word_length){
+			if(alpha == NULL){
+				return;
+			}
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < max_word_length + 1;k++){
 					delete[] alpha[t][k];
@@ -50,12 +53,27 @@ namespace npylm {
 		int*** _viterbi_backward;
 		int _max_word_length;
 		int _max_sentence_length;
-		Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length){
+		bool _is_ready;
+		Lattice(NPYLM* npylm){
 			_npylm = npylm;
+			_word_ids = new id[4];	// 3-gramなので<bos><bos>単語<eos>の最低4つ
+			_is_ready = false;
+			_alpha = NULL;
+			_normalized_alpha = NULL;
+			_pw_h = NULL;
+			_log_z = NULL;
+			_backward_sampling_table = NULL;
+			_viterbi_backward = NULL;
+		}
+		~Lattice(){
+			delete[] _word_ids;
+			_delete_cache();
+		}
+		void _init_cache(int max_word_length, int max_sentence_length){
+			_delete_cache();
 			_max_word_length = max_word_length;
 			_max_sentence_length = max_sentence_length;
-			_word_ids = new id[4];	// 3-gramなので<bos><bos>単語<eos>の最低4つ
-			int size = _max_sentence_length + 1;
+			int size = max_sentence_length + 1;
 			// 前向き確率の正規化定数
 			_log_z = new double[size];
 			assert(_log_z != NULL);
@@ -63,33 +81,33 @@ namespace npylm {
 			_viterbi_backward = new int**[size];
 			assert(_viterbi_backward != NULL);
 			for(int t = 0;t < size;t++){
-				_viterbi_backward[t] = new int*[_max_word_length + 1];
+				_viterbi_backward[t] = new int*[max_word_length + 1];
 				assert(_viterbi_backward[t] != NULL);
-				for(int k = 0;k < _max_word_length + 1;k++){
-					_viterbi_backward[t][k] = new int[_max_word_length + 1];
+				for(int k = 0;k < max_word_length + 1;k++){
+					_viterbi_backward[t][k] = new int[max_word_length + 1];
 					assert(_viterbi_backward[t][k] != NULL);
 				}
 			}
 			// 後ろ向きアルゴリズムでkとjをサンプリングするときの確率表
-			_backward_sampling_table = new double[_max_word_length * _max_word_length];
+			_backward_sampling_table = new double[max_word_length * max_word_length];
 			assert(_backward_sampling_table != NULL);
 			// 前向き確率
-			lattice::init_alpha(_alpha, size, _max_word_length);
+			lattice::init_alpha(_alpha, size, max_word_length);
 			// 正規化後の前向き確率
-			lattice::init_alpha(_normalized_alpha, size, _max_word_length);
+			lattice::init_alpha(_normalized_alpha, size, max_word_length);
 			// 3-gram確率のキャッシュ
 			_pw_h = new double***[size];
 			assert(_pw_h != NULL);
 			for(int t = 0;t < size;t++){
-				_pw_h[t] = new double**[_max_word_length + 1];
+				_pw_h[t] = new double**[max_word_length + 1];
 				assert(_pw_h[t] != NULL);
-				for(int k = 0;k < _max_word_length + 1;k++){
-					_pw_h[t][k] = new double*[_max_word_length + 1];
+				for(int k = 0;k < max_word_length + 1;k++){
+					_pw_h[t][k] = new double*[max_word_length + 1];
 					assert(_pw_h[t][k] != NULL);
-					for(int j = 0;j < _max_word_length + 1;j++){
-						_pw_h[t][k][j] = new double[_max_word_length + 1];
+					for(int j = 0;j < max_word_length + 1;j++){
+						_pw_h[t][k][j] = new double[max_word_length + 1];
 						assert(_pw_h[t][k] != NULL);
-						for(int i = 0;i < _max_word_length + 1;i++){
+						for(int i = 0;i < max_word_length + 1;i++){
 							_pw_h[t][k][j][i] = 0;
 						}
 					}
@@ -99,29 +117,39 @@ namespace npylm {
 			_substring_word_id_cache = new id*[size];
 			assert(_substring_word_id_cache != NULL);
 			for(int i = 0;i < size;i++){
-				_substring_word_id_cache[i] = new id[_max_word_length + 1];
+				_substring_word_id_cache[i] = new id[max_word_length + 1];
 				assert(_substring_word_id_cache[i] != NULL);
-				for(int j = 0;j < _max_word_length + 1;j++){
+				for(int j = 0;j < max_word_length + 1;j++){
 					_substring_word_id_cache[i][j] = 0;
 				}
 			}
+			_is_ready = true;
 		}
-		~Lattice(){
-			delete[] _word_ids;
-			delete[] _log_z;
+		void _delete_cache(){
+			if(_log_z != NULL){
+				delete[] _log_z;
+			}
 			int size = _max_sentence_length + 1;
 			lattice::delete_alpha(_alpha, size, _max_word_length);
 			lattice::delete_alpha(_normalized_alpha, size, _max_word_length);
-			for(int t = 0;t < size;t++){
-				delete[] _substring_word_id_cache[t];
-				for(int k = 0;k < _max_word_length + 1;k++){
-					delete[] _viterbi_backward[t][k];
+			if(_substring_word_id_cache != NULL){
+				for(int t = 0;t < size;t++){
+					delete[] _substring_word_id_cache[t];
+					for(int k = 0;k < _max_word_length + 1;k++){
+						delete[] _viterbi_backward[t][k];
+					}
+					delete[] _viterbi_backward[t];
 				}
-				delete[] _viterbi_backward[t];
 			}
-			delete[] _substring_word_id_cache;
-			delete[] _viterbi_backward;
-			delete[] _backward_sampling_table;
+			if(_substring_word_id_cache != NULL){
+				delete[] _substring_word_id_cache;
+			}
+			if(_viterbi_backward != NULL){
+				delete[] _viterbi_backward;
+			}
+			if(_backward_sampling_table != NULL){
+				delete[] _backward_sampling_table;
+			}
 		}
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k){
 			assert(t < _max_sentence_length + 1);

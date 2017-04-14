@@ -7,9 +7,9 @@
 #include <fstream>
 #include <algorithm>
 #include <unordered_set>
-#include "core/sentence.h"
-#include "core/npylm.h"
-#include "core/lattice.h"
+#include "src/sentence.h"
+#include "src/npylm.h"
+#include "src/lattice.h"
 using namespace boost;
 using namespace npylm;
 
@@ -52,9 +52,6 @@ public:
 	int _num_ws_acceptance;
 	int _num_ws_rejection;
 	double _average_sentence_length;
-	// ハイパーパラメータ
-	double _npylm_lambda_a;
-	double _npylm_lambda_b;
 	PyTrainer(){
 		#ifdef __DEBUG__
 		cout << "\x1b[47mDEBUG\x1b[1m" << endl;
@@ -68,8 +65,8 @@ public:
 		wcout.imbue(ctype_default);
 		wcin.imbue(ctype_default);
 
-		_npylm = NULL;
-		_lattice = NULL;
+		_npylm = new NPYLM();
+		_lattice = new Lattice(_npylm);
 		_vpylm_sampling_probability_table = NULL;
 		_vpylm_sampling_id_table = NULL;
 		_added_npylm_train = NULL;
@@ -81,9 +78,6 @@ public:
 		_always_accept_new_segmentation = true;
 		_num_ws_acceptance = 0;
 		_num_ws_rejection = 0;
-
-		_npylm_lambda_a = 4;
-		_npylm_lambda_b = 1;
 	}
 	~PyTrainer(){
 		for(auto sentence: _dataset_train){
@@ -121,14 +115,23 @@ public:
 		}
 		_average_sentence_length /= _dataset_train.size() + _dataset_test.size();
 		// NPYLMの初期化
+		_npylm->_init_cache(_max_word_length, _max_sentence_length);
 		double g0 = 1.0 / (double)get_num_characters();
-		_npylm = new NPYLM(_max_word_length, _max_sentence_length, g0);
-		_npylm->set_lambda_prior(_npylm_lambda_a, _npylm_lambda_b);
+		_npylm->set_vpylm_g0(g0);
 		// forward-filtering backward-sampling
-		_lattice = new Lattice(_npylm, _max_word_length, _max_sentence_length);
+		_lattice->_init_cache(_max_word_length, _max_sentence_length);
 		// VPYLMからの単語のサンプリング用
 		_vpylm_sampling_probability_table = new double[get_num_characters() + 1];
 		_vpylm_sampling_id_table = new wchar_t[get_num_characters() + 1];
+	}
+	void compile_if_needed(){
+		if(_npylm->_is_ready){
+			return;
+		}
+		if(_lattice->_is_ready){
+			return;
+		}
+		compile();
 	}
 	bool add_textfile(string filename, double train_split_ratio){
 		wifstream ifs(filename.c_str());
@@ -211,8 +214,8 @@ public:
 		_num_ws_rejection = 0;
 	}
 	void set_lambda_prior(double a, double b){
-		_npylm_lambda_a = a;
-		_npylm_lambda_b = b;
+		assert(_npylm != NULL);
+		_npylm->set_lambda_prior(a, b);
 	}
 	// HPYLM,VPYLMのdとthetaをサンプリング
 	void sample_pitman_yor_hyperparameters(){
@@ -342,6 +345,7 @@ public:
 	// 単語分割のギブスサンプリング
 	void perform_gibbs_sampling(){
 		assert(_dataset_train.size() > 0);
+		compile_if_needed();
 		int num_sentences = _dataset_train.size();
 		vector<int> segments;		// 分割の一時保存用
 		shuffle(_rand_indices_train.begin(), _rand_indices_train.end(), sampler::mt);		// データをシャッフル
@@ -352,7 +356,9 @@ public:
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return;		
 			}
-			show_progress(step, num_sentences);
+			if(step % 100 == 0 || step == num_sentences){
+				show_progress(step, num_sentences);
+			}
 			// 訓練データを一つ取り出す
 			int data_index = _rand_indices_train[step - 1];
 			assert(data_index < _dataset_train.size());
@@ -458,7 +464,7 @@ public:
 		vector<int> segments;		// 分割の一時保存用
 		for(int data_index = 0;data_index < num_sentences;data_index++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
-				return;		
+				return 0;		
 			}
 			Sentence* sentence = dataset[data_index]->copy();
 			_lattice->viterbi_decode(sentence, segments);
@@ -567,7 +573,8 @@ public:
 	unordered_set<wchar_t> _all_characters;	// すべての文字
 	int _max_word_length;
 	int _max_sentence_length;
-	PyNPYLM(string filename){
+	PyNPYLM(string dir){
+		string filename = dir + "/npylm.model";
 		load(filename);
 	}
 	~PyNPYLM(){
@@ -583,13 +590,36 @@ public:
 		iarchive >> _all_characters;
 		_max_word_length = _npylm->_max_word_length;
 		_max_sentence_length = _npylm->_max_sentence_length;
-		_npylm->_init_cache(_max_sentence_length);
-		_npylm->_vpylm->_init_cache(_max_sentence_length);
-		_lattice = new Lattice(_npylm, _max_word_length, _max_sentence_length);
+		_npylm->_init_cache(_max_word_length, _max_sentence_length);
+		_lattice = new Lattice(_npylm);
+		_lattice->_init_cache(_max_word_length, _max_sentence_length);
+	}
+	python::list parse(wstring str){
+		init_cache_if_needed(str.size());
+		vector<int> segments;		// 分割の一時保存用
+		Sentence* sentence = new Sentence(str);
+		_lattice->viterbi_decode(sentence, segments);
+		sentence->split(segments);
+		python::list words;
+		for(int n = 0;n < sentence->get_num_segments_without_special_tokens();n++){
+			wstring word = sentence->get_word_str_at(n + 2);
+			words.append(word);
+		}
+		delete sentence;
+		return words;
+	}
+	void init_cache_if_needed(int max_sentence_length){
+		int max_word_length = _npylm->_max_word_length;
+		if(max_sentence_length > _lattice->_max_sentence_length){
+			_lattice->_init_cache(max_word_length, max_sentence_length);
+		}
+		if(max_sentence_length > _npylm->_max_sentence_length){
+			_npylm->_init_cache(max_word_length, max_sentence_length);
+		}
 	}
 };
 
-BOOST_PYTHON_MODULE(npylm){
+BOOST_PYTHON_MODULE(model){
 	python::class_<PyTrainer>("trainer")
 	.def("add_textfile", &PyTrainer::add_textfile)
 	.def("compile", &PyTrainer::compile)
@@ -613,4 +643,7 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("sample_lambda", &PyTrainer::sample_lambda)
 	.def("sample_pitman_yor_hyperparameters", &PyTrainer::sample_pitman_yor_hyperparameters)
 	.def("update_Pk_vpylm", &PyTrainer::update_Pk_vpylm);
+
+	python::class_<PyNPYLM>("npylm", python::init<std::string>())
+	.def("parse", &PyNPYLM::parse);
 }

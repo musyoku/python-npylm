@@ -25,22 +25,19 @@ namespace npylm{
 		double* _parent_pw_cache;
 		Node<wchar_t>** _path_nodes;
 		VPYLM(){
-			_sampling_table = NULL;
-			_parent_pw_cache = NULL;
-			_path_nodes = NULL;
-		}
-		VPYLM(int max_possible_depth){
 			_root = new Node<wchar_t>(0);
 			_root->_depth = 0;	// ルートは深さ0
 			// http://www.ism.ac.jp/~daichi/paper/ipsj07vpylm.pdfによると初期値は(4, 1)
 			// しかしVPYLMは初期値にあまり依存しないらしい
 			_beta_stop = VPYLM_BETA_STOP;
 			_beta_pass = VPYLM_BETA_PASS;
-			_max_depth = max_possible_depth;	// 訓練データ中の最大長の文の文字数が可能な最大深さになる
 			_depth = 0;
 			_sampling_table = NULL;
 			_parent_pw_cache = NULL;
 			_path_nodes = NULL;
+		}
+		VPYLM(int max_possible_depth){
+			VPYLM();
 			_init_cache(max_possible_depth);
 		}
 		~VPYLM(){
@@ -49,6 +46,7 @@ namespace npylm{
 		}
 		void _init_cache(int max_possible_depth){
 			_delete_cache();
+			_max_depth = max_possible_depth;	// 訓練データ中の最大長の文の文字数が可能な最大深さになる
 			_parent_pw_cache = new double[max_possible_depth + 1];
 			_sampling_table = new double[max_possible_depth + 1];
 			_path_nodes = new Node<wchar_t>*[max_possible_depth + 1];

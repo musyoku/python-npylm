@@ -1,6 +1,6 @@
 # coding: utf-8
 import argparse, time, os
-import npylm
+import model
 
 def main(args):
 	assert args.model_dir is not None
@@ -9,10 +9,7 @@ def main(args):
 	except:
 		pass
 
-	trainer = npylm.trainer()
-	# ハイパーパラメータ
-	trainer.set_max_word_length(args.max_word_length)		# 可能な単語の最大長
-	trainer.set_lambda_prior(4, 1)		# lambdaの事前分布（ガンマ分布）のハイパーパラメータ
+	trainer = model.trainer()
 
 	# テキストファイルの追加
 	if args.input_dir is not None:
@@ -29,13 +26,16 @@ def main(args):
 	else:
 		raise Exception()
 
+	# ハイパーパラメータの設定
+	trainer.set_lambda_prior(4, 1)		# lambdaの事前分布（ガンマ分布）のハイパーパラメータ
+
 	# NPYLMでは通常、新しい分割結果をもとに単語nグラムモデルを更新する
 	# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に確率的に棄却する
 	# Falseの方が切りすぎない分割結果になるが切りすぎなさすぎることもある
 	trainer.set_always_accept_new_segmentation(True)
 
-	# データを追加し終わったら呼ぶ
-	trainer.compile()
+	# 可能な単語の最大長を指定
+	trainer.set_max_word_length(args.max_word_length)
 
 	max_epoch = 500
 	num_sentences_train = trainer.get_num_sentences_train()
