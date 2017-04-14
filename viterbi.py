@@ -17,10 +17,22 @@ def main(args):
 		for filename in files:
 			if filename.endswith(".txt"):
 				print filename, "を処理中です ..."
+				i = 1
 				sentences = []
 				with codecs.open(args.input_dir + "/" + filename, "r", "utf-8") as f:
 					for sentence in f:
+						if i % 100 == 0:
+							sys.stdout.write("\r{}行目を分割しています ...".format(i))
+							sys.stdout.flush()
 						sentences.append(npylm.parse(sentence))
+						i += 1
+				with codecs.open(args.output_dir + "/" + filename, "w", "utf-8") as f:
+					for words in sentences:
+						f.write(" ".join(words))
+						f.write("\n")
+				sys.stdout.write("\r\033[2K")
+				sys.stdout.flush()
+
 	elif args.input_filename is not None:
 		assert os.path.exists(args.input_filename)
 		print args.input_filename, "を処理中です ..."
@@ -28,8 +40,9 @@ def main(args):
 		with codecs.open(args.input_filename, "r", "utf-8") as f:
 			i = 1
 			for sentence in f:
-				sys.stdout.write("\r{}行目を分割しています ...".format(i))
-				sys.stdout.flush()
+				if i % 100 == 0:
+					sys.stdout.write("\r{}行目を分割しています ...".format(i))
+					sys.stdout.flush()
 				sentences.append(npylm.parse(sentence.replace("\n", "")))
 				i += 1
 		filename = args.input_filename.split("/")[-1]
@@ -39,7 +52,6 @@ def main(args):
 				f.write("\n")
 	else:
 		raise Exception()
-
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

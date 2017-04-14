@@ -484,6 +484,7 @@ public:
 	}
 	void _show_sampled_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
 		assert(num_to_show < rand_indices.size());
+		num_to_show = std::min(dataset.size(), num_to_show);
 		vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
@@ -506,6 +507,7 @@ public:
 	}
 	void _show_viterbi_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
 		assert(num_to_show < rand_indices.size());
+		num_to_show = std::min(dataset.size(), num_to_show);
 		vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
