@@ -2,7 +2,7 @@
 #include <boost/functional/hash.hpp>
 #include <chrono>
 #include "core/hash.h"
-#include "model.cpp"
+#include "npylm.cpp"
 using namespace std;
 
 void test_wchar(){
@@ -129,7 +129,7 @@ void test_hash(){
 // 		model->perform_gibbs_sampling();
 // 		model->sample_pitman_yor_hyperparameters();
 // 		model->sample_lambda();
-// 		model->update_pk_vpylm();
+// 		model->update_Pk_vpylm();
 // 		auto end = std::chrono::system_clock::now();
 // 		auto diff = end - start;
 // 		double elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(diff).count();
@@ -1165,12 +1165,12 @@ void test_npylm_update_pk_vpylm(){
 	cout << model->_npylm->_vpylm->get_sum_stop_counts() << endl;
 	cout << model->_npylm->_vpylm->get_sum_pass_counts() << endl;
 
-	model->update_pk_vpylm();
+	model->update_Pk_vpylm();
 }		
 void test_npylm_perform_gibbs_sampling(){
 	string filename = "dataset/test.txt";
 	PyTrainer* model = new PyTrainer();
-	model->_max_word_length = 16;
+	model->_max_word_length = 20;
 	model->add_textfile(filename, 0.95);
 	model->compile();
 	model->_always_accept_new_segmentation = true;
@@ -1193,7 +1193,7 @@ void test_npylm_perform_gibbs_sampling(){
 		cout << model->_dataset_train.size() / (double)std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() * 1000.0 << " sentences/sec" << endl;
 		if(i > 0){
 			model->_always_accept_new_segmentation = true;
-			model->update_pk_vpylm();
+			model->update_Pk_vpylm();
 			model->sample_lambda();
 			model->sample_pitman_yor_hyperparameters();
 		}
@@ -1217,7 +1217,7 @@ void test_npylm_remove_all_data(){
 		auto end = std::chrono::system_clock::now();
 		auto diff = end - start;
 		cout << model->_dataset_train.size() / (double)std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() * 1000.0 << " sentences/sec" << endl;
-		model->update_pk_vpylm();
+		model->update_Pk_vpylm();
 		model->sample_lambda();
 		model->sample_pitman_yor_hyperparameters();
 		for(int j = 0;j < 10;j++){
