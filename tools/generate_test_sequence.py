@@ -21,7 +21,7 @@ def main(args):
 	prob += 10, 13, 15, 17, 19, 10, 13, 15, 17, 19, 20, 21
 	prob /= np.sum(prob)
 
-	with codecs.open("dataset/test.txt", "w", "utf-8") as f:
+	with codecs.open("../dataset/test.txt", "w", "utf-8") as f:
 		for n in xrange(args.num_seq):
 			sequence = ""
 			for l in xrange(args.seq_length):
