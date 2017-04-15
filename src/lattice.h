@@ -270,14 +270,16 @@ namespace npylm {
 					for(int k = 1;k <= std::min(t, _max_word_length);k++){
 						if(t - k == 0){
 							assert(_alpha[t][k][0] > 0);
-							if(max_log_z == 0 || _log_z[t - k] > max_log_z){
-								max_log_z = log(_alpha[t][k][0]) + _log_z[t - k];
+							double tmp = log(_alpha[t][k][0]) + _log_z[t - k];
+							if(max_log_z == 0 || tmp > max_log_z){
+								max_log_z = tmp;
 							}
 						}
 						for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 							assert(_alpha[t][k][j] > 0);
-							if(max_log_z == 0 || _log_z[t - k] > max_log_z){
-								max_log_z = log(_alpha[t][k][j]) + _log_z[t - k];
+							double tmp = log(_alpha[t][k][j]) + _log_z[t - k];
+							if(max_log_z == 0 || tmp > max_log_z){
+								max_log_z = tmp;
 							}
 						}
 					}
