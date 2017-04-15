@@ -36,7 +36,7 @@ python train.py -f textfile.txt -l 16
 - -l
 	- 可能な単語の最大長
 	- 日本語なら12〜16、英語なら20程度を指定
-	- 文の長さをN、単語の最大長をLとすると、NPYLMの計算量はO(NL^2)になる
+	- 文の長さをN、単語の最大長をLとすると、NPYLMの計算量はO(NL^3)になる
 
 ## 単語分割
 
@@ -58,6 +58,10 @@ python viterbi.py -f textfile.txt
 研究以外の用途には使用できません。
 
 https://twitter.com/daiti_m/status/851810748263157760
+
+また、実装に誤りが含まれる可能性があります。
+
+何かありましたらissueにてお知らせください。
 
 ## 展望
 

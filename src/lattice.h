@@ -255,11 +255,9 @@ namespace npylm {
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					if(t - k == 0){
 						sum_alpha_t_k_j(sentence, t, k, 0, normalized_alpha);
-					// cout << t << ", " << k << ", " << 0 << endl;
 					}
 					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 						sum_alpha_t_k_j(sentence, t, k, j, normalized_alpha);
-					// cout << t << ", " << k << ", " << j << endl;
 					}
 				}
 				// 正規化
