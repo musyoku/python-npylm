@@ -479,7 +479,6 @@ public:
 		_show_sampled_segmentation(num_to_show, _dataset_test, _rand_indices_test);
 	}
 	void _show_sampled_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
-		assert(num_to_show < rand_indices.size());
 		num_to_show = std::min((int)dataset.size(), num_to_show);
 		vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
@@ -502,7 +501,6 @@ public:
 		_show_viterbi_segmentation(num_to_show, _dataset_test, _rand_indices_test);
 	}
 	void _show_viterbi_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
-		assert(num_to_show < rand_indices.size());
 		num_to_show = std::min((int)dataset.size(), num_to_show);
 		vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){

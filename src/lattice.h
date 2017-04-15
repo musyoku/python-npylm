@@ -180,6 +180,7 @@ namespace npylm {
 			}
 			return word_id;
 		}
+		// 正規化定数をここでは掛けないことに注意
 		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** normalized_alpha){
 			double*** forward_alpha = (normalized_alpha == NULL) ? _alpha : normalized_alpha;
 			id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
@@ -264,12 +265,23 @@ namespace npylm {
 				if(normalized_alpha != NULL){
 					// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
 					double log_sum = 0;
+					// 最大値を求める
 					double max_log_z = 0;
 					for(int k = 1;k <= std::min(t, _max_word_length);k++){
-						if(max_log_z == 0 || _log_z[t - k] > max_log_z){
-							max_log_z = _log_z[t - k];
+						if(t - k == 0){
+							assert(_alpha[t][k][0] > 0);
+							if(max_log_z == 0 || _log_z[t - k] > max_log_z){
+								max_log_z = log(_alpha[t][k][0]) + _log_z[t - k];
+							}
+						}
+						for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+							assert(_alpha[t][k][j] > 0);
+							if(max_log_z == 0 || _log_z[t - k] > max_log_z){
+								max_log_z = log(_alpha[t][k][j]) + _log_z[t - k];
+							}
 						}
 					}
+					// 求めた最大値をもとにlogsumexp
 					for(int k = 1;k <= std::min(t, _max_word_length);k++){
 						if(t - k == 0){
 							log_sum += exp(log(_alpha[t][k][0]) + _log_z[t - k] - max_log_z);
@@ -281,7 +293,7 @@ namespace npylm {
 						}
 					}
 					log_sum = log(log_sum) + max_log_z;
-
+					// 正規化
 					assert(log_sum != 0);
 					for(int k = 1;k <= std::min(t, _max_word_length);k++){
 						if(t - k == 0){

@@ -1209,12 +1209,12 @@ void test_npylm_viterbi(){
 	delete npylm;
 }
 void test_train(){
-	string filename = "dataset/alice/alice.txt";
+	string filename = "dataset/test.txt";
 	PyTrainer* model = new PyTrainer();
 	model->_max_word_length = 16;
-	model->add_textfile(filename, 0.8);
+	model->add_textfile(filename, 0.99);
 	model->_always_accept_new_segmentation = true;
-	for(int i = 0;i < 3;i++){
+	for(int i = 0;i < 100;i++){
 		auto start = std::chrono::system_clock::now();
 		model->perform_gibbs_sampling();
 		auto end = std::chrono::system_clock::now();
