@@ -3,9 +3,10 @@ import argparse, time, os
 import model
 
 def main(args):
-	assert args.model_dir is not None
+	model_dir = "/".join(args.model_filename.split("/")[:-1])
+	assert model_dir is not None
 	try:
-		os.mkdir(args.model_dir)
+		os.mkdir(model_dir)
 	except:
 		pass
 
@@ -85,13 +86,13 @@ def main(args):
 			print "viterbi:"
 			trainer.show_viterbi_segmentation_test(5)
 		# 保存
-		trainer.save(args.model_dir)
+		trainer.save(args.model_filename)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-i", "--input-dir", type=str, default=None, help="訓練用のテキストファイルが入っているディレクトリ.")
 	parser.add_argument("-f", "--input-filename", type=str, default=None, help="訓練用のテキストファイル.")
-	parser.add_argument("-m", "--model-dir", type=str, default="out", help="モデル保存用ディレクトリ.")
+	parser.add_argument("-m", "--model-filename", type=str, default="out", help="モデルを保存するファイルへのパス.")
 	parser.add_argument("-l", "--max-word-length", type=int, default=16, help="可能な単語の最大長.")
 	parser.add_argument("-t", "--train-split-ratio", type=float, default=0.8, help="テキストデータの何割を学習に用いるか.")
 	main(parser.parse_args())

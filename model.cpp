@@ -553,8 +553,7 @@ public:
 		wcout << L"	漢字+カタカナ:	" << _npylm->_lambda_for_type[8] << endl;
 		wcout << L"	その他:		" << _npylm->_lambda_for_type[9] << endl;
 	}
-	void save(string dir){
-		string filename = dir + "/npylm.model";
+	void save(string filename){
 		std::ofstream ofs(filename);
 		boost::archive::binary_oarchive oarchive(ofs);
 		oarchive << *_npylm;
@@ -569,8 +568,9 @@ public:
 	unordered_set<wchar_t> _all_characters;	// すべての文字
 	int _max_word_length;
 	int _max_sentence_length;
-	PyNPYLM(string dir){
-		string filename = dir + "/npylm.model";
+	PyNPYLM(string filename){
+		_npylm = new NPYLM();
+		_lattice = new Lattice(_npylm);
 		load(filename);
 	}
 	~PyNPYLM(){
@@ -581,13 +581,11 @@ public:
 		std::ifstream ifs(filename);
 		assert(ifs.good());
 		boost::archive::binary_iarchive iarchive(ifs);
-		_npylm = new NPYLM();
 		iarchive >> *_npylm;
 		iarchive >> _all_characters;
 		_max_word_length = _npylm->_max_word_length;
 		_max_sentence_length = _npylm->_max_sentence_length;
 		_npylm->_init_cache(_max_word_length, _max_sentence_length);
-		_lattice = new Lattice(_npylm);
 		_lattice->_init_cache(_max_word_length, _max_sentence_length);
 	}
 	python::list parse(wstring str){

@@ -3,13 +3,12 @@ import argparse, os, codecs, sys
 import model
 
 def main(args):
-	assert args.model_dir is not None
 	try:
 		os.mkdir(args.output_dir)
 	except:
 		pass
 
-	npylm = model.npylm(args.model_dir)
+	npylm = model.npylm(args.model_filename)
 
 	if args.input_dir is not None:
 		assert os.path.exists(args.input_dir)
@@ -24,6 +23,7 @@ def main(args):
 						if i % 100 == 0:
 							sys.stdout.write("\r{}行目を分割しています ...".format(i))
 							sys.stdout.flush()
+						sentence = sentence.strip()
 						sentences.append(npylm.parse(sentence))
 						i += 1
 				with codecs.open(args.output_dir + "/" + filename, "w", "utf-8") as f:
@@ -58,5 +58,5 @@ if __name__ == "__main__":
 	parser.add_argument("-i", "--input-dir", type=str, default=None, help="分割の対象となるテキストファイルが入っているディレクトリ.")
 	parser.add_argument("-f", "--input-filename", type=str, default=None, help="分割の対象となるテキストファイル.")
 	parser.add_argument("-o", "--output-dir", type=str, default="out", help="分割結果を保存するディレクトリ.")
-	parser.add_argument("-m", "--model-dir", type=str, default="out", help="モデルが保存されているディレクトリ.")
+	parser.add_argument("-m", "--model-filename", type=str, default="out/npylm.model", help="モデルが保存されているファイルのパス.")
 	main(parser.parse_args())
