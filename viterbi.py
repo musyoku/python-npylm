@@ -43,7 +43,8 @@ def main(args):
 				if i % 100 == 0:
 					sys.stdout.write("\r{}行目を分割しています ...".format(i))
 					sys.stdout.flush()
-				sentences.append(npylm.parse(sentence.replace("\n", "")))
+				sentence = sentence.strip()
+				sentences.append(npylm.parse(sentence))
 				i += 1
 		filename = args.input_filename.split("/")[-1]
 		with codecs.open(args.output_dir + "/" + filename, "w", "utf-8") as f:
