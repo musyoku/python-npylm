@@ -69,7 +69,7 @@ https://twitter.com/daiti_m/status/851810748263157760
 
 ## 展望
 
-現在、[条件付確率場とベイズ階層言語モデルの統合による半教師あり形態素解析](http://chasen.org/~daiti-m/paper/nlp2011semiseg.pdf)を実装しています。
+現在、[条件付確率場とベイズ階層言語モデルの統合による半教師あり形態素解析](http://chasen.org/~daiti-m/paper/nlp2011semiseg.pdf)と[半教師あり形態素解析NPYCRFの修正](http://www.anlp.jp/proceedings/annual_meeting/2016/pdf_dir/D6-3.pdf)を実装しています。
 
 ## 実行結果
 
