@@ -6,6 +6,10 @@
 
 現在も開発途中です。
 
+実装について
+- [ベイズ階層言語モデルによる教師なし形態素解析](http://musyoku.github.io/2016/12/14/%E3%83%99%E3%82%A4%E3%82%BA%E9%9A%8E%E5%B1%A4%E8%A8%80%E8%AA%9E%E3%83%A2%E3%83%87%E3%83%AB%E3%81%AB%E3%82%88%E3%82%8B%E6%95%99%E5%B8%AB%E3%81%AA%E3%81%97%E5%BD%A2%E6%85%8B%E7%B4%A0%E8%A7%A3%E6%9E%90/)
+- [Forward filtering-Backward samplingによる単語分割でアンダーフローを防ぐ](http://musyoku.github.io/2017/04/15/forward-filtering-backward-sampling%E3%81%A7%E3%82%A2%E3%83%B3%E3%83%80%E3%83%BC%E3%83%95%E3%83%AD%E3%83%BC%E3%82%92%E9%98%B2%E3%81%90/)
+
 ## 動作環境
 
 - Boost
