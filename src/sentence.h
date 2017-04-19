@@ -93,20 +93,20 @@ namespace npylm{
 			wcout << endl;
 		}
 		// num_segmentsには<bos>や<eos>の数は含めない
-		void split(int* segments, int num_segments_without_special_tokens){
+		void split(int* segments_without_special_tokens, int num_segments_without_special_tokens){
 			int start = 0;
 			int n = 0;
 			int sum = 0;
 			for(;n < num_segments_without_special_tokens;n++){
-				if(segments[n] == 0){
+				if(segments_without_special_tokens[n] == 0){
 					assert(n > 0);
 					break;
 				}
-				sum += segments[n];
-				_segments[n + 2] = segments[n];
-				_word_ids[n + 2] = get_substr_word_id(start, start + segments[n] - 1);
+				sum += segments_without_special_tokens[n];
+				_segments[n + 2] = segments_without_special_tokens[n];
+				_word_ids[n + 2] = get_substr_word_id(start, start + segments_without_special_tokens[n] - 1);
 				_start[n + 2] = start;
-				start += segments[n];
+				start += segments_without_special_tokens[n];
 			}
 			assert(sum == _sentence_str.size());
 			_segments[n + 2] = 1;
