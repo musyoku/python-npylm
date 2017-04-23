@@ -1237,6 +1237,7 @@ void test_hash_collision(){
 	wstring str;
 	int i = 0;
 	int max_word_length = 20;
+	hashmap<id, wstring> pool;
 	wifstream ifs(filename.c_str());
 	assert(ifs.fail() == false);
 	while (getline(ifs, str) && !str.empty()){
@@ -1246,11 +1247,19 @@ void test_hash_collision(){
 				id word_id = sentence->get_substr_word_id(t - k, t - 1);
 				wstring word = sentence->get_substr_word_str(t - k, t - 1);
 				assert(word_id == hash_wstring(word));
+				auto itr = pool.find(word_id);
+				if(itr == pool.end()){
+					pool[word_id] = word;
+				}else{
+					assert(itr->second == word);
+				}
 			}
 		}
 		delete sentence;
+		i++;
 		cout << "\r" << i << flush;
 	}
+	cout << "OK" << endl;
 }
 int main(int argc, char *argv[]){
 	// 日本語周り
@@ -1283,7 +1292,7 @@ int main(int argc, char *argv[]){
 	// test_npylm_save_load();
 	// test_npylm_viterbi();
 	test_hash_collision();
-	// exit(0);
+	exit(0);
 
 	// test_wchar();
 	for(int i = 0;i < 3;i++){

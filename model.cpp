@@ -130,6 +130,43 @@ public:
 		}
 		compile();
 	}
+	// ハッシュが衝突していないかチェック
+	int detect_collision(){
+		int step = 0;
+		hashmap<id, wstring> pool;
+		for(Sentence* sentence: _dataset_train){
+			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+				return 0;
+			}
+			_detect_collision_of_sentence(sentence, pool);
+			step++;
+			show_progress(step, _dataset_train.size() + _dataset_test.size());
+		}
+		for(Sentence* sentence: _dataset_test){
+			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+				return 0;
+			}
+			_detect_collision_of_sentence(sentence, pool);
+			step++;
+			show_progress(step, _dataset_train.size() + _dataset_test.size());
+		}
+		return pool.size();
+	}
+	void _detect_collision_of_sentence(Sentence* sentence, hashmap<id, wstring> &pool){
+		for(int t = 1;t <= sentence->size();t++){
+			for(int k = 1;k <= std::min(t, _max_word_length);k++){
+				id word_id = sentence->get_substr_word_id(t - k, t - 1);
+				wstring word = sentence->get_substr_word_str(t - k, t - 1);
+				assert(word_id == hash_wstring(word));
+				auto itr = pool.find(word_id);
+				if(itr == pool.end()){
+					pool[word_id] = word;
+				}else{
+					assert(itr->second == word);
+				}
+			}
+		}
+	}
 	bool add_textfile(string filename, double train_split_ratio){
 		wifstream ifs(filename.c_str());
 		wstring sentence;
@@ -617,6 +654,7 @@ BOOST_PYTHON_MODULE(model){
 	python::class_<PyTrainer>("trainer")
 	.def("add_textfile", &PyTrainer::add_textfile)
 	.def("compile", &PyTrainer::compile)
+	.def("detect_collision", &PyTrainer::detect_collision)
 	.def("save", &PyTrainer::save)
 	.def("get_num_sentences_train", &PyTrainer::get_num_sentences_train)
 	.def("get_num_sentences_test", &PyTrainer::get_num_sentences_test)
