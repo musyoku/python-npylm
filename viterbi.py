@@ -24,7 +24,8 @@ def main(args):
 							sys.stdout.write("\r{}行目を分割しています ...".format(i))
 							sys.stdout.flush()
 						sentence = sentence.strip()
-						sentences.append(npylm.parse(sentence))
+						if len(sentence) > 1:
+							sentences.append(npylm.parse(sentence))
 						i += 1
 				with codecs.open(args.output_dir + "/" + filename, "w", "utf-8") as f:
 					for words in sentences:
