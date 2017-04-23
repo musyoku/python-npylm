@@ -44,10 +44,11 @@ def main(args):
 
 	# 文字列の単語IDが衝突しているかどうかをチェック
 	# 時間の無駄なので一度したらもうしなくていい
+	# メモリを大量に消費します
 	if False:
 		print "ハッシュの衝突を確認中 ..."
 		num_checked_words = trainer.detect_collision()
-		print "衝突はありません", "({} 単語)".format(num_checked_words)
+		print "\r\033[2K衝突はありません", "({} 単語)".format(num_checked_words)
 
 	max_epoch = 500
 	num_sentences_train = trainer.get_num_sentences_train()
