@@ -44,7 +44,7 @@ def main(args):
 
 	# 文字列の単語IDが衝突しているかどうかをチェック
 	# 時間の無駄なので一度したらもうしなくていい
-	if True:
+	if False:
 		print "ハッシュの衝突を確認中 ..."
 		num_checked_words = trainer.detect_collision()
 		print "衝突はありません", "({} 単語)".format(num_checked_words)
