@@ -66,6 +66,10 @@ namespace npylm{
 		id get_substr_word_id(int start, int end){
 			return hash_substring_ptr(_character_ids, start, end);
 		}
+		wstring get_substr_word_str(int start, int end){
+			wstring str(_sentence_str.begin() + start, _sentence_str.begin() + end + 1);
+			return str;
+		}
 		// <bos>を考慮
 		wstring get_word_str_at(int t){
 			assert(t < _num_segments);

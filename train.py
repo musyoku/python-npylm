@@ -38,6 +38,18 @@ def main(args):
 	# 可能な単語の最大長を指定
 	trainer.set_max_word_length(args.max_word_length)
 
+	# 必要なメモリを確保
+	# データを追加し終わってから呼ぶ
+	trainer.compile()
+
+	# 文字列の単語IDが衝突しているかどうかをチェック
+	# 時間の無駄なので一度したらもうしなくていい
+	# メモリを大量に消費します
+	if False:
+		print "ハッシュの衝突を確認中 ..."
+		num_checked_words = trainer.detect_collision()
+		print "\r\033[2K衝突はありません", "({} 単語)".format(num_checked_words)
+
 	max_epoch = 500
 	num_sentences_train = trainer.get_num_sentences_train()
 	num_sentences_test = trainer.get_num_sentences_test()
