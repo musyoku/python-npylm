@@ -241,7 +241,7 @@ namespace npylm{
 				return 0;
 			}
 			// VPYLMは本来無限の深さを考えるが、計算量的な問題から以下の値を下回れば打ち切り
-			double eps = 1e-8;
+			double eps = 1e-24;
 			
 			wchar_t token_t = character_ids[t];
 			double sum = 0;
@@ -263,7 +263,7 @@ namespace npylm{
 					sampling_table_size += 1;
 					parent_pass_probability *= node->pass_probability(_beta_stop, _beta_pass, false);
 					sum += p;
-					if(p < eps){
+					if(p_stop < eps){
 						break;
 					}
 					if(n < t){
@@ -279,7 +279,7 @@ namespace npylm{
 					sampling_table_size += 1;
 					sum += p;
 					parent_pass_probability *= (_beta_pass) / (_beta_pass + _beta_stop);
-					if(p < eps){
+					if(p_stop < eps){
 						break;
 					}
 				}
