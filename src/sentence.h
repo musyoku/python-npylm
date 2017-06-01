@@ -32,7 +32,7 @@ namespace npylm{
 			_segments[2] = _sentence_str.size();
 			_segments[3] = 1;
 			_start[0] = 0;
-			_start[0] = 0;
+			_start[1] = 0;
 			_start[2] = 0;
 			_start[3] = _sentence_str.size();
 			_num_segments = 4;

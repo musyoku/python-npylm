@@ -212,23 +212,30 @@ namespace npylm{
 			double parent_pass_probability = 1;
 			double p = 0;
 			double parent_pw = _g0;
-			for(int i = 0;i < context_size;i++){
+			double eps = 1e-24;		// 停止確率がこの値を下回れば打ち切り
+			double p_stop = 1;
+			int depth = 0;
+
+			// 無限の深さまで考える
+			// 実際のコンテキスト長を超えて確率を計算することもある
+			while(p_stop > eps){
 				// ノードがない場合親の確率とベータ事前分布から計算
 				if(node == NULL){
-					double p_stop = (_beta_stop) / (_beta_pass + _beta_stop) * parent_pass_probability;
+					p_stop = (_beta_stop) / (_beta_pass + _beta_stop) * parent_pass_probability;
 					p += parent_pw * p_stop;
 					parent_pass_probability *= (_beta_pass) / (_beta_pass + _beta_stop);
 				}else{
-					assert(context_substr_end - i >= 0);
-					wchar_t context_token_id = character_ids[context_substr_end - i];
+					assert(context_substr_end - depth >= 0);
 					double pw = node->compute_Pw_with_parent_Pw(target_id, parent_pw, _d_m, _theta_m);
-					double p_stop = node->stop_probability(_beta_stop, _beta_pass, false);
+					p_stop = node->stop_probability(_beta_stop, _beta_pass, false);
 					p += pw * p_stop * parent_pass_probability;
-					Node<wchar_t>* child = node->find_child_node(context_token_id);
 					parent_pass_probability *= node->pass_probability(_beta_stop, _beta_pass, false);
 					parent_pw = pw;
+					wchar_t context_token_id = character_ids[context_substr_end - depth];
+					Node<wchar_t>* child = node->find_child_node(context_token_id);
 					node = child;
 				}
+				depth++;
 			}
 			assert(p > 0);
 			return p;

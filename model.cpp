@@ -99,6 +99,9 @@ public:
 			delete _added_npylm_train;
 		}
 	}
+	void set_seed(int seed){
+		sampler::mt.seed(seed);
+	}
 	void compile(){
 		assert(_dataset_train.size() > 0);
 		_added_npylm_train = new bool[_dataset_train.size()];
@@ -661,6 +664,7 @@ BOOST_PYTHON_MODULE(model){
 	.def("set_always_accept_new_segmentation", &PyTrainer::set_always_accept_new_segmentation)
 	.def("set_max_word_length", &PyTrainer::set_max_word_length)
 	.def("set_lambda_prior", &PyTrainer::set_lambda_prior)
+	.def("set_seed", &PyTrainer::set_seed)
 	.def("show_sampled_segmentation_train", &PyTrainer::show_sampled_segmentation_train)
 	.def("show_sampled_segmentation_test", &PyTrainer::show_sampled_segmentation_test)
 	.def("show_viterbi_segmentation_train", &PyTrainer::show_viterbi_segmentation_train)

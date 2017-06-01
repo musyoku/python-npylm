@@ -106,5 +106,6 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--input-filename", type=str, default=None, help="訓練用のテキストファイル.")
 	parser.add_argument("-m", "--model-filename", type=str, default="out", help="モデルを保存するファイルへのパス.")
 	parser.add_argument("-l", "--max-word-length", type=int, default=16, help="可能な単語の最大長.")
+	parser.add_argument("--seed", type=int, default=0, help="シード.")
 	parser.add_argument("-split", "--train-split", type=float, default=0.8, help="データ全体の何割を学習に用いるか.")
 	main(parser.parse_args())

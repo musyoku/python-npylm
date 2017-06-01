@@ -1,6 +1,7 @@
 #include <unordered_set>
 #include <boost/functional/hash.hpp>
 #include <chrono>
+#include <fstream>
 #include "src/hash.h"
 #include "model.cpp"
 using namespace std;
@@ -1261,6 +1262,81 @@ void test_hash_collision(){
 	}
 	cout << "OK" << endl;
 }
+
+void test_vpylm_equiv(){
+	sampler::mt.seed(0);
+	vector<Sentence*> dataset_train;
+	vector<Sentence*> dataset_test;
+	double train_split_ratio = 0.85;
+	vector<int> rand_indices;
+	VPYLM* vpylm = new VPYLM(1000);
+	vpylm->set_g0(1.0 / 10000.0);
+	string filename = "dataset/ptb.txt";
+	{
+		wifstream ifs(filename.c_str());
+		wstring str;
+		if (ifs.fail()){
+			return;
+		}
+		vector<wstring> lines;
+		while (getline(ifs, str) && !str.empty()){
+			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+				return;
+			}
+			lines.push_back(str);
+		}
+		for(int i = 0;i < lines.size();i++){
+			rand_indices.push_back(i);
+		}
+		int train_split = lines.size() * train_split_ratio;
+		shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
+		for(int i = 0;i < rand_indices.size();i++){
+			wstring &str = lines[rand_indices[i]];
+			Sentence* sentence = new Sentence(str);
+			if(i < train_split){
+				dataset_train.push_back(sentence);
+			}else{
+				dataset_test.push_back(sentence);
+			}
+		}
+	}
+
+	vector<vector<int>> _prev_depths_for_data;
+	for(int data_index = 0;data_index < dataset_train.size();data_index++){
+		Sentence* sentence = dataset_train[data_index];
+		vector<int> prev_depths(sentence->size() + 2, -1);
+		_prev_depths_for_data.push_back(prev_depths);
+	}
+
+	wchar_t* wrapped_character_ids = new wchar_t[1000];
+	shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
+	for(int epoch = 1;epoch <= 100;epoch++){
+		for(int itr = 0;itr < dataset_train.size();itr++){
+			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+				return;
+			}
+			int data_index = rand_indices[itr];
+			Sentence* sentence = dataset_train[data_index];
+			vector<int> &prev_depths = _prev_depths_for_data[data_index];
+			bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+			for(int token_t_index = 1;token_t_index < sentence->size() + 1;token_t_index++){
+
+				if(epoch == 1){
+					int prev_depth = prev_depths[token_t_index];
+					assert(prev_depth >= 0);
+					vpylm->remove_customer_at_time_t(wrapped_character_ids, token_t_index, prev_depth);
+				}
+
+				cout << (int)wrapped_character_ids[token_t_index] << endl;
+				int new_depth = vpylm->sample_depth_at_time_t(wrapped_character_ids, token_t_index, vpylm->_parent_pw_cache, vpylm->_path_nodes);
+				vpylm->add_customer_at_time_t(wrapped_character_ids, token_t_index, new_depth);
+				prev_depths[token_t_index] = new_depth;
+			}
+		}
+	}
+	delete[] wrapped_character_ids;
+}
+
 int main(int argc, char *argv[]){
 	// 日本語周り
 	setlocale(LC_CTYPE, "");
@@ -1291,7 +1367,8 @@ int main(int argc, char *argv[]){
 	// test_npylm_pw();
 	// test_npylm_save_load();
 	// test_npylm_viterbi();
-	test_hash_collision();
+	// test_hash_collision();
+	test_vpylm_equiv();
 	exit(0);
 
 	// test_wchar();
