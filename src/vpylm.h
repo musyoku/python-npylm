@@ -218,7 +218,7 @@ namespace npylm{
 			double parent_pass_probability = 1;
 			double p = 0;
 			double parent_pw = _g0;
-			double eps = 1e-24;		// 停止確率がこの値を下回れば打ち切り
+			double eps = VPYLM_EPS;		// 停止確率がこの値を下回れば打ち切り
 			double p_stop = 1;
 			int depth = 0;
 
@@ -234,8 +234,8 @@ namespace npylm{
 					assert(context_substr_end - depth + 1 >= 0);
 					assert(node->_depth == depth);
 					double pw = node->compute_Pw_with_parent_Pw(target_id, parent_pw, _d_m, _theta_m);
-					p_stop = node->stop_probability(_beta_stop, _beta_pass, false);
-					p += pw * p_stop * parent_pass_probability;
+					p_stop = node->stop_probability(_beta_stop, _beta_pass, false) * parent_pass_probability;
+					p += pw * p_stop;
 					parent_pass_probability *= node->pass_probability(_beta_stop, _beta_pass, false);
 					parent_pw = pw;
 					wchar_t context_token_id = character_ids[context_substr_end - depth];
@@ -258,7 +258,7 @@ namespace npylm{
 				return 0;
 			}
 			// VPYLMは本来無限の深さを考えるが、計算量的な問題から以下の値を下回れば打ち切り
-			double eps = 1e-24;
+			double eps = VPYLM_EPS;
 			
 			wchar_t token_t = character_ids[t];
 			double sum = 0;

@@ -123,7 +123,7 @@ void bow_eow(wchar_t const* character_ids, int char_t_start, int char_t_end, wch
 	wrapped_character_ids[i + 1] = ID_EOW;
 }
 void test2(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -156,24 +156,32 @@ double vpylm_compute_Pw_given_h(VPYLM* vpylm, wchar_t const* character_ids, int 
 	assert(node != NULL);
 	double parent_pass_probability = 1;
 	double p = 0;
+	double eps = VPYLM_EPS;		// 停止確率がこの値を下回れば打ち切り
 	double parent_pw = vpylm->_g0;
-	for(int i = 0;i < context_size;i++){
+	double p_stop = 1;
+	int depth = 0;
+	while(p_stop > eps){
 		// ノードがない場合親の確率とベータ事前分布から計算
 		if(node == NULL){
-			double p_stop = (vpylm->_beta_stop) / (vpylm->_beta_pass + vpylm->_beta_stop) * parent_pass_probability;
+			p_stop = (vpylm->_beta_stop) / (vpylm->_beta_pass + vpylm->_beta_stop) * parent_pass_probability;
 			p += parent_pw * p_stop;
 			parent_pass_probability *= (vpylm->_beta_pass) / (vpylm->_beta_pass + vpylm->_beta_stop);
 		}else{
-			wchar_t context_token_id = character_ids[context_end - i];
+			assert(context_end - depth + 1 >= 0);
+			assert(node->_depth == depth);
+			wchar_t context_token_id = character_ids[context_end - depth];
 			double pw = node->compute_Pw(target_id, vpylm->_g0, vpylm->_d_m, vpylm->_theta_m);
-			double p_stop = node->stop_probability(vpylm->_beta_stop, vpylm->_beta_pass);
+			p_stop = node->stop_probability(vpylm->_beta_stop, vpylm->_beta_pass);
 			p += pw * p_stop;
 			Node<wchar_t>* child = node->find_child_node(context_token_id);
-			double p_pass = node->pass_probability(vpylm->_beta_stop, vpylm->_beta_pass);
-			parent_pass_probability *= p_pass;
+			parent_pass_probability = node->pass_probability(vpylm->_beta_stop, vpylm->_beta_pass);
 			parent_pw = pw;
 			node = child;
+			if(depth > 0 && node){
+				assert(node->_token_id == context_token_id);
+			}
 		}
+		depth++;
 	}
 	assert(p > 0);
 	return p;
@@ -181,7 +189,7 @@ double vpylm_compute_Pw_given_h(VPYLM* vpylm, wchar_t const* character_ids, int 
 void test_vpylm_compute_Pw_given_h(){
 	VPYLM* vpylm = new VPYLM(1000);
 	vpylm->set_g0(0.00001);
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -214,7 +222,7 @@ void test_vpylm_compute_Pw_given_h(){
 void test_vpylm_compute_Pw_substr(){
 	VPYLM* vpylm = new VPYLM(1000);
 	vpylm->set_g0(0.00001);
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
@@ -241,13 +249,13 @@ void test_vpylm_compute_Pw_substr(){
 	delete[] wrapped_character_ids;
 }
 void test_npylm_compute_g0_of_substring(){
-	NPYLM* npylm = new NPYLM(20, 1000, 0.00001);
-	string filename = "dataset/kemono.txt";
+	NPYLM* npylm = new NPYLM(20, 10000, 0.00001);
+	string filename = "dataset/ptb.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
 	int i = 0;
-	wchar_t* wrapped_character_ids = new wchar_t[1000];
+	wchar_t* wrapped_character_ids = new wchar_t[10000];
 	while (getline(ifs, str) && !str.empty()){
 		Sentence* sentence = new Sentence(str);
 		bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
@@ -279,11 +287,13 @@ void test_vpylm_add_customer(){
 	VPYLM* vpylm1 = new VPYLM(1000);
 	vpylm1->set_g0(0.00001);
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
+	int limit = 100;
 	{
 		wifstream ifs(filename.c_str());
 		wstring str;
 		assert(ifs.fail() == false);
+		int i = 0;
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
 			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
@@ -291,6 +301,10 @@ void test_vpylm_add_customer(){
 				for(int j = 0;j <= i;j++){
 					vpylm1->add_customer_at_time_t(wrapped_character_ids, i, j);
 				}
+			}
+			i++;
+			if(i > limit){
+				break;
 			}
 			delete sentence;
 		}
@@ -301,6 +315,7 @@ void test_vpylm_add_customer(){
 	{
 		wifstream ifs(filename.c_str());
 		wstring str;
+		int i = 0;
 		assert(ifs.fail() == false);
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
@@ -309,6 +324,10 @@ void test_vpylm_add_customer(){
 				for(int j = 0;j <= i;j++){
 					vpylm_add_customer_at_time_t(vpylm2, wrapped_character_ids, i, j);
 				}
+			}
+			i++;
+			if(i > limit){
+				break;
 			}
 			delete sentence;
 		}
@@ -347,7 +366,7 @@ void test_vpylm_add_customer(){
 }
 void test_npylm_find_node_by_tracing_back_context(){
 	NPYLM* npylm = new NPYLM(20, 1000, 0.00001);
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -366,7 +385,7 @@ void test_npylm_find_node_by_tracing_back_context(){
 }
 void test_sentence_split(){
 	NPYLM* npylm = new NPYLM(20, 1000, 0.00001);
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -417,7 +436,7 @@ void test_sentence_split(){
 }
 void test_npylm_find_node_by_tracing_back_context_and_store_pw(){
 	NPYLM* npylm = new NPYLM(20, 1000, 0.00001);
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -471,7 +490,7 @@ int vpylm_sample_depth_at_timestep(VPYLM* vpylm, wchar_t const* token_ids, int t
 	wchar_t token_t = token_ids[t];
 
 	// この値を下回れば打ち切り
-	double eps = 1e-8;
+	double eps = VPYLM_EPS;
 	
 	double sum = 0;
 	double p_pass = 0;
@@ -488,11 +507,11 @@ int vpylm_sample_depth_at_timestep(VPYLM* vpylm, wchar_t const* token_ids, int t
 			vpylm->_sampling_table[n] = p;
 			sampling_table_size += 1;
 			sum += p;
-			if(p < eps){
+			if(p_stop < eps){
 				break;
 			}
 			if(n < t){
-				id context_token_id = token_ids[t - n - 1];
+				wchar_t context_token_id = token_ids[t - n - 1];
 				node = node->find_child_node(context_token_id);
 			}
 		}else{
@@ -503,7 +522,7 @@ int vpylm_sample_depth_at_timestep(VPYLM* vpylm, wchar_t const* token_ids, int t
 			sampling_table_size += 1;
 			sum += p;
 			p_pass *= vpylm->_beta_pass / (vpylm->_beta_stop + vpylm->_beta_pass);
-			if(p < eps){
+			if(p_stop < eps){
 				break;
 			}
 		}
@@ -525,12 +544,14 @@ void test_vpylm_sample_depth_at_timestep(){
 	sampler::mt.seed(0);
 	VPYLM* vpylm1 = new VPYLM(1000);
 	vpylm1->set_g0(0.00001);
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
+	int limit = 100;
 	{
 		wifstream ifs(filename.c_str());
 		wstring str;
 		assert(ifs.fail() == false);
+		int i = 0;
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
 			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
@@ -538,6 +559,10 @@ void test_vpylm_sample_depth_at_timestep(){
 				for(int j = 0;j <= i;j++){
 					vpylm1->add_customer_at_time_t(wrapped_character_ids, i, j);
 				}
+			}
+			i++;
+			if(i > limit){
+				break;
 			}
 			delete sentence;
 		}
@@ -549,6 +574,7 @@ void test_vpylm_sample_depth_at_timestep(){
 		wifstream ifs(filename.c_str());
 		wstring str;
 		assert(ifs.fail() == false);
+		int i = 0;
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
 			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
@@ -556,6 +582,10 @@ void test_vpylm_sample_depth_at_timestep(){
 				for(int j = 0;j <= i;j++){
 					vpylm_add_customer_at_time_t(vpylm2, wrapped_character_ids, i, j);
 				}
+			}
+			i++;
+			if(i > limit){
+				break;
 			}
 			delete sentence;
 		}
@@ -633,7 +663,7 @@ bool npylm_add_customer_at_time_t(NPYLM* npylm, Sentence* sentence, int t){
 	return true;
 }
 void test_npylm_add_customer_at_time_t(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -745,7 +775,7 @@ void test_npylm_add_customer_at_time_t2(){
 	delete[] wrapped_character_ids;
 }
 void test_npylm_remove_customer_at_time_t(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -858,7 +888,7 @@ void test_npylm_remove_customer_at_time_t(){
 	assert(npylm->_hpylm->get_sum_pass_counts() == 0);
 }
 void test_npylm_sample_lambda(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -921,7 +951,7 @@ double npylm_compute_Pw_h(NPYLM* npylm, Sentence* sentence, int word_t){
 	return npylm_compute_Pw_h(npylm, sentence->_character_ids, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t, substr_start, substr_end);
 }
 void npylm_test_compute_Pw_h(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -1011,7 +1041,7 @@ void npylm_test_compute_Pw_h(){
 	}
 }		
 void test_lattice_perform_blocked_gibbs_sampling(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -1065,7 +1095,7 @@ void test_lattice_perform_blocked_gibbs_sampling(){
 	}
 }		
 void test_npylm_update_pk_vpylm(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -1112,7 +1142,7 @@ void test_npylm_update_pk_vpylm(){
 	model->update_Pk_vpylm();
 }		
 void test_npylm_perform_gibbs_sampling(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	PyTrainer* model = new PyTrainer();
 	model->_max_word_length = 30;
 	model->add_textfile(filename, 0.95);
@@ -1153,7 +1183,7 @@ void test_npylm_perform_gibbs_sampling(){
 	delete model;
 }
 void test_npylm_remove_all_data(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	PyTrainer* model = new PyTrainer();
 	model->add_textfile(filename, 0.95);
 	model->compile();
@@ -1188,7 +1218,7 @@ void test_npylm_remove_all_data(){
 	delete model;
 }
 void test_npylm_pw(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	PyTrainer* model = new PyTrainer();
 	model->add_textfile(filename, 0.95);
 	model->compile();
@@ -1199,7 +1229,7 @@ void test_npylm_pw(){
 	delete model;
 }
 void test_npylm_viterbi(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	PyNPYLM* npylm = new PyNPYLM("out");
 	wifstream ifs(filename.c_str());
 	wstring str;
@@ -1234,7 +1264,7 @@ void test_train(){
 	delete model;
 }
 void test_hash_collision(){
-	string filename = "dataset/kemono.txt";
+	string filename = "dataset/ptb.txt";
 	wstring str;
 	int i = 0;
 	int max_word_length = 20;
@@ -1423,19 +1453,18 @@ int main(int argc, char *argv[]){
 	// test_sentence_split();
 	// test_npylm_find_node_by_tracing_back_context_and_store_pw();
 	// test_npylm_remove_customer_at_time_t();
-	// test_vpylm_sample_depth_at_timestep();
-	// test_npylm_add_customer_at_time_t();
-	// test_npylm_add_customer_at_time_t2();
-	// test_npylm_sample_lambda();
-	// npylm_test_compute_Pw_h();
-	// test_lattice_perform_blocked_gibbs_sampling();
-	// test_npylm_update_pk_vpylm();
-	// test_npylm_remove_all_data();
-	// test_npylm_perform_gibbs_sampling();
-	// test_npylm_pw();
-	// test_npylm_save_load();
-	// test_npylm_viterbi();
-	// test_hash_collision();
+	test_vpylm_sample_depth_at_timestep();
+	test_npylm_add_customer_at_time_t();
+	test_npylm_add_customer_at_time_t2();
+	test_npylm_sample_lambda();
+	npylm_test_compute_Pw_h();
+	test_lattice_perform_blocked_gibbs_sampling();
+	test_npylm_update_pk_vpylm();
+	test_npylm_remove_all_data();
+	test_npylm_perform_gibbs_sampling();
+	test_npylm_pw();
+	test_npylm_viterbi();
+	test_hash_collision();
 	test_vpylm_equiv();
 	exit(0);
 
