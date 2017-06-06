@@ -46,18 +46,11 @@ namespace npylm{
 		wchar_t* _character_ids;
 		bool _is_ready;
 		NPYLM(){
-			_hpylm = new HPYLM(3);	// 3-gram以外を指定すると動かないので注意
-			_vpylm = new VPYLM();
-			_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
-			_hpylm_parent_pw_cache = new double[3];					// 3-gram
-			_pk_vpylm = NULL;
-			_character_ids = NULL;
-			_is_ready = false;
-			set_lambda_prior(4, 1);
+			_init();
 		}
 		NPYLM(int max_word_length, int max_sentence_length, double g0){
-			NPYLM();
-			_init_cache(max_sentence_length, max_word_length);
+			_init();
+			_init_cache(max_word_length, max_sentence_length);
 			_vpylm->set_g0(g0);
 		}
 		~NPYLM(){
@@ -74,6 +67,16 @@ namespace npylm{
 				delete _vpylm;
 			}
 			_delete_cache();
+		}
+		void _init(){
+			_hpylm = new HPYLM(3);	// 3-gram以外を指定すると動かないので注意
+			_vpylm = new VPYLM();
+			_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
+			_hpylm_parent_pw_cache = new double[3];					// 3-gram
+			_pk_vpylm = NULL;
+			_character_ids = NULL;
+			_is_ready = false;
+			set_lambda_prior(4, 1);
 		}
 		void _init_cache(int max_word_length, int max_sentence_length){
 			_delete_cache();
@@ -307,6 +310,17 @@ namespace npylm{
 				double poisson = compute_poisson_k_lambda(word_length, lambda);
 				assert(poisson > 0);
 				double g0 = pw * poisson / p_k_vpylm;
+				if(!(0 < g0 && g0 < 1)){
+					for(int u = 0;u < character_ids_length;u++){
+						wcout << character_ids[u];
+					}
+					wcout << endl;
+					cout << pw << endl;
+					cout << poisson << endl;
+					cout << p_k_vpylm << endl;
+					cout << g0 << endl;
+					cout << word_length << endl;
+				}
 				assert(0 < g0 && g0 < 1);
 				_g0_cache[word_t_id] = g0;
 				return g0;

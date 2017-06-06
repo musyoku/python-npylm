@@ -25,6 +25,17 @@ namespace npylm{
 		double* _parent_pw_cache;
 		Node<wchar_t>** _path_nodes;
 		VPYLM(){
+			_init();
+		}
+		VPYLM(int max_possible_depth){
+			_init();
+			_init_cache(max_possible_depth);
+		}
+		~VPYLM(){
+			_delete_node(_root);
+			_delete_cache();
+		}
+		void _init(){
 			_root = new Node<wchar_t>(0);
 			_root->_depth = 0;	// ルートは深さ0
 			// http://www.ism.ac.jp/~daichi/paper/ipsj07vpylm.pdfによると初期値は(4, 1)
@@ -35,14 +46,6 @@ namespace npylm{
 			_sampling_table = NULL;
 			_parent_pw_cache = NULL;
 			_path_nodes = NULL;
-		}
-		VPYLM(int max_possible_depth){
-			VPYLM();
-			_init_cache(max_possible_depth);
-		}
-		~VPYLM(){
-			_delete_node(_root);
-			_delete_cache();
 		}
 		void _init_cache(int max_possible_depth){
 			_delete_cache();
@@ -188,7 +191,10 @@ namespace npylm{
 		}
 		double compute_log_Pw(wchar_t const* character_ids, int character_ids_length){
 			wchar_t token_t = character_ids[0];
-			double log_pw = log(_root->compute_Pw(token_t, _g0, _d_m, _theta_m));
+			double log_pw = 0;
+			if(token_t != ID_BOW){
+				log_pw = log(_root->compute_Pw(token_t, _g0, _d_m, _theta_m));
+			}
 			for(int t = 1;t < character_ids_length;t++){
 				log_pw += log(compute_Pw_given_h(character_ids, 0, t - 1));
 			}
@@ -212,23 +218,34 @@ namespace npylm{
 			double parent_pass_probability = 1;
 			double p = 0;
 			double parent_pw = _g0;
-			for(int i = 0;i < context_size;i++){
+			double eps = VPYLM_EPS;		// 停止確率がこの値を下回れば打ち切り
+			double p_stop = 1;
+			int depth = 0;
+
+			// 無限の深さまで考える
+			// 実際のコンテキスト長を超えて確率を計算することもある
+			while(p_stop > eps){
 				// ノードがない場合親の確率とベータ事前分布から計算
 				if(node == NULL){
-					double p_stop = (_beta_stop) / (_beta_pass + _beta_stop) * parent_pass_probability;
+					p_stop = (_beta_stop) / (_beta_pass + _beta_stop) * parent_pass_probability;
 					p += parent_pw * p_stop;
 					parent_pass_probability *= (_beta_pass) / (_beta_pass + _beta_stop);
 				}else{
-					assert(context_substr_end - i >= 0);
-					wchar_t context_token_id = character_ids[context_substr_end - i];
+					assert(context_substr_end - depth + 1 >= 0);
+					assert(node->_depth == depth);
 					double pw = node->compute_Pw_with_parent_Pw(target_id, parent_pw, _d_m, _theta_m);
-					double p_stop = node->stop_probability(_beta_stop, _beta_pass, false);
-					p += pw * p_stop * parent_pass_probability;
-					Node<wchar_t>* child = node->find_child_node(context_token_id);
+					p_stop = node->stop_probability(_beta_stop, _beta_pass, false) * parent_pass_probability;
+					p += pw * p_stop;
 					parent_pass_probability *= node->pass_probability(_beta_stop, _beta_pass, false);
 					parent_pw = pw;
+					wchar_t context_token_id = character_ids[context_substr_end - depth];
+					Node<wchar_t>* child = node->find_child_node(context_token_id);
 					node = child;
+					if(depth > 0 && node){
+						assert(node->_token_id == context_token_id);
+					}
 				}
+				depth++;
 			}
 			assert(p > 0);
 			return p;
@@ -241,7 +258,7 @@ namespace npylm{
 				return 0;
 			}
 			// VPYLMは本来無限の深さを考えるが、計算量的な問題から以下の値を下回れば打ち切り
-			double eps = 1e-8;
+			double eps = VPYLM_EPS;
 			
 			wchar_t token_t = character_ids[t];
 			double sum = 0;
@@ -263,7 +280,7 @@ namespace npylm{
 					sampling_table_size += 1;
 					parent_pass_probability *= node->pass_probability(_beta_stop, _beta_pass, false);
 					sum += p;
-					if(p < eps){
+					if(p_stop < eps){
 						break;
 					}
 					if(n < t){
@@ -279,7 +296,7 @@ namespace npylm{
 					sampling_table_size += 1;
 					sum += p;
 					parent_pass_probability *= (_beta_pass) / (_beta_pass + _beta_stop);
-					if(p < eps){
+					if(p_stop < eps){
 						break;
 					}
 				}

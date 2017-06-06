@@ -12,7 +12,7 @@ using hashmap = emilib::HashMap<T, U>;
 
 using id = size_t;
 
-#define HPYLM_INITIAL_D 	0.2
+#define HPYLM_INITIAL_D 	0.5
 #define HPYLM_INITIAL_THETA 2.0
 #define HPYLM_INITIAL_A 	1.0
 #define HPYLM_INITIAL_B 	1.0
@@ -21,6 +21,7 @@ using id = size_t;
 
 #define VPYLM_BETA_STOP  4
 #define VPYLM_BETA_PASS  1
+#define VPYLM_EPS 1e-12
 
 #define ID_BOS 0
 #define ID_EOS 1

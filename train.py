@@ -19,11 +19,11 @@ def main(args):
 		for filename in files:
 			if filename.endswith(".txt"):
 				print "loading", filename
-				trainer.add_textfile(args.input_dir + "/" + filename, args.train_split_ratio)
+				trainer.add_textfile(args.input_dir + "/" + filename, args.train_split)
 	elif args.input_filename is not None:
 		assert os.path.exists(args.input_filename)
 		print "loading", args.input_filename
-		trainer.add_textfile(args.input_filename, args.train_split_ratio)
+		trainer.add_textfile(args.input_filename, args.train_split)
 	else:
 		raise Exception()
 
@@ -66,7 +66,9 @@ def main(args):
 		# ハイパーパラメータの推定
 		trainer.sample_pitman_yor_hyperparameters()
 		trainer.sample_lambda()
-		trainer.update_Pk_vpylm()
+
+		if epoch > 3:
+			trainer.update_Pk_vpylm()
 
 		elapsed_time = time.time() - start_time
 		total_time += elapsed_time
@@ -106,5 +108,6 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--input-filename", type=str, default=None, help="訓練用のテキストファイル.")
 	parser.add_argument("-m", "--model-filename", type=str, default="out", help="モデルを保存するファイルへのパス.")
 	parser.add_argument("-l", "--max-word-length", type=int, default=16, help="可能な単語の最大長.")
-	parser.add_argument("-t", "--train-split-ratio", type=float, default=0.8, help="テキストデータの何割を学習に用いるか.")
+	parser.add_argument("--seed", type=int, default=0, help="シード.")
+	parser.add_argument("-split", "--train-split", type=float, default=0.8, help="データ全体の何割を学習に用いるか.")
 	main(parser.parse_args())
