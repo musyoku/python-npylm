@@ -189,7 +189,7 @@ void test_vpylm_compute_Pw_given_h(){
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
 	while (getline(ifs, str) && !str.empty()){
 		Sentence* sentence = new Sentence(str);
-		bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+		bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 		for(int i = 0;i < sentence->size();i++){
 			for(int j = 0;j <= i;j++){
 				vpylm->add_customer_at_time_t(wrapped_character_ids, i, j);
@@ -222,7 +222,7 @@ void test_vpylm_compute_Pw_substr(){
 	int i = 0;
 	while (getline(ifs, str) && !str.empty()){
 		Sentence* sentence = new Sentence(str);
-		bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+		bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 		for(int i = 0;i < sentence->size();i++){
 			for(int j = 0;j <= i;j++){
 				vpylm->add_customer_at_time_t(wrapped_character_ids, i, j);
@@ -250,7 +250,7 @@ void test_npylm_compute_g0_of_substring(){
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
 	while (getline(ifs, str) && !str.empty()){
 		Sentence* sentence = new Sentence(str);
-		bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+		bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 		for(int i = 0;i < sentence->size();i++){
 			for(int j = 0;j <= i;j++){
 				npylm->_vpylm->add_customer_at_time_t(wrapped_character_ids, i, j);
@@ -286,7 +286,7 @@ void test_vpylm_add_customer(){
 		assert(ifs.fail() == false);
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
-			bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 			for(int i = 0;i < sentence->size();i++){
 				for(int j = 0;j <= i;j++){
 					vpylm1->add_customer_at_time_t(wrapped_character_ids, i, j);
@@ -304,7 +304,7 @@ void test_vpylm_add_customer(){
 		assert(ifs.fail() == false);
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
-			bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 			for(int i = 0;i < sentence->size();i++){
 				for(int j = 0;j <= i;j++){
 					vpylm_add_customer_at_time_t(vpylm2, wrapped_character_ids, i, j);
@@ -533,7 +533,7 @@ void test_vpylm_sample_depth_at_timestep(){
 		assert(ifs.fail() == false);
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
-			bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 			for(int i = 0;i < sentence->size();i++){
 				for(int j = 0;j <= i;j++){
 					vpylm1->add_customer_at_time_t(wrapped_character_ids, i, j);
@@ -551,7 +551,7 @@ void test_vpylm_sample_depth_at_timestep(){
 		assert(ifs.fail() == false);
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
-			bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 			for(int i = 0;i < sentence->size();i++){
 				for(int j = 0;j <= i;j++){
 					vpylm_add_customer_at_time_t(vpylm2, wrapped_character_ids, i, j);
@@ -577,7 +577,7 @@ void test_vpylm_sample_depth_at_timestep(){
 		assert(ifs.fail() == false);
 		while (getline(ifs, str) && !str.empty()){
 			Sentence* sentence = new Sentence(str);
-			bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 			for(int start = 0;start < sentence->size();start++){
 				sampler::mt.seed(start);
 				int a = vpylm1->sample_depth_at_time_t(wrapped_character_ids, start, vpylm1->_parent_pw_cache, vpylm1->_path_nodes);
@@ -739,7 +739,7 @@ void test_npylm_add_customer_at_time_t2(){
 	wstring str = L"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん";
 	Sentence* sentence = new Sentence(str);
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
-	bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
+	bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
 	npylm->_vpylm->add_customer_at_time_t(wrapped_character_ids, str.size() - 1, str.size() - 1);
 	npylm->_vpylm->sample_depth_at_time_t(wrapped_character_ids, str.size() - 1, npylm->_vpylm->_parent_pw_cache, npylm->_vpylm->_path_nodes);
 	delete[] wrapped_character_ids;
@@ -1263,14 +1263,40 @@ void test_hash_collision(){
 	cout << "OK" << endl;
 }
 
+void split_word_by(const wstring &str, wchar_t delim, vector<wstring> &elems){
+	elems.clear();
+	wstring item;
+	for(wchar_t ch: str){
+		if (ch == delim){
+			if (!item.empty()){
+				elems.push_back(item);
+			}
+			item.clear();
+		}
+		else{
+			item += ch;
+		}
+	}
+	if (!item.empty()){
+		elems.push_back(item);
+	}
+}
+
 void test_vpylm_equiv(){
 	sampler::mt.seed(0);
 	vector<Sentence*> dataset_train;
 	vector<Sentence*> dataset_test;
-	double train_split_ratio = 0.85;
+	double train_split_ratio = 0.87;
 	vector<int> rand_indices;
 	VPYLM* vpylm = new VPYLM(1000);
-	vpylm->set_g0(1.0 / 10000.0);
+	vpylm->set_g0(1.0 / 9999.0);
+
+	unordered_map<wstring, wchar_t> vocab;
+	vocab[L"<bow>"] = ID_BOW;
+	vocab[L"<bos>"] = ID_BOS;
+	vocab[L"<eow>"] = ID_EOW;
+	vocab[L"<eos>"] = ID_EOS;
+
 	string filename = "dataset/ptb.txt";
 	{
 		wifstream ifs(filename.c_str());
@@ -1292,13 +1318,38 @@ void test_vpylm_equiv(){
 		shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
 		for(int i = 0;i < rand_indices.size();i++){
 			wstring &str = lines[rand_indices[i]];
-			Sentence* sentence = new Sentence(str);
-			if(i < train_split){
-				dataset_train.push_back(sentence);
-			}else{
-				dataset_test.push_back(sentence);
+
+			vector<wstring> words;
+			split_word_by(str, L' ', words);	// スペースで分割
+			if(words.size() > 0){
+				wstring token_ids = L"";
+				for(auto word: words){
+					if(word.size() == 0){
+						continue;
+					}
+					auto itr = vocab.find(word);
+					wchar_t token_id = 0;
+					if(itr == vocab.end()){
+						token_id = vocab.size();
+						vocab[word] = token_id;
+					}else{
+						token_id = itr->second;
+					}
+					token_ids += token_id;
+				}
+				Sentence* sentence = new Sentence(token_ids);
+				if(i < train_split){
+					dataset_train.push_back(sentence);
+				}else{
+					dataset_test.push_back(sentence);
+				}
 			}
 		}
+	}
+
+	rand_indices.clear();
+	for(int i = 0;i < dataset_train.size();i++){
+		rand_indices.push_back(i);
 	}
 
 	vector<vector<int>> _prev_depths_for_data;
@@ -1307,10 +1358,12 @@ void test_vpylm_equiv(){
 		vector<int> prev_depths(sentence->size() + 2, -1);
 		_prev_depths_for_data.push_back(prev_depths);
 	}
-
+	cout << dataset_train.size() << endl;
+	cout << dataset_test.size() << endl;
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
 	shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
 	for(int epoch = 1;epoch <= 100;epoch++){
+		cout << "epoch: " << epoch << endl;
 		for(int itr = 0;itr < dataset_train.size();itr++){
 			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 				return;
@@ -1318,21 +1371,36 @@ void test_vpylm_equiv(){
 			int data_index = rand_indices[itr];
 			Sentence* sentence = dataset_train[data_index];
 			vector<int> &prev_depths = _prev_depths_for_data[data_index];
-			bow_eow(sentence->_character_ids, 0, sentence->size(), wrapped_character_ids);
-			for(int token_t_index = 1;token_t_index < sentence->size() + 1;token_t_index++){
-
-				if(epoch == 1){
+			bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
+			for(int token_t_index = 1;token_t_index < sentence->size() + 2;token_t_index++){
+				if(epoch > 1){
 					int prev_depth = prev_depths[token_t_index];
 					assert(prev_depth >= 0);
 					vpylm->remove_customer_at_time_t(wrapped_character_ids, token_t_index, prev_depth);
 				}
-
-				cout << (int)wrapped_character_ids[token_t_index] << endl;
 				int new_depth = vpylm->sample_depth_at_time_t(wrapped_character_ids, token_t_index, vpylm->_parent_pw_cache, vpylm->_path_nodes);
 				vpylm->add_customer_at_time_t(wrapped_character_ids, token_t_index, new_depth);
 				prev_depths[token_t_index] = new_depth;
 			}
 		}
+		if(epoch % 10 == 0){
+			double log_Pdataset = 0;
+			for(int data_index = 0;data_index < dataset_test.size();data_index++){
+				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+					return;
+				}
+				Sentence* sentence = dataset_test[data_index];
+				bow_eow(sentence->_character_ids, 0, sentence->size() - 1, wrapped_character_ids);
+				log_Pdataset += vpylm->compute_log_Pw(wrapped_character_ids, sentence->size() + 2) / (sentence->size() + 2);
+			}
+			cout << exp(-log_Pdataset / (double)dataset_test.size()) << endl;
+			printf("# of nodes: %d\n", vpylm->get_num_nodes());
+			printf("# of customers: %d\n", vpylm->get_num_customers());
+			printf("# of tables: %d\n", vpylm->get_num_tables());
+			printf("stop count: %d\n", vpylm->get_sum_stop_counts());
+			printf("pass count: %d\n", vpylm->get_sum_pass_counts());
+		}
+		vpylm->sample_hyperparams();
 	}
 	delete[] wrapped_character_ids;
 }

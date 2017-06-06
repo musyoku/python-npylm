@@ -4,6 +4,8 @@
 #include "hash.h"
 using namespace std;
 
+// <bos>と<eos>は長さが0文字であることに注意
+
 namespace npylm{
 	class Sentence{
 	public:
