@@ -19,11 +19,11 @@ def main(args):
 		for filename in files:
 			if filename.endswith(".txt"):
 				print "loading", filename
-				trainer.add_textfile(args.input_dir + "/" + filename, args.train_split_ratio)
+				trainer.add_textfile(args.input_dir + "/" + filename, args.train_split)
 	elif args.input_filename is not None:
 		assert os.path.exists(args.input_filename)
 		print "loading", args.input_filename
-		trainer.add_textfile(args.input_filename, args.train_split_ratio)
+		trainer.add_textfile(args.input_filename, args.train_split)
 	else:
 		raise Exception()
 
@@ -66,7 +66,9 @@ def main(args):
 		# ハイパーパラメータの推定
 		trainer.sample_pitman_yor_hyperparameters()
 		trainer.sample_lambda()
-		trainer.update_Pk_vpylm()
+
+		if epoch > 5:
+			trainer.update_Pk_vpylm()
 
 		elapsed_time = time.time() - start_time
 		total_time += elapsed_time

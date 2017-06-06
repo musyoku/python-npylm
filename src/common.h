@@ -21,7 +21,7 @@ using id = size_t;
 
 #define VPYLM_BETA_STOP  4
 #define VPYLM_BETA_PASS  1
-#define VPYLM_EPS 1e-8
+#define VPYLM_EPS 1e-12
 
 #define ID_BOS 0
 #define ID_EOS 1

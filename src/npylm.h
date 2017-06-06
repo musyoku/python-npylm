@@ -310,6 +310,17 @@ namespace npylm{
 				double poisson = compute_poisson_k_lambda(word_length, lambda);
 				assert(poisson > 0);
 				double g0 = pw * poisson / p_k_vpylm;
+				if(!(0 < g0 && g0 < 1)){
+					for(int u = 0;u < character_ids_length;u++){
+						wcout << character_ids[u];
+					}
+					wcout << endl;
+					cout << pw << endl;
+					cout << poisson << endl;
+					cout << p_k_vpylm << endl;
+					cout << g0 << endl;
+					cout << word_length << endl;
+				}
 				assert(0 < g0 && g0 < 1);
 				_g0_cache[word_t_id] = g0;
 				return g0;

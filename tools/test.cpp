@@ -123,7 +123,7 @@ void bow_eow(wchar_t const* character_ids, int char_t_start, int char_t_end, wch
 	wrapped_character_ids[i + 1] = ID_EOW;
 }
 void test2(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -189,7 +189,7 @@ double vpylm_compute_Pw_given_h(VPYLM* vpylm, wchar_t const* character_ids, int 
 void test_vpylm_compute_Pw_given_h(){
 	VPYLM* vpylm = new VPYLM(1000);
 	vpylm->set_g0(0.00001);
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -222,7 +222,7 @@ void test_vpylm_compute_Pw_given_h(){
 void test_vpylm_compute_Pw_substr(){
 	VPYLM* vpylm = new VPYLM(1000);
 	vpylm->set_g0(0.00001);
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
@@ -250,7 +250,7 @@ void test_vpylm_compute_Pw_substr(){
 }
 void test_npylm_compute_g0_of_substring(){
 	NPYLM* npylm = new NPYLM(20, 10000, 0.00001);
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -287,7 +287,7 @@ void test_vpylm_add_customer(){
 	VPYLM* vpylm1 = new VPYLM(1000);
 	vpylm1->set_g0(0.00001);
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	int limit = 100;
 	{
 		wifstream ifs(filename.c_str());
@@ -366,7 +366,7 @@ void test_vpylm_add_customer(){
 }
 void test_npylm_find_node_by_tracing_back_context(){
 	NPYLM* npylm = new NPYLM(20, 1000, 0.00001);
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -385,7 +385,7 @@ void test_npylm_find_node_by_tracing_back_context(){
 }
 void test_sentence_split(){
 	NPYLM* npylm = new NPYLM(20, 1000, 0.00001);
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -436,7 +436,7 @@ void test_sentence_split(){
 }
 void test_npylm_find_node_by_tracing_back_context_and_store_pw(){
 	NPYLM* npylm = new NPYLM(20, 1000, 0.00001);
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wifstream ifs(filename.c_str());
 	wstring str;
 	assert(ifs.fail() == false);
@@ -544,7 +544,7 @@ void test_vpylm_sample_depth_at_timestep(){
 	sampler::mt.seed(0);
 	VPYLM* vpylm1 = new VPYLM(1000);
 	vpylm1->set_g0(0.00001);
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wchar_t* wrapped_character_ids = new wchar_t[1000];
 	int limit = 100;
 	{
@@ -663,7 +663,7 @@ bool npylm_add_customer_at_time_t(NPYLM* npylm, Sentence* sentence, int t){
 	return true;
 }
 void test_npylm_add_customer_at_time_t(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -775,7 +775,7 @@ void test_npylm_add_customer_at_time_t2(){
 	delete[] wrapped_character_ids;
 }
 void test_npylm_remove_customer_at_time_t(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -888,7 +888,7 @@ void test_npylm_remove_customer_at_time_t(){
 	assert(npylm->_hpylm->get_sum_pass_counts() == 0);
 }
 void test_npylm_sample_lambda(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -951,7 +951,7 @@ double npylm_compute_Pw_h(NPYLM* npylm, Sentence* sentence, int word_t){
 	return npylm_compute_Pw_h(npylm, sentence->_character_ids, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t, substr_start, substr_end);
 }
 void npylm_test_compute_Pw_h(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -1041,7 +1041,7 @@ void npylm_test_compute_Pw_h(){
 	}
 }		
 void test_lattice_perform_blocked_gibbs_sampling(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -1095,7 +1095,7 @@ void test_lattice_perform_blocked_gibbs_sampling(){
 	}
 }		
 void test_npylm_update_pk_vpylm(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	int* segments = new int[3];
 	segments[0] = 0;
 	segments[1] = 0;
@@ -1142,7 +1142,7 @@ void test_npylm_update_pk_vpylm(){
 	model->update_Pk_vpylm();
 }		
 void test_npylm_perform_gibbs_sampling(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	PyTrainer* model = new PyTrainer();
 	model->_max_word_length = 30;
 	model->add_textfile(filename, 0.95);
@@ -1183,7 +1183,7 @@ void test_npylm_perform_gibbs_sampling(){
 	delete model;
 }
 void test_npylm_remove_all_data(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	PyTrainer* model = new PyTrainer();
 	model->add_textfile(filename, 0.95);
 	model->compile();
@@ -1218,7 +1218,7 @@ void test_npylm_remove_all_data(){
 	delete model;
 }
 void test_npylm_pw(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	PyTrainer* model = new PyTrainer();
 	model->add_textfile(filename, 0.95);
 	model->compile();
@@ -1229,7 +1229,7 @@ void test_npylm_pw(){
 	delete model;
 }
 void test_npylm_viterbi(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	PyNPYLM* npylm = new PyNPYLM("out");
 	wifstream ifs(filename.c_str());
 	wstring str;
@@ -1264,7 +1264,7 @@ void test_train(){
 	delete model;
 }
 void test_hash_collision(){
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	wstring str;
 	int i = 0;
 	int max_word_length = 20;
@@ -1327,7 +1327,7 @@ void test_vpylm_equiv(){
 	vocab[L"<eow>"] = ID_EOW;
 	vocab[L"<eos>"] = ID_EOS;
 
-	string filename = "dataset/ptb.txt";
+	string filename = "dataset/karen.txt";
 	{
 		wifstream ifs(filename.c_str());
 		wstring str;
@@ -1453,19 +1453,19 @@ int main(int argc, char *argv[]){
 	// test_sentence_split();
 	// test_npylm_find_node_by_tracing_back_context_and_store_pw();
 	// test_npylm_remove_customer_at_time_t();
-	test_vpylm_sample_depth_at_timestep();
-	test_npylm_add_customer_at_time_t();
-	test_npylm_add_customer_at_time_t2();
-	test_npylm_sample_lambda();
-	npylm_test_compute_Pw_h();
-	test_lattice_perform_blocked_gibbs_sampling();
-	test_npylm_update_pk_vpylm();
-	test_npylm_remove_all_data();
-	test_npylm_perform_gibbs_sampling();
-	test_npylm_pw();
-	test_npylm_viterbi();
-	test_hash_collision();
-	test_vpylm_equiv();
+	// test_vpylm_sample_depth_at_timestep();
+	// test_npylm_add_customer_at_time_t();
+	// test_npylm_add_customer_at_time_t2();
+	// test_npylm_sample_lambda();
+	// npylm_test_compute_Pw_h();
+	// test_lattice_perform_blocked_gibbs_sampling();
+	// test_npylm_update_pk_vpylm();
+	// test_npylm_remove_all_data();
+	// test_npylm_perform_gibbs_sampling();
+	// test_npylm_pw();
+	// test_npylm_viterbi();
+	// test_hash_collision();
+	// test_vpylm_equiv();
 	exit(0);
 
 	// test_wchar();
