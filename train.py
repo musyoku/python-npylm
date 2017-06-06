@@ -67,7 +67,7 @@ def main(args):
 		trainer.sample_pitman_yor_hyperparameters()
 		trainer.sample_lambda()
 
-		if epoch > 2:
+		if epoch > 3:
 			trainer.update_Pk_vpylm()
 
 		elapsed_time = time.time() - start_time
