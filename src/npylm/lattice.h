@@ -4,7 +4,6 @@
 #include "npylm.h"
 #include "sampler.h"
 #include "hash.h"
-using namespace std;
 
 // ＿人人人人人人人人人人人人人人人人人人人人人人人人人人人人＿
 // ＞　Latticeでは文字のインデックスtが1から始まることに注意　＜
