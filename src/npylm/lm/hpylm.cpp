@@ -3,12 +3,12 @@
 #include <boost/serialization/vector.hpp>
 #include <cassert>
 #include <fstream>
+#include "../sampler.h"
 #include "hpylm.h"
-#include "sampler.h"
 
 namespace npylm {
 	namespace lm {
-		HPYLM::HPYLM(int ngram = 2){
+		HPYLM::HPYLM(int ngram){
 			// 深さは0から始まることに注意
 			// 2-gramなら最大深さは1. root(0) -> 2-gram(1)
 			// 3-gramなら最大深さは2. root(0) -> 2-gram(1) -> 3-gram(2)
@@ -42,5 +42,7 @@ namespace npylm {
 			archive & _alpha_m;
 			archive & _beta_m;
 		}
+		template void HPYLM::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
+		template void HPYLM::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
 	}
 }

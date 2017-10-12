@@ -5,13 +5,19 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/unordered_set.hpp>
 #include <fstream>
+#include <iostream>
 #include <algorithm>
 #include <unordered_set>
-#include "src/sentence.h"
-#include "src/npylm.h"
-#include "src/lattice.h"
+#include "../npylm/wordtype.h"
+#include "../npylm/hash.h"
+#include "../npylm/sentence.h"
+#include "../npylm/npylm.h"
+#include "../npylm/lattice.h"
 using namespace boost;
 using namespace npylm;
+using std::cout;
+using std::wcout;
+using std::endl;
 
 void show_progress(int step, int total){
 	double progress = step / (double)(total - 1);
@@ -32,12 +38,12 @@ class PyTrainer{
 public:
 	NPYLM* _npylm;
 	Lattice* _lattice;
-	unordered_set<wchar_t> _all_characters;	// すべての文字
-	vector<Sentence*> _dataset_train;
-	vector<Sentence*> _dataset_test;
+	std::unordered_set<wchar_t> _all_characters;	// すべての文字
+	std::vector<Sentence*> _dataset_train;
+	std::vector<Sentence*> _dataset_test;
 	bool* _added_npylm_train;
-	vector<int> _rand_indices_train;
-	vector<int> _rand_indices_test;
+	std::vector<int> _rand_indices_train;
+	std::vector<int> _rand_indices_test;
 	double* _vpylm_sampling_probability_table;
 	wchar_t* _vpylm_sampling_id_table;
 	int _max_word_length;
@@ -55,12 +61,12 @@ public:
 		#endif
 		// 日本語周り
 		setlocale(LC_CTYPE, "ja_JP.UTF-8");
-		ios_base::sync_with_stdio(false);
-		locale default_loc("ja_JP.UTF-8");
-		locale::global(default_loc);
-		locale ctype_default(locale::classic(), default_loc, locale::ctype); //※
-		wcout.imbue(ctype_default);
-		wcin.imbue(ctype_default);
+		std::ios_base::sync_with_stdio(false);
+		std::locale default_loc("ja_JP.UTF-8");
+		std::locale::global(default_loc);
+		std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
+		std::wcout.imbue(ctype_default);
+		std::wcin.imbue(ctype_default);
 
 		_npylm = new NPYLM();
 		_lattice = new Lattice(_npylm);
@@ -136,7 +142,7 @@ public:
 	// ハッシュが衝突していないかチェック
 	int detect_collision(){
 		int step = 0;
-		hashmap<id, wstring> pool;
+		hashmap<id, std::wstring> pool;
 		for(Sentence* sentence: _dataset_train){
 			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 				return 0;
@@ -155,11 +161,11 @@ public:
 		}
 		return pool.size();
 	}
-	void _detect_collision_of_sentence(Sentence* sentence, hashmap<id, wstring> &pool){
+	void _detect_collision_of_sentence(Sentence* sentence, hashmap<id, std::wstring> &pool){
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				id word_id = sentence->get_substr_word_id(t - k, t - 1);
-				wstring word = sentence->get_substr_word_str(t - k, t - 1);
+				std::wstring word = sentence->get_substr_word_str(t - k, t - 1);
 				assert(word_id == hash_wstring(word));
 				auto itr = pool.find(word_id);
 				if(itr == pool.end()){
@@ -170,11 +176,11 @@ public:
 			}
 		}
 	}
-	bool add_textfile(string filename, double train_split_ratio){
-		wifstream ifs(filename.c_str());
-		wstring sentence;
+	bool add_textfile(std::string filename, double train_split_ratio){
+		std::wifstream ifs(filename.c_str());
+		std::wstring sentence;
 		assert(ifs.fail() == false);
-		vector<wstring> sentence_array;
+		std::vector<std::wstring> sentence_array;
 		while (getline(ifs, sentence) && !sentence.empty()){
 			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 				return false;
@@ -191,13 +197,13 @@ public:
 		}
 		int train_split = (double)sentence_array.size() * train_split_ratio;
 		assert(sentence_array.size() >= train_split);
-		vector<int> rand_indices;
+		std::vector<int> rand_indices;
 		for(int i = 0;i < sentence_array.size();i++){
 			rand_indices.push_back(i);
 		}
 		shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
 		for(int i = 0;i < rand_indices.size();i++){
-			wstring &sentence = sentence_array[rand_indices[i]];
+			std::wstring &sentence = sentence_array[rand_indices[i]];
 			if(train_split == -1){
 				add_train_data(sentence);
 				continue;
@@ -210,13 +216,13 @@ public:
 		}
 		return true;
 	}
-	void add_train_data(wstring sentence){
+	void add_train_data(std::wstring sentence){
 		_add_data_to(sentence, _dataset_train);
 	}
-	void add_test_data(wstring sentence){
+	void add_test_data(std::wstring sentence){
 		_add_data_to(sentence, _dataset_test);
 	}
-	void _add_data_to(wstring &sentence_str, vector<Sentence*> &dataset){
+	void _add_data_to(std::wstring &sentence_str, std::vector<Sentence*> &dataset){
 		if(sentence_str.size() > 0){
 			for(wchar_t character: sentence_str){
 				add_character(character);
@@ -260,9 +266,9 @@ public:
 	}
 	// 文字種ごとにλのサンプリング
 	void sample_lambda(){
-		vector<double> a_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
-		vector<double> b_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
-		unordered_set<id> words;
+		std::vector<double> a_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
+		std::vector<double> b_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
+		std::unordered_set<id> words;
 		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
 			a_for_type[type] = _npylm->_lambda_a;
 			b_for_type[type] = _npylm->_lambda_b;
@@ -270,14 +276,14 @@ public:
 		for(auto sentence: _dataset_train){
 			// <bos>と<eos>は除外
 			for(int t = 2;t < sentence->get_num_segments() - 1;t++){
-				wstring word = sentence->get_word_str_at(t);
+				std::wstring word = sentence->get_word_str_at(t);
 				id word_id = sentence->get_word_id_at(t);
 				int word_length = sentence->get_word_length_at(t);
 				if(word_length > _max_word_length){
 					continue;
 				}
 				if(words.find(word_id) == words.end()){
-					vector<int> &tables = _npylm->_hpylm->_root->_arrangement[word_id];
+					std::vector<int> &tables = _npylm->_hpylm->_root->_arrangement[word_id];
 					int t_w = tables.size();
 					int type = wordtype::detect_word_type(word);
 					a_for_type[type] += t_w * word_length;
@@ -294,7 +300,7 @@ public:
 	// VPYLMに文脈を渡し次の文字を生成
 	wchar_t sample_word_from_vpylm_given_context(wchar_t* context_ids, int context_length, int sample_t, bool skip_eow = false){
 		double sum_probs = 0;
-		VPYLM* vpylm = _npylm->_vpylm;
+		lm::VPYLM* vpylm = _npylm->_vpylm;
 		int table_index = 0;
 		for(wchar_t character_id: _all_characters){
 			assert(table_index < get_num_characters());
@@ -384,7 +390,7 @@ public:
 		assert(_dataset_train.size() > 0);
 		compile_if_needed();
 		int num_sentences = _dataset_train.size();
-		vector<int> segments;		// 分割の一時保存用
+		std::vector<int> segments;		// 分割の一時保存用
 		shuffle(_rand_indices_train.begin(), _rand_indices_train.end(), sampler::mt);		// データをシャッフル
 		int* old_segments = new int[_max_sentence_length + 3];
 		int num_old_segments;
@@ -431,10 +437,10 @@ public:
 				
 				#ifdef __DEBUG__
 				// 正規化しない場合の結果と比較
-				vector<int> a = segments;
+				std::vector<int> a = segments;
 				sampler::mt.seed(seed);
 				_lattice->perform_blocked_gibbs_sampling(sentence, segments, false);
-				vector<int> b = segments;
+				std::vector<int> b = segments;
 				assert(a.size() == b.size());
 				for(int i = 0;i < a.size();i++){
 					// cout << a[i] << "," << b[i] << endl;
@@ -491,13 +497,13 @@ public:
 	double compute_perplexity_test(){
 		return _compute_perplexity(_dataset_test);
 	}
-	double _compute_perplexity(vector<Sentence*> &dataset){
+	double _compute_perplexity(std::vector<Sentence*> &dataset){
 		if(dataset.size() == 0){
 			return -1;
 		}
 		double ppl = 0;
 		int num_sentences = dataset.size();
-		vector<int> segments;		// 分割の一時保存用
+		std::vector<int> segments;		// 分割の一時保存用
 		for(int data_index = 0;data_index < num_sentences;data_index++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return 0;		
@@ -518,9 +524,9 @@ public:
 		shuffle(_rand_indices_test.begin(), _rand_indices_test.end(), sampler::mt);
 		_show_sampled_segmentation(num_to_show, _dataset_test, _rand_indices_test);
 	}
-	void _show_sampled_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
+	void _show_sampled_segmentation(int num_to_show, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices){
 		num_to_show = std::min((int)dataset.size(), num_to_show);
-		vector<int> segments;		// 分割の一時保存用
+		std::vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return;		
@@ -540,9 +546,9 @@ public:
 		shuffle(_rand_indices_test.begin(), _rand_indices_test.end(), sampler::mt);
 		_show_viterbi_segmentation(num_to_show, _dataset_test, _rand_indices_test);
 	}
-	void _show_viterbi_segmentation(int num_to_show, vector<Sentence*> &dataset, vector<int> &rand_indices){
+	void _show_viterbi_segmentation(int num_to_show, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices){
 		num_to_show = std::min((int)dataset.size(), num_to_show);
-		vector<int> segments;		// 分割の一時保存用
+		std::vector<int> segments;		// 分割の一時保存用
 		for(int n = 0;n < num_to_show;n++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return;		
@@ -593,7 +599,7 @@ public:
 		wcout << L"	漢字+カタカナ:	" << _npylm->_lambda_for_type[8] << endl;
 		wcout << L"	その他:		" << _npylm->_lambda_for_type[9] << endl;
 	}
-	void save(string filename){
+	void save(std::string filename){
 		std::ofstream ofs(filename);
 		boost::archive::binary_oarchive oarchive(ofs);
 		oarchive << *_npylm;
@@ -605,10 +611,10 @@ class PyNPYLM{
 public:
 	NPYLM* _npylm;
 	Lattice* _lattice;
-	unordered_set<wchar_t> _all_characters;	// すべての文字
+	std::unordered_set<wchar_t> _all_characters;	// すべての文字
 	int _max_word_length;
 	int _max_sentence_length;
-	PyNPYLM(string filename){
+	PyNPYLM(std::string filename){
 		_npylm = new NPYLM();
 		_lattice = new Lattice(_npylm);
 		load(filename);
@@ -617,7 +623,7 @@ public:
 		delete _npylm;
 		delete _lattice;
 	}
-	void load(string filename){
+	void load(std::string filename){
 		std::ifstream ifs(filename);
 		assert(ifs.good());
 		boost::archive::binary_iarchive iarchive(ifs);
@@ -628,15 +634,15 @@ public:
 		_npylm->_init_cache(_max_word_length, _max_sentence_length);
 		_lattice->_init_cache(_max_word_length, _max_sentence_length);
 	}
-	python::list parse(wstring str){
+	python::list parse(std::wstring str){
 		init_cache_if_needed(str.size());
-		vector<int> segments;		// 分割の一時保存用
+		std::vector<int> segments;		// 分割の一時保存用
 		Sentence* sentence = new Sentence(str);
 		_lattice->viterbi_decode(sentence, segments);
 		sentence->split(segments);
 		python::list words;
 		for(int n = 0;n < sentence->get_num_segments_without_special_tokens();n++){
-			wstring word = sentence->get_word_str_at(n + 2);
+			std::wstring word = sentence->get_word_str_at(n + 2);
 			words.append(word);
 		}
 		delete sentence;

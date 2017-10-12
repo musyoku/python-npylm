@@ -1,10 +1,11 @@
 #include <iostream>
+#include "hash.h"
 #include "sentence.h"
 
 // <bos>と<eos>は長さが0文字であることに注意
 
 namespace npylm {
-	Sentence::Sentence(wstring sentence){
+	Sentence::Sentence(std::wstring sentence){
 		_sentence_str = sentence;
 		_character_ids = _sentence_str.data();
 		_word_ids = new id[size() + 3];
@@ -57,35 +58,35 @@ namespace npylm {
 	id Sentence::get_substr_word_id(int start, int end){
 		return hash_substring_ptr(_character_ids, start, end);
 	}
-	wstring Sentence::get_substr_word_str(int start, int end){
-		wstring str(_sentence_str.begin() + start, _sentence_str.begin() + end + 1);
+	std::wstring Sentence::get_substr_word_str(int start, int end){
+		std::wstring str(_sentence_str.begin() + start, _sentence_str.begin() + end + 1);
 		return str;
 	}
 	// <bos>を考慮
-	wstring Sentence::get_word_str_at(int t){
+	std::wstring Sentence::get_word_str_at(int t){
 		assert(t < _num_segments);
 		if(t < 2){
 			return L"<bos>";
 		}
 		assert(t < _num_segments - 1);
-		wstring str(_sentence_str.begin() + _start[t], _sentence_str.begin() + _start[t] + _segments[t]);
+		std::wstring str(_sentence_str.begin() + _start[t], _sentence_str.begin() + _start[t] + _segments[t]);
 		return str;
 	}
 	void Sentence::dump_characters(){
 		for(int i = 0;i < size();i++){
-			cout << _character_ids[i] << ",";
+			std::cout << _character_ids[i] << ",";
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}
 	void Sentence::dump_words(){
-		wcout << L" / ";
+		std::wcout << L" / ";
 		for(int i = 2;i < _num_segments - 1;i++){
 			for(int j = 0;j < _segments[i];j++){
-				wcout << _character_ids[j + _start[i]];
+				std::wcout << _character_ids[j + _start[i]];
 			}
-			wcout << L" / ";
+			std::wcout << L" / ";
 		}
-		wcout << endl;
+		std::wcout << std::endl;
 	}
 	// num_segmentsには<bos>や<eos>の数は含めない
 	void Sentence::split(int* segments_without_special_tokens, int num_segments_without_special_tokens){
@@ -114,7 +115,7 @@ namespace npylm {
 		}
 		_num_segments = num_segments_without_special_tokens + 3;
 	}
-	void Sentence::split(vector<int> &segments_without_special_tokens){
+	void Sentence::split(std::vector<int> &segments_without_special_tokens){
 		int num_segments_without_special_tokens = segments_without_special_tokens.size();
 		int start = 0;
 		int n = 0;

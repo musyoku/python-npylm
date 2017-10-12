@@ -1,14 +1,20 @@
 CC = g++
-INCLUDE = -I`python -c 'from distutils.sysconfig import *; print get_python_inc()'`
-BOOST = -lboost_python -lpython2.7 -lboost_serialization
-CFLAGS = -std=c++11 -L/usr/local/lib -O3
-CFLAGS_SO = -shared -fPIC -std=c++11 -L/usr/local/lib -O3 
+BOOST = /usr/local/Cellar/boost/1.65.0
+INCLUDE = `python3-config --includes` -std=c++11 -I$(BOOST)/include
+LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib
+SOFLAGS = -shared -fPIC
 
-install: ## NPYLMのビルド
-	$(CC) model.cpp -o model.so $(INCLUDE) $(CFLAGS_SO) $(BOOST)
+install: ## Python用ライブラリをコンパイル
+	$(CC) $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python/model.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
 
-test: ## LLDB用
-	$(CC) tools/test.cpp $(CFLAGS) $(INCLUDE) $(BOOST)
+install_ubuntu: ## Python用ライブラリをコンパイル
+	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/ihmm/*.cpp src/python/*.cpp -o run/ihmm.so -O3
+
+check_includes:	## Python.hの場所を確認
+	python3-config --includes
+
+check_ldflags:	## libpython3の場所を確認
+	python3-config --ldflags
 
 .PHONY: help
 help:

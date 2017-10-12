@@ -1,8 +1,7 @@
-#pragma once
 #include <algorithm>
+#include "hash.h"
 #include "lattice.h"
 #include "sampler.h"
-#include "hash.h"
 
 // ＿人人人人人人人人人人人人人人人人人人人人人人人人人人人人＿
 // ＞　Latticeでは文字のインデックスtが1から始まることに注意　＜
@@ -299,7 +298,7 @@ namespace npylm {
 			}
 		}
 	}
-	void Lattice::backward_sampling(Sentence* sentence, vector<int> &segments, double*** backward_alpha){
+	void Lattice::backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** backward_alpha){
 		segments.clear();
 		int k = 0;
 		int j = 0;
@@ -463,7 +462,7 @@ namespace npylm {
 	}
 	// Blocked Gibbs Samplingによる分割のサンプリング
 	// 分割結果が確率的に決まる
-	void Lattice::perform_blocked_gibbs_sampling(Sentence* sentence, vector<int> &segments, bool normalize = true){
+	void Lattice::perform_blocked_gibbs_sampling(Sentence* sentence, std::vector<int> &segments, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 
@@ -616,7 +615,7 @@ namespace npylm {
 			}
 		}
 	}
-	void Lattice::viterbi_backward(Sentence* sentence, vector<int> &segments){
+	void Lattice::viterbi_backward(Sentence* sentence, std::vector<int> &segments){
 		segments.clear();
 		int k = 0;
 		int j = 0;
@@ -666,7 +665,7 @@ namespace npylm {
 	}
 	// ビタビアルゴリズムによる分割
 	// 決定的に分割が決まる
-	void Lattice::viterbi_decode(Sentence* sentence, vector<int> &segments){
+	void Lattice::viterbi_decode(Sentence* sentence, std::vector<int> &segments){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 
