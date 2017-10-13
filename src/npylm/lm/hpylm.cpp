@@ -20,10 +20,10 @@ namespace npylm {
 			for(int n = 0;n < ngram;n++){
 				_d_m.push_back(HPYLM_INITIAL_D);	
 				_theta_m.push_back(HPYLM_INITIAL_THETA);
-				_a_m.push_back(HPYLM_INITIAL_A);	
-				_b_m.push_back(HPYLM_INITIAL_B);	
-				_alpha_m.push_back(HPYLM_INITIAL_ALPHA);
-				_beta_m.push_back(HPYLM_INITIAL_BETA);
+				_a_m.push_back(HPYLM_BETA_A);	
+				_b_m.push_back(HPYLM_BETA_B);	
+				_alpha_m.push_back(HPYLM_GAMMA_ALPHA);
+				_beta_m.push_back(HPYLM_GAMMA_BETA);
 			}
 		}
 		HPYLM::~HPYLM(){

@@ -10,6 +10,7 @@ namespace npylm {
 		void _set_locale();
 	public:
 		NPYLM* _npylm;
+		Model(Dataset* dataset, int max_word_length);
 		Model(Dataset* dataset, 
 			int max_word_length, 
 			double initial_lambda_a, 
@@ -19,6 +20,10 @@ namespace npylm {
 		Model(std::string filename);
 		~Model();
 		int get_max_word_length();
+		void set_initial_lambda_a(double lambda);
+		void set_initial_lambda_b(double lambda);
+		void set_vpylm_beta_stop(double stop);
+		void set_vpylm_beta_pass(double pass);
 		bool load(std::string filename);
 		bool save(std::string filename);
 	};

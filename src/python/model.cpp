@@ -1,7 +1,14 @@
 #include <iostream>
+#include "../npylm/common.h"
 #include "model.h"
 
 namespace npylm {
+	Model::Model(Dataset* dataset, int max_word_length){
+		_set_locale();
+		int max_sentence_length = dataset->get_max_sentence_length();
+		double vpylm_g0 = 1.0 / (double)dataset->_dict->get_num_characters();
+		_npylm = new NPYLM(max_word_length, max_sentence_length, vpylm_g0, 4, 1, VPYLM_BETA_STOP, VPYLM_BETA_PASS);
+	}
 	Model::Model(Dataset* dataset, 
 				int max_word_length, 		// 可能な単語長の最大値. 英語24, 日本語16程度
 				double initial_lambda_a, 	// 単語長のポアソン分布のλの事前分布のハイパーパラメータ
@@ -36,6 +43,20 @@ namespace npylm {
 	}
 	int Model::get_max_word_length(){
 		return _npylm->_max_word_length;
+	}
+	void Model::set_initial_lambda_a(double lambda){
+		_npylm->_lambda_a = lambda;
+		_npylm->sample_lambda_with_initial_params();
+	}
+	void Model::set_initial_lambda_b(double lambda){
+		_npylm->_lambda_b = lambda;
+		_npylm->sample_lambda_with_initial_params();
+	}
+	void Model::set_vpylm_beta_stop(double stop){
+		_npylm->_vpylm->_beta_stop = stop;
+	}
+	void Model::set_vpylm_beta_pass(double pass){
+		_npylm->_vpylm->_beta_pass = pass;
 	}
 	bool Model::load(std::string filename){
 		bool success = false;

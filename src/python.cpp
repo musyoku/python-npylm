@@ -20,10 +20,16 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("get_dict", &Dataset::get_dict_obj, boost::python::return_internal_reference<>());
 
 	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Model*, bool>((arg("dataset"), arg("model"), arg("always_accept_new_segmentation")=true)))
+	.def("sample_hpylm_vpylm_hyperparameters", &Trainer::sample_hpylm_vpylm_hyperparameters)
+	.def("sample_lambda", &Trainer::sample_lambda)
 	.def("gibbs", &Trainer::gibbs);
 
-	boost::python::class_<Model>("model", boost::python::init<Dataset*, int, double, double, double, double>())
+	boost::python::class_<Model>("model", boost::python::init<Dataset*, int>())
 	.def(boost::python::init<std::string>())
+	.def("set_initial_lambda_a", &Model::set_initial_lambda_a)
+	.def("set_initial_lambda_b", &Model::set_initial_lambda_b)
+	.def("set_vpylm_beta_stop", &Model::set_vpylm_beta_stop)
+	.def("set_vpylm_beta_pass", &Model::set_vpylm_beta_pass)
 	.def("save", &Model::save)
 	.def("load", &Model::load);
 }

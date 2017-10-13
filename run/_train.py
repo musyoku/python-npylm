@@ -1,28 +1,14 @@
+# coding: utf-8
 import argparse, time, os
 import model
 
-def main():
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--train-filename", "-file", type=str, default=None, help="訓練用のテキストファイルのパス")
-	parser.add_argument("--train-directory", "-dir", type=str, default=None, help="訓練用のテキストファイルが入っているディレクトリ")
-	parser.add_argument("--seed", type=int, default=1)
-	parser.add_argument("--epochs", "-e", type=int, default=100000, help="総epoch")
-	parser.add_argument("--working-directory", "-cwd", type=str, default="out", help="ワーキングディレクトリ")
-	parser.add_argument("--train-split", "-split", type=float, default=0.9, help="テキストデータの何割を訓練データにするか")
-	parser.add_argument("--lambda-a", "-lam-a", type=float, default=4)
-	parser.add_argument("--lambda-b", "-lam-b", type=float, default=1)
-	parser.add_argument("--vpylm-beta-stop", "-beta-stop", type=float, default=4)
-	parser.add_argument("--vpylm-beta-pass", "-beta-pass", type=float, default=1)
-	parser.add_argument("--max-word-length", "-l", type=int, default=16, help="可能な単語の最大長.")
-	args = parser.parse_args()
-
-	assert args.working_directory is not None
+def main(args):
+	model_dir = "/".join(args.model_filename.split("/")[:-1])
+	assert model_dir is not None
 	try:
-		os.mkdir(args.working_directory)
+		os.mkdir(model_dir)
 	except:
 		pass
-
-		
 
 	trainer = model.trainer()
 
@@ -117,4 +103,11 @@ def main():
 		trainer.save(args.model_filename)
 
 if __name__ == "__main__":
-	main()
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-i", "--input-dir", type=str, default=None, help="訓練用のテキストファイルが入っているディレクトリ.")
+	parser.add_argument("-f", "--input-filename", type=str, default=None, help="訓練用のテキストファイル.")
+	parser.add_argument("-m", "--model-filename", type=str, default="out", help="モデルを保存するファイルへのパス.")
+	parser.add_argument("-l", "--max-word-length", type=int, default=16, help="可能な単語の最大長.")
+	parser.add_argument("--seed", type=int, default=0, help="シード.")
+	parser.add_argument("-split", "--train-split", type=float, default=0.8, help="データ全体の何割を学習に用いるか.")
+	main(parser.parse_args())
