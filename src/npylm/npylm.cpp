@@ -1,4 +1,4 @@
-#include <boost/format.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <algorithm>
 #include <iostream> 
 #include <cmath> 
@@ -221,7 +221,7 @@ namespace npylm {
 				context_id = word_ids[word_t_index - depth];
 			}
 			// 事前に確率を計算
-			double pw = node->compute_Pw_with_parent_Pw(word_t_id, parent_pw, _hpylm->_d_m, _hpylm->_theta_m);
+			double pw = node->compute_p_w_with_parent_p_w(word_t_id, parent_pw, _hpylm->_d_m, _hpylm->_theta_m);
 			parent_pw_cache[depth] = pw;
 			Node<id>* child = node->find_child_node(context_id, generate_node_if_needed);
 			if(child == NULL && return_middle_node == true){
@@ -259,12 +259,12 @@ namespace npylm {
 			wrap_bow_eow(character_ids, substr_char_t_start, substr_char_t_end, wrapped_character_ids);
 			int wrapped_character_ids_length = substr_char_t_end - substr_char_t_start + 3;
 			// g0を計算
-			double pw = _vpylm->compute_Pw(wrapped_character_ids, wrapped_character_ids_length);
+			double pw = _vpylm->compute_p_w(wrapped_character_ids, wrapped_character_ids_length);
 			if(word_length > _max_word_length){
 				_g0_cache[word_t_id] = pw;
 				return pw;
 			}
-			double p_k_vpylm = compute_Pk_vpylm(word_length);
+			double p_k_vpylm = compute_p_k_given_vpylm(word_length);
 			if(p_k_vpylm == 0){
 				_g0_cache[word_t_id] = pw;
 				return pw;
@@ -296,7 +296,7 @@ namespace npylm {
 	double NPYLM::compute_poisson_k_lambda(unsigned int k, double lambda){
 		return pow(lambda, k) * exp(-lambda) / factorial(k);
 	}
-	double NPYLM::compute_Pk_vpylm(int k){
+	double NPYLM::compute_p_k_given_vpylm(int k){
 		assert(k > 0);
 		if(k > _max_word_length){
 			return 0;
@@ -307,29 +307,29 @@ namespace npylm {
 		_hpylm->sample_hyperparams();
 		_vpylm->sample_hyperparams();
 	}
-	double NPYLM::compute_log_Pw(Sentence* sentence){
+	double NPYLM::compute_log_p_w(Sentence* sentence){
 		double pw = 0;
 		for(int t = 2;t < sentence->get_num_segments();t++){
-			pw += log(compute_Pw_h(sentence, t));
+			pw += log(compute_p_w_given_h(sentence, t));
 		}
 		return pw;
 	}
-	double NPYLM::compute_Pw(Sentence* sentence){
+	double NPYLM::compute_p_w(Sentence* sentence){
 		double pw = 1;
 		for(int t = 2;t < sentence->get_num_segments();t++){
-			pw *= compute_Pw_h(sentence, t);
+			pw *= compute_p_w_given_h(sentence, t);
 		}
 		return pw;
 	}
-	double NPYLM::compute_Pw_h(Sentence* sentence, int word_t_index){
+	double NPYLM::compute_p_w_given_h(Sentence* sentence, int word_t_index){
 		assert(word_t_index >= 2);
 		assert(word_t_index < sentence->get_num_segments());
 		assert(sentence->_segments[word_t_index] > 0);
 		int substr_char_t_start = sentence->_start[word_t_index];
 		int substr_char_t_end = sentence->_start[word_t_index] + sentence->_segments[word_t_index] - 1;
-		return compute_Pw_h(sentence->_character_ids, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_char_t_start, substr_char_t_end);
+		return compute_p_w_given_h(sentence->_character_ids, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_char_t_start, substr_char_t_end);
 	}
-	double NPYLM::compute_Pw_h(
+	double NPYLM::compute_p_w_given_h(
 			wchar_t const* character_ids, int character_ids_length, 
 			id const* word_ids, int word_ids_length, 
 			int word_t_index, int substr_char_t_start, int substr_char_t_end){
@@ -353,53 +353,48 @@ namespace npylm {
 		assert(node != NULL);
 		double parent_pw = _hpylm_parent_pw_cache[node->_depth];
 		// 効率のため親の確率のキャッシュから計算
-		return node->compute_Pw_with_parent_Pw(word_id, parent_pw, _hpylm->_d_m, _hpylm->_theta_m);
+		return node->compute_p_w_with_parent_p_w(word_id, parent_pw, _hpylm->_d_m, _hpylm->_theta_m);
 	}
 	template <class Archive>
 	void NPYLM::serialize(Archive &archive, unsigned int version)
 	{
-		boost::serialization::split_free(archive, *this, version);
+		boost::serialization::split_member(archive, *this, version);
 	}
 	template void NPYLM::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
 	template void NPYLM::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
+	void NPYLM::save(boost::archive::binary_oarchive &archive, unsigned int version) const {
+		archive & _hpylm;
+		archive & _vpylm;
+		archive & _max_word_length;
+		archive & _max_sentence_length;
+		archive & _lambda_a;
+		archive & _lambda_b;
+
+		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
+			archive & _lambda_for_type[type];
+		}
+
+		for(int k = 0;k <= _max_word_length + 1;k++){
+			archive & _pk_vpylm[k];
+		}
+	}
+	void NPYLM::load(boost::archive::binary_iarchive &archive, unsigned int version) {
+		archive & _hpylm;
+		archive & _vpylm;
+		archive & _max_word_length;
+		archive & _max_sentence_length;
+		archive & _lambda_a;
+		archive & _lambda_b;
+
+		_pk_vpylm = new double[_max_word_length + 2];
+		_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
+
+		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
+			archive & _lambda_for_type[type];
+		}
+
+		for(int k = 0;k <= _max_word_length + 1;k++){
+			archive & _pk_vpylm[k];
+		}
+	}
 } // namespace npylm
-
-namespace boost { namespace serialization {
-	template<class Archive>
-	void save(Archive &archive, const npylm::NPYLM &npylm, unsigned int version) {
-		archive & npylm._hpylm;
-		archive & npylm._vpylm;
-		archive & npylm._max_word_length;
-		archive & npylm._max_sentence_length;
-		archive & npylm._lambda_a;
-		archive & npylm._lambda_b;
-
-		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
-			archive & npylm._lambda_for_type[type];
-		}
-
-		for(int k = 0;k <= npylm._max_word_length + 1;k++){
-			archive & npylm._pk_vpylm[k];
-		}
-	}
-	template<class Archive>
-	void load(Archive &archive, npylm::NPYLM &npylm, unsigned int version) {
-		archive & npylm._hpylm;
-		archive & npylm._vpylm;
-		archive & npylm._max_word_length;
-		archive & npylm._max_sentence_length;
-		archive & npylm._lambda_a;
-		archive & npylm._lambda_b;
-
-		npylm._pk_vpylm = new double[npylm._max_word_length + 2];
-		npylm._lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
-
-		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
-			archive & npylm._lambda_for_type[type];
-		}
-
-		for(int k = 0;k <= npylm._max_word_length + 1;k++){
-			archive & npylm._pk_vpylm[k];
-		}
-	}
-}} // namespace boost::serialization

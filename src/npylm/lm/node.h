@@ -162,7 +162,7 @@ namespace npylm {
 				double theta_u = theta_m[_depth];
 				double parent_pw = g0;
 				if(_parent){
-					parent_pw = _parent->compute_Pw(token_id, g0, d_m, theta_m);
+					parent_pw = _parent->compute_p_w(token_id, g0, d_m, theta_m);
 				}
 				auto itr = _arrangement.find(token_id);
 				if(itr == _arrangement.end()){
@@ -296,7 +296,7 @@ namespace npylm {
 				return true;
 			}
 			// 再帰計算が含まれるので遅い
-			double compute_Pw(T token_id, double g0, std::vector<double> &d_m, std::vector<double> &theta_m){
+			double compute_p_w(T token_id, double g0, std::vector<double> &d_m, std::vector<double> &theta_m){
 				init_hyperparameters_at_depth_if_needed(_depth, d_m, theta_m);
 				double d_u = d_m[_depth];
 				double theta_u = theta_m[_depth];
@@ -306,13 +306,13 @@ namespace npylm {
 				if(itr == _arrangement.end()){
 					double coeff = (theta_u + d_u * t_u) / (theta_u + c_u);
 					if(_parent != NULL){
-						return _parent->compute_Pw(token_id, g0, d_m, theta_m) * coeff;
+						return _parent->compute_p_w(token_id, g0, d_m, theta_m) * coeff;
 					}
 					return g0 * coeff;
 				}
 				double parent_pw = g0;
 				if(_parent != NULL){
-					parent_pw = _parent->compute_Pw(token_id, g0, d_m, theta_m);
+					parent_pw = _parent->compute_p_w(token_id, g0, d_m, theta_m);
 				}
 				std::vector<int> &num_customers_at_table = itr->second;
 				double c_uw = std::accumulate(num_customers_at_table.begin(), num_customers_at_table.end(), 0);
@@ -322,7 +322,7 @@ namespace npylm {
 				return first_term + second_coeff * parent_pw;
 			}
 			// 再帰計算を防ぐ
-			double compute_Pw_with_parent_Pw(T token_id, double parent_pw, std::vector<double> &d_m, std::vector<double> &theta_m){
+			double compute_p_w_with_parent_p_w(T token_id, double parent_pw, std::vector<double> &d_m, std::vector<double> &theta_m){
 				init_hyperparameters_at_depth_if_needed(_depth, d_m, theta_m);
 				double d_u = d_m[_depth];
 				double theta_u = theta_m[_depth];

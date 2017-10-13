@@ -125,7 +125,7 @@ namespace npylm {
 			for(int depth = 1;depth <= depth_t;depth++){
 				wchar_t context_token_id = character_ids[t - depth];
 				// 事前に確率を計算
-				double pw = node->compute_Pw_with_parent_Pw(token_t, parent_pw, _d_m, _theta_m);
+				double pw = node->compute_p_w_with_parent_p_w(token_t, parent_pw, _d_m, _theta_m);
 				assert(pw > 0);
 				parent_pw_cache[depth] = pw;
 				Node<wchar_t>* child = node->find_child_node(context_token_id, true);
@@ -158,30 +158,30 @@ namespace npylm {
 			assert(node != NULL);
 			return node;
 		}
-		double VPYLM::compute_Pw(wchar_t const* character_ids, int character_ids_length){
-			return exp(compute_log_Pw(character_ids, character_ids_length));
+		double VPYLM::compute_p_w(wchar_t const* character_ids, int character_ids_length){
+			return exp(compute_log_p_w(character_ids, character_ids_length));
 		}
-		double VPYLM::compute_log_Pw(wchar_t const* character_ids, int character_ids_length){
+		double VPYLM::compute_log_p_w(wchar_t const* character_ids, int character_ids_length){
 			wchar_t token_t = character_ids[0];
 			double log_pw = 0;
 			if(token_t != ID_BOW){
-				log_pw = log(_root->compute_Pw(token_t, _g0, _d_m, _theta_m));
+				log_pw = log(_root->compute_p_w(token_t, _g0, _d_m, _theta_m));
 			}
 			for(int t = 1;t < character_ids_length;t++){
-				log_pw += log(compute_Pw_given_h(character_ids, 0, t - 1));
+				log_pw += log(compute_p_w_given_h(character_ids, 0, t - 1));
 			}
 			return log_pw;
 		}
 		// 文字列のcontext_substr_startからcontext_substr_endまでの部分文字列を文脈として、context_substr_end+1の文字が生成される確率
-		double VPYLM::compute_Pw_given_h(wchar_t const* character_ids, int context_substr_start, int context_substr_end){
+		double VPYLM::compute_p_w_given_h(wchar_t const* character_ids, int context_substr_start, int context_substr_end){
 			assert(context_substr_start >= 0);
 			assert(context_substr_end >= context_substr_start);
 			wchar_t target_id = character_ids[context_substr_end + 1];
-			return compute_Pw_given_h(target_id, character_ids, context_substr_start, context_substr_end);
+			return compute_p_w_given_h(target_id, character_ids, context_substr_start, context_substr_end);
 		}
 		// 単語のサンプリングなどで任意のtarget_idの確率を計算することがあるため一般化
 		// 文字列のcontext_substr_startからcontext_substr_endまでの部分文字列を文脈として、target_idが生成される確率
-		double VPYLM::compute_Pw_given_h(wchar_t target_id, wchar_t const* character_ids, int context_substr_start, int context_substr_end){
+		double VPYLM::compute_p_w_given_h(wchar_t target_id, wchar_t const* character_ids, int context_substr_start, int context_substr_end){
 			assert(context_substr_start >= 0);
 			assert(context_substr_end >= context_substr_start);
 			int context_size = context_substr_end - context_substr_start + 1;
@@ -205,7 +205,7 @@ namespace npylm {
 				}else{
 					assert(context_substr_end - depth + 1 >= 0);
 					assert(node->_depth == depth);
-					double pw = node->compute_Pw_with_parent_Pw(target_id, parent_pw, _d_m, _theta_m);
+					double pw = node->compute_p_w_with_parent_p_w(target_id, parent_pw, _d_m, _theta_m);
 					p_stop = node->stop_probability(_beta_stop, _beta_pass, false) * parent_pass_probability;
 					p += pw * p_stop;
 					parent_pass_probability *= node->pass_probability(_beta_stop, _beta_pass, false);
@@ -242,7 +242,7 @@ namespace npylm {
 			for(int n = 0;n <= t;n++){
 				if(node){
 					assert(n == node->_depth);
-					double pw = node->compute_Pw_with_parent_Pw(token_t, parent_pw, _d_m, _theta_m);
+					double pw = node->compute_p_w_with_parent_p_w(token_t, parent_pw, _d_m, _theta_m);
 					double p_stop = node->stop_probability(_beta_stop, _beta_pass, false);
 					double p = pw * p_stop * parent_pass_probability;
 					parent_pw = pw;

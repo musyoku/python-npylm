@@ -13,6 +13,11 @@ namespace npylm {
 	private:
 		void _init_cache(int max_word_length, int max_sentence_length);
 		void _delete_cache();
+		friend class boost::serialization::access;
+		template <class Archive>
+		void serialize(Archive &archive, unsigned int version);
+		void save(boost::archive::binary_oarchive &archive, unsigned int version) const;
+		void load(boost::archive::binary_iarchive &archive, unsigned int version);
 	public:
 		lm::HPYLM* _hpylm;	// 単語n-gram
 		lm::VPYLM* _vpylm;	// 文字n-gram
@@ -54,17 +59,15 @@ namespace npylm {
 		// word_idは既知なので再計算を防ぐ
 		double compute_g0_substring_at_time_t(wchar_t const* character_ids, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id);
 		double compute_poisson_k_lambda(unsigned int k, double lambda);
-		double compute_Pk_vpylm(int k);
+		double compute_p_k_given_vpylm(int k);
 		void sample_hpylm_vpylm_hyperparameters();
-		double compute_log_Pw(Sentence* sentence);
-		double compute_Pw(Sentence* sentence);
-		double compute_Pw_h(Sentence* sentence, int word_t_index);
-		double compute_Pw_h(
+		double compute_log_p_w(Sentence* sentence);
+		double compute_p_w(Sentence* sentence);
+		double compute_p_w_given_h(Sentence* sentence, int word_t_index);
+		double compute_p_w_given_h(
 			wchar_t const* character_ids, int character_ids_length, 
 			id const* word_ids, int word_ids_length, 
 			int word_t_index, int substr_char_t_start, int substr_char_t_end);
-		template <class Archive>
-		void serialize(Archive &archive, unsigned int version);
 	};
 } // namespace npylm
 

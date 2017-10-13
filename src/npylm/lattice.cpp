@@ -179,7 +179,7 @@ namespace npylm {
 			_word_ids[1] = ID_BOS;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			_alpha[t][k][0] = pw_h;
 			_pw_h[t][k][0][0] = pw_h;
@@ -192,7 +192,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(forward_alpha[t - k][j][0] > 0);
 			_alpha[t][k][j] = pw_h * forward_alpha[t - k][j][0];
@@ -209,7 +209,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(i <= _max_word_length);
 			assert(_alpha[t - k][j][i] > 0);
 			double value = pw_h * forward_alpha[t - k][j][i];
@@ -370,11 +370,11 @@ namespace npylm {
 				_word_ids[3] = ID_EOS;
 				double pw_h = 0;
 				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+					pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][j];
 					#ifdef __DEBUG__
-					double pw_h2 = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
+					double pw_h2 = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
 					if(pw_h != pw_h2){
 						cout << "t = " << t << ", k = " << k << ", j = " << j << endl;
 						cout << "next_word_length = " << next_word_length << endl;
@@ -408,11 +408,11 @@ namespace npylm {
 				_word_ids[3] = ID_EOS;
 				double pw_h = 0;
 				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+					pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][0];
 					#ifdef __DEBUG__
-					double pw_h2 = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
+					double pw_h2 = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
 					if(pw_h != pw_h2){
 						cout << "t = " << t << ", k = " << k << ", j = " << 0 << endl;
 						cout << "next_word_length = " << next_word_length << endl;
@@ -510,7 +510,7 @@ namespace npylm {
 			_word_ids[1] = ID_BOS;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			_alpha[t][k][0] = log(pw_h);
 			_viterbi_backward[t][k][0] = 0;
@@ -523,7 +523,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(_alpha[t - k][j][0] != 0);
 			_alpha[t][k][j] = log(pw_h) + _alpha[t - k][j][0];
@@ -541,7 +541,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(i <= _max_word_length);
 			assert(_alpha[t - k][j][i] <= 0);
@@ -585,7 +585,7 @@ namespace npylm {
 				_word_ids[1] = word_k_id;
 				_word_ids[2] = ID_EOS;
 				_word_ids[3] = ID_EOS;
-				double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
 				assert(_alpha[t][k][j] <= 0);
 				double value = log(pw_h) + _alpha[t][k][j];
 				assert(value <= 0);
@@ -603,7 +603,7 @@ namespace npylm {
 				_word_ids[1] = word_k_id;
 				_word_ids[2] = word_t_id;
 				_word_ids[3] = ID_EOS;
-				double pw_h = _npylm->compute_Pw_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
 				assert(_alpha[t][k][0] <= 0);
 				double value = log(pw_h) + _alpha[t][k][0];
 				assert(value <= 0);

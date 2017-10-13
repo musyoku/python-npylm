@@ -64,7 +64,7 @@ namespace npylm {
 		int num_characters = _dict->get_num_characters();
 		for(wchar_t character_id: all_characters){
 			assert(table_index < num_characters);
-			double pw = vpylm->compute_Pw_given_h(character_id, context_ids, 0, context_length - 1);
+			double pw = vpylm->compute_p_w_given_h(character_id, context_ids, 0, context_length - 1);
 			sum_probs += pw;
 			_vpylm_sampling_probability_table[table_index] = pw;
 			_vpylm_sampling_id_table[table_index] = character_id;
@@ -72,7 +72,7 @@ namespace npylm {
 		}
 		if(skip_eow == false){
 			assert(table_index < num_characters + 1);
-			double pw = vpylm->compute_Pw_given_h(ID_EOW, context_ids, 0, context_length - 1);
+			double pw = vpylm->compute_p_w_given_h(ID_EOW, context_ids, 0, context_length - 1);
 			sum_probs += pw;
 			_vpylm_sampling_probability_table[table_index] = pw;
 			_vpylm_sampling_id_table[table_index] = ID_EOW;
@@ -178,7 +178,7 @@ namespace npylm {
 					}
 					num_old_segments = sentence->get_num_segments_without_special_tokens();
 					// 古い分割での文の確率を計算
-					old_log_ps = _model->_npylm->compute_log_Pw(sentence);
+					old_log_ps = _model->_npylm->compute_log_p_w(sentence);
 				}
 				
 				#ifdef __DEBUG__
@@ -207,7 +207,7 @@ namespace npylm {
 				// 以前の分割結果と現在の分割結果の確率を求める
 				// 本来は分割を一定数サンプリングして平均をとるべき
 				if(_always_accept_new_segmentation == false){
-					new_log_ps = _model->_npylm->compute_log_Pw(sentence);
+					new_log_ps = _model->_npylm->compute_log_p_w(sentence);
 					// 新しい分割の方が確率が低い場合、比率のベルヌーイ試行でどちらを採用するか決める.
 					double bernoulli = std::min(1.0, exp(new_log_ps - old_log_ps));
 					double r = sampler::uniform(0, 1);
