@@ -25,6 +25,7 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("print_segmentation_dev", &Trainer::print_segmentation_dev)
 	.def("sample_hpylm_vpylm_hyperparameters", &Trainer::sample_hpylm_vpylm_hyperparameters)
 	.def("sample_lambda", &Trainer::sample_lambda)
+	.def("update_p_k_given_vpylm", &Trainer::update_p_k_given_vpylm)
 	.def("gibbs", &Trainer::gibbs);
 
 	boost::python::class_<Model>("model", boost::python::init<Dataset*, int>())

@@ -1,4 +1,4 @@
-import argparse, time, os, codecs
+import argparse, time, os, codecs, sys
 import npylm
 
 class stdout:
@@ -99,11 +99,15 @@ def main():
 		trainer.sample_hpylm_vpylm_hyperparameters()	# HPYLMとVPYLMのハイパーパラメータの更新
 		trainer.sample_lambda()		# λの更新
 
+		if epoch > 3:
+			trainer.update_p_k_given_vpylm()
+
 		# ログ
 		elapsed_time = time.time() - start
 		printr("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
 		if epoch % 100 == 0:
 			printr("")
+			trainer.print_segmentation_train()
 		if epoch % 100 == 0:
 			printr("")
 			model.save(os.path.join(args.working_directory, "npylm.model"))
