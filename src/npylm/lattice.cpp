@@ -457,7 +457,7 @@ namespace npylm {
 	}
 	// Blocked Gibbs Samplingによる分割のサンプリング
 	// 分割結果が確率的に決まる
-	void Lattice::perform_blocked_gibbs_sampling(Sentence* sentence, std::vector<int> &segments, bool normalize){
+	void Lattice::blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 

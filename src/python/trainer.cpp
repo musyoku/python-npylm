@@ -9,17 +9,20 @@ namespace npylm {
 		_dataset = dataset;
 		_model = model;
 		_dict = dataset->_dict;
+		_lattice = new Lattice(model->_npylm, model->get_max_word_length(), dataset->get_max_sentence_length());
 		_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
 		_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
 		_added_npylm_train = new bool[dataset->_sentence_sequences_train.size()];
-		_always_accept_new_segmentation = always_accept_new_segmentation;
-		_num_segmentation_rejection = 0;
-		_num_segmentation_acceptance = 0;
-		
 		for(int data_index = 0;data_index < dataset->_sentence_sequences_train.size();data_index++){
 			_rand_indices_train.push_back(data_index);
 			_added_npylm_train[data_index] = false;
 		}
+		for(int data_index = 0;data_index < dataset->_sentence_sequences_dev.size();data_index++){
+			_rand_indices_dev.push_back(data_index);
+		}
+		_always_accept_new_segmentation = always_accept_new_segmentation;
+		_num_segmentation_rejection = 0;
+		_num_segmentation_acceptance = 0;
 	}
 
 	// HPYLM,VPYLMのdとthetaをサンプリング
@@ -192,14 +195,14 @@ namespace npylm {
 				#endif
 
 				// 新しい分割を取得
-				_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
+				_lattice->blocked_gibbs(sentence, segments, true);
 				sentence->split(segments);
 				
 				#ifdef __DEBUG__
 				// 正規化しない場合の結果と比較
 				std::vector<int> a = segments;
 				sampler::mt.seed(seed);
-				_lattice->perform_blocked_gibbs_sampling(sentence, segments, false);
+				_lattice->blocked_gibbs(sentence, segments, false);
 				std::vector<int> b = segments;
 				assert(a.size() == b.size());
 				for(int i = 0;i < a.size();i++){
@@ -251,5 +254,27 @@ namespace npylm {
 			}
 		}
 		delete[] wrapped_character_ids;
+	}
+	void Trainer::print_segmentation_train(int num_to_print){
+		_print_segmentation(num_to_print, _dataset->_sentence_sequences_train, _rand_indices_train);
+	}
+	void Trainer::print_segmentation_dev(int num_to_print){
+		shuffle(_rand_indices_dev.begin(), _rand_indices_dev.end(), sampler::mt);
+		_print_segmentation(num_to_print, _dataset->_sentence_sequences_dev, _rand_indices_dev);
+	}
+	void Trainer::_print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices){
+		num_to_print = std::min((int)dataset.size(), num_to_print);
+		std::vector<int> segments;		// 分割の一時保存用
+		for(int n = 0;n < num_to_print;n++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
+			}
+			int data_index = rand_indices[n];
+			Sentence* sentence = dataset[data_index]->copy();
+			_lattice->blocked_gibbs(sentence, segments, true);
+			sentence->split(segments);
+			sentence->dump_words();
+			delete sentence;
+		}
 	}
 }

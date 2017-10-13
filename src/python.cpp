@@ -21,6 +21,8 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("get_dict", &Dataset::get_dict_obj, boost::python::return_internal_reference<>());
 
 	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Model*, bool>((arg("dataset"), arg("model"), arg("always_accept_new_segmentation")=true)))
+	.def("print_segmentation_train", &Trainer::print_segmentation_train)
+	.def("print_segmentation_dev", &Trainer::print_segmentation_dev)
 	.def("sample_hpylm_vpylm_hyperparameters", &Trainer::sample_hpylm_vpylm_hyperparameters)
 	.def("sample_lambda", &Trainer::sample_lambda)
 	.def("gibbs", &Trainer::gibbs);

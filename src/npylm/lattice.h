@@ -29,7 +29,7 @@ namespace npylm {
 		void forward_filtering(Sentence* sentence, double*** normalized_alpha);
 		void backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** backward_alpha);
 		void sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j, double*** backward_alpha);
-		void perform_blocked_gibbs_sampling(Sentence* sentence, std::vector<int> &segments, bool normalize = true);
+		void blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize = true);
 		void viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j);
 		void viterbi_forward(Sentence* sentence);
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);

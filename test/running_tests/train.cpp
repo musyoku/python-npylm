@@ -25,5 +25,8 @@ int main(int argc, char *argv[]){
 		trainer->gibbs();
 		trainer->sample_hpylm_vpylm_hyperparameters();
 		trainer->sample_lambda();
+		if(epoch % 10 == 0){
+			trainer->print_segmentation_train(10);
+		}
 	}
 }
