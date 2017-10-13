@@ -1,10 +1,10 @@
 #pragma once
 #include <boost/python.hpp>
-#include "../ithmm/ithmm.h"
+#include "../npylm/npylm.h"
 #include "dataset.h"
 #include "dictionary.h"
 
-namespace ithmm {
+namespace npylm {
 	class Model{
 	private:
 		void _set_locale();
@@ -18,6 +18,7 @@ namespace ithmm {
 			double vpylm_beta_pass);
 		Model(std::string filename);
 		~Model();
+		int get_max_word_length();
 		bool load(std::string filename);
 		bool save(std::string filename);
 	};

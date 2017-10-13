@@ -1,154 +1,251 @@
+#include <boost/python.hpp>
 #include <cassert>
-#include "../ithmm/sampler.h"
+#include "../npylm/sampler.h"
+#include "../npylm/wordtype.h"
 #include "trainer.h"
 
-namespace ithmm {
-	Trainer::Trainer(Dataset* dataset, Model* model){
+namespace npylm {
+	Trainer::Trainer(Dataset* dataset, Model* model, bool always_accept_new_segmentation){
 		_dataset = dataset;
 		_model = model;
 		_dict = dataset->_dict;
-		_forward_table = NULL;
-		_decode_table = NULL;
+		_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
+		_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
+		_added_npylm_train = new bool[dataset->_sentence_sequences_train.size()];
+		_always_accept_new_segmentation = always_accept_new_segmentation;
+		_num_segmentation_rejection = 0;
+		_num_segmentation_acceptance = 0;
 	}
-	void Trainer::set_model(Model* model){
-		_model = model;
+
+	// HPYLM,VPYLMのdとthetaをサンプリング
+	void Trainer::sample_hpylm_vpylm_hyperparameters(){
+		_model->_npylm->sample_hpylm_vpylm_hyperparameters();
 	}
-	void Trainer::remove_all_data(){
-		_model->_ithmm->remove_all_data(_dataset->_word_sequences_train);
-		_model->_ithmm->delete_unnecessary_children();
-	}
-	void Trainer::gibbs(){
-		if(_rand_indices.size() != _dataset->_word_sequences_train.size()){
-			_rand_indices.clear();
-			for(int data_index = 0;data_index < _dataset->_word_sequences_train.size();data_index++){
-				_rand_indices.push_back(data_index);
+	// 文字種ごとにλのサンプリング
+	void Trainer::sample_lambda(){
+		std::vector<double> a_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
+		std::vector<double> b_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
+		std::unordered_set<id> words;
+		NPYLM* npylm = _model->_npylm;
+		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
+			a_for_type[type] = npylm->_lambda_a;
+			b_for_type[type] = npylm->_lambda_b;
+		}
+		for(auto sentence: _dataset->_sentence_sequences_train){
+			// <bos>と<eos>は除外
+			for(int t = 2;t < sentence->get_num_segments() - 1;t++){
+				std::wstring word = sentence->get_word_str_at(t);
+				id word_id = sentence->get_word_id_at(t);
+				int word_length = sentence->get_word_length_at(t);
+				if(word_length > npylm->_max_word_length){
+					continue;
+				}
+				if(words.find(word_id) == words.end()){
+					std::vector<int> &tables = npylm->_hpylm->_root->_arrangement[word_id];
+					int t_w = tables.size();
+					int type = wordtype::detect_word_type(word);
+					a_for_type[type] += t_w * word_length;
+					b_for_type[type] += t_w;
+					words.insert(word_id);
+				}
 			}
 		}
-		_model->_ithmm->_num_mh_acceptance = 0;
-		_model->_ithmm->_num_mh_rejection = 0;
-		shuffle(_rand_indices.begin(), _rand_indices.end(), sampler::mt);	// データをシャッフル
-		for(int n = 0;n < _dataset->_word_sequences_train.size();n++){
+		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
+			double lambda = sampler::gamma(a_for_type[type], b_for_type[type]);
+			npylm->_lambda_for_type[type] = lambda;
+		}
+	}
+	// VPYLMに文脈を渡し次の文字を生成
+	wchar_t Trainer::sample_word_from_vpylm_given_context(wchar_t* context_ids, int context_length, int sample_t, bool skip_eow){
+		double sum_probs = 0;
+		lm::VPYLM* vpylm = _model->_npylm->_vpylm;
+		int table_index = 0;
+		auto all_characters = _dict->_all_characters;
+		int num_characters = _dict->get_num_characters();
+		for(wchar_t character_id: all_characters){
+			assert(table_index < num_characters);
+			double pw = vpylm->compute_Pw_given_h(character_id, context_ids, 0, context_length - 1);
+			sum_probs += pw;
+			_vpylm_sampling_probability_table[table_index] = pw;
+			_vpylm_sampling_id_table[table_index] = character_id;
+			table_index++;
+		}
+		if(skip_eow == false){
+			assert(table_index < num_characters + 1);
+			double pw = vpylm->compute_Pw_given_h(ID_EOW, context_ids, 0, context_length - 1);
+			sum_probs += pw;
+			_vpylm_sampling_probability_table[table_index] = pw;
+			_vpylm_sampling_id_table[table_index] = ID_EOW;
+		}
+
+		double normalizer = 1.0 / sum_probs;
+		double r = sampler::uniform(0, 1);
+		double stack = 0;
+		for(int i = 0;i <= table_index;i++){
+			stack += _vpylm_sampling_probability_table[i] * normalizer;
+			if(r <= stack){
+				return _vpylm_sampling_id_table[i];
+			}
+		}
+		return _vpylm_sampling_id_table[table_index];
+	}
+	// VPYLMから長さkの単語が出現する確率をキャッシュする
+	void Trainer::update_p_k_given_vpylm(){
+		int num_samples = 20000;
+		int early_stopping_threshold = 10;
+		int max_word_length = _model->get_max_word_length() + 1;
+		double* pk_vpylm = _model->_npylm->_pk_vpylm;
+		int* num_words_of_k = new int[max_word_length];
+		for(int i = 0;i <= max_word_length;i++){
+			pk_vpylm[i] = 0;
+			num_words_of_k[i] = 0;
+		}
+		wchar_t* wrapped_character_ids = new wchar_t[max_word_length + 2];
+		int k;
+		double sum_words = 0;
+		double sum_probs = 0;
+		for(int m = 0;m < num_samples;m++){
+			// wcout << "m = " << m << endl;
+			wrapped_character_ids[0] = ID_BOW;
+			int k = 0;
+			for(int j = 0;j < max_word_length;j++){
+				bool skip_eow = (j == 0) ? true : false;
+				wchar_t token_char = sample_word_from_vpylm_given_context(wrapped_character_ids, j + 1, j + 1, skip_eow);
+				wrapped_character_ids[j + 1] = token_char;
+				if(token_char == ID_EOW){
+					break;
+				}
+				k++;
+			}
+			sum_words += 1;
+			if(k == 0){	// <bow><eow>
+				continue;
+			}
+			assert(k <= max_word_length);
+			num_words_of_k[k] += 1;
+			// すべてのkが生成されているかをチェック
+			if(m % 100 == 99){
+				bool stop = true;
+				for(int k = 1;k <= max_word_length;k++){
+					if(num_words_of_k[k] < early_stopping_threshold){
+						stop = false;
+						break;
+					}
+				}
+				if(stop){
+					break;
+				}
+			}
+		}
+		for(int k = 1;k <= max_word_length;k++){
+			pk_vpylm[k] = num_words_of_k[k] / sum_words;
+			assert(pk_vpylm[k] > 0);
+		}
+		delete[] num_words_of_k;
+		delete[] wrapped_character_ids;
+	}
+	// 単語分割のギブスサンプリング
+	void Trainer::gibbs(){
+		int num_sentences = _dataset->_sentence_sequences_train.size();
+		assert(num_sentences > 0);
+		int max_sentence_length = _dataset->get_max_sentence_length();
+		std::vector<int> segments;		// 分割の一時保存用
+		shuffle(_rand_indices_train.begin(), _rand_indices_train.end(), sampler::mt);		// データをシャッフル
+		int* old_segments = new int[max_sentence_length + 3];
+		int num_old_segments;
+		// モデルパラメータを更新
+		for(int step = 1;step <= num_sentences;step++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
+			}
+			// 訓練データを一つ取り出す
+			int data_index = _rand_indices_train[step - 1];
+			assert(data_index < _dataset->_sentence_sequences_train.size());
+			Sentence* sentence = _dataset->_sentence_sequences_train[data_index];
+			// モデルに追加されているかチェック
+			if(_added_npylm_train[data_index] == true){
+				double old_log_ps, new_log_ps;
+				// 古い分割をモデルから削除
+				for(int t = 2;t < sentence->get_num_segments();t++){
+					_model->_npylm->remove_customer_at_time_t(sentence, t);
+				}
+				// 新しい分割の棄却判定をするかどうか
+				if(_always_accept_new_segmentation == false){
+					// 古い分割を一時保存
+					// <bos>と<eos>は無視
+					for(int i = 0;i < sentence->get_num_segments_without_special_tokens();i++){
+						old_segments[i] = sentence->_segments[i + 2];	// <bos>は2つ
+					}
+					num_old_segments = sentence->get_num_segments_without_special_tokens();
+					// 古い分割での文の確率を計算
+					old_log_ps = _model->_npylm->compute_log_Pw(sentence);
+				}
+				
+				#ifdef __DEBUG__
+				// 正規化しない場合の結果と比較するためシードを合わせる
+				int seed = (unsigned int)time(NULL);
+				sampler::mt.seed(seed);
+				#endif
+
+				// 新しい分割を取得
+				_lattice->perform_blocked_gibbs_sampling(sentence, segments, true);
+				sentence->split(segments);
+				
+				#ifdef __DEBUG__
+				// 正規化しない場合の結果と比較
+				std::vector<int> a = segments;
+				sampler::mt.seed(seed);
+				_lattice->perform_blocked_gibbs_sampling(sentence, segments, false);
+				std::vector<int> b = segments;
+				assert(a.size() == b.size());
+				for(int i = 0;i < a.size();i++){
+					// cout << a[i] << "," << b[i] << endl;
+					assert(a[i] == b[i]);
+				}
+				#endif
+
+				// 以前の分割結果と現在の分割結果の確率を求める
+				// 本来は分割を一定数サンプリングして平均をとるべき
+				if(_always_accept_new_segmentation == false){
+					new_log_ps = _model->_npylm->compute_log_Pw(sentence);
+					// 新しい分割の方が確率が低い場合、比率のベルヌーイ試行でどちらを採用するか決める.
+					double bernoulli = std::min(1.0, exp(new_log_ps - old_log_ps));
+					double r = sampler::uniform(0, 1);
+					if(bernoulli < r){
+						// 新しい分割を捨てて古いものに差し替える
+						sentence->split(old_segments, num_old_segments);
+						_num_segmentation_rejection++;
+					}else{
+						_num_segmentation_acceptance++;
+					}
+				}
+			}
+			// 新しい分割結果をモデルに追加
+			for(int t = 2;t < sentence->get_num_segments();t++){
+				_model->_npylm->add_customer_at_time_t(sentence, t);
+			}
+			_added_npylm_train[data_index] = true;
+		}
+		// 客数チェック
+		assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
+		delete[] old_segments;
+	}
+	// デバッグ用
+	void Trainer::remove_all_data(){
+		int max_sentence_length = _dataset->get_max_sentence_length();
+		wchar_t* wrapped_character_ids = new wchar_t[max_sentence_length + 2];	// <bow>と<eow>を追加
+		for(int data_index = 0;data_index < _dataset->_sentence_sequences_train.size();data_index++){
 			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 				return;
 			}
-			int data_index = _rand_indices[n];
-			std::vector<Word*> &sentence = _dataset->_word_sequences_train[data_index];
-			_model->_ithmm->gibbs(sentence);
-		}
-		_model->_ithmm->delete_unnecessary_children();
-	}
-	void Trainer::_before_viterbi_decode(std::vector<Node*> &nodes){
-		_before_compute_log_p_dataset(nodes);
-		assert(_dataset->_max_num_words_in_line > 0);
-		_decode_table = new double*[_dataset->_max_num_words_in_line];
-		for(int i = 0;i < _dataset->_max_num_words_in_line;i++){
-			_decode_table[i] = new double[nodes.size()];
-		}
-	}
-	void Trainer::_after_viterbi_decode(){
-		_after_compute_log_p_dataset();
-		assert(_dataset->_max_num_words_in_line > 0);
-		for(int i = 0;i < _dataset->_max_num_words_in_line;i++){
-			delete[] _decode_table[i];
-		}
-		delete[] _decode_table;
-	}
-	void Trainer::_before_compute_log_p_dataset(std::vector<Node*> &nodes){
-		// あらかじめ全HTSSBの棒の長さを計算しておく
-		_model->enumerate_all_states(nodes);
-		_model->precompute_all_stick_lengths(nodes);
-		// 計算用のテーブルを確保
-		assert(_dataset->_max_num_words_in_line > 0);
-		_forward_table = new double*[_dataset->_max_num_words_in_line];
-		for(int i = 0;i < _dataset->_max_num_words_in_line;i++){
-			_forward_table[i] = new double[nodes.size()];
-		}
-	}
-	void Trainer::_after_compute_log_p_dataset(){
-		// 計算用のテーブルを解放
-		assert(_dataset->_max_num_words_in_line > 0);
-		for(int i = 0;i < _dataset->_max_num_words_in_line;i++){
-			delete[] _forward_table[i];
-		}
-		delete[] _forward_table;
-	}
-	// データセット全体の対数尤度を計算
-	double Trainer::compute_log_p_dataset_train(){
-		return _compute_log_p_dataset(_dataset->_word_sequences_train);
-	}
-	double Trainer::compute_log_p_dataset_dev(){
-		return _compute_log_p_dataset(_dataset->_word_sequences_dev);
-	}
-	double Trainer::_compute_log_p_dataset(std::vector<std::vector<Word*>> &dataset){
-		std::vector<Node*> nodes;
-		_before_compute_log_p_dataset(nodes);
-		// データごとの対数尤度を足していく
-		double log_p_dataset = 0;
-		for(int data_index = 0;data_index < dataset.size();data_index++){
-			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
-				return 0;
-			}
-			std::vector<Word*> &sentence = dataset[data_index];
-			double p_x = _model->compute_p_sentence(sentence, nodes, _forward_table);
-			if(p_x > 0){
-				log_p_dataset += log(p_x);
+			Sentence* sentence = _dataset->_sentence_sequences_train[data_index];
+			// 古い分割をモデルから削除
+			if(_added_npylm_train[data_index] == true){
+				for(int t = 2;t < sentence->get_num_segments();t++){
+					_model->_npylm->remove_customer_at_time_t(sentence, t);
+				}
 			}
 		}
-		_after_compute_log_p_dataset();
-		return log_p_dataset;
-	}
-	double Trainer::compute_log2_p_dataset_train(){
-		return _compute_log2_p_dataset(_dataset->_word_sequences_train);
-	}
-	double Trainer::compute_log2_p_dataset_dev(){
-		return _compute_log2_p_dataset(_dataset->_word_sequences_dev);
-	}
-	double Trainer::_compute_log2_p_dataset(std::vector<std::vector<Word*>> &dataset){
-		std::vector<Node*> nodes;
-		_before_compute_log_p_dataset(nodes);
-		// データごとの対数尤度を足していく
-		double log_p_dataset = 0;
-		for(int data_index = 0;data_index < dataset.size();data_index++){
-			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
-				return 0;
-			}
-			std::vector<Word*> &sentence = dataset[data_index];
-			double p_x = _model->compute_p_sentence(sentence, nodes, _forward_table);
-			if(p_x > 0){
-				log_p_dataset += log2(p_x);
-			}
-		}
-		_after_compute_log_p_dataset();
-		return log_p_dataset;
-	}
-	double Trainer::compute_perplexity_train(){
-		return _compute_perplexity(_dataset->_word_sequences_train);
-	}
-	double Trainer::compute_perplexity_dev(){
-		return _compute_perplexity(_dataset->_word_sequences_dev);
-	}
-	double Trainer::_compute_perplexity(std::vector<std::vector<Word*>> &dataset){
-		std::vector<Node*> nodes;
-		_before_compute_log_p_dataset(nodes);
-		// データごとの対数尤度を足していく
-		double log_p_dataset = 0;
-		for(int data_index = 0;data_index < dataset.size();data_index++){
-			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
-				return 0;
-			}
-			std::vector<Word*> &sentence = dataset[data_index];
-			double p_x = _model->compute_p_sentence(sentence, nodes, _forward_table);
-			if(p_x > 0){
-				log_p_dataset += log2(p_x) / sentence.size();
-			}
-		}
-		_after_compute_log_p_dataset();
-		return pow(2.0, -log_p_dataset / (double)dataset.size());
-	}
-	void Trainer::update_hyperparameters(){
-		_model->update_hyperparameters();
-	}
-	void Trainer::show_assigned_words_for_each_tag(Dictionary* dict, int number_to_show_for_each_tag, bool show_probability){
-		_model->show_assigned_words_for_each_tag(dict, number_to_show_for_each_tag, show_probability);
+		delete[] wrapped_character_ids;
 	}
 }

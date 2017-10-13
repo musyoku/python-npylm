@@ -34,7 +34,7 @@ namespace npylm {
 				delete[] _path_nodes;
 			}
 		}
-		void _delete_node(Node* node){
+		void VPYLM::_delete_node(Node<wchar_t>* node){
 			assert(false);
 		}
 		bool VPYLM::add_customer_at_time_t(wchar_t const* character_ids, int t, int depth_t){

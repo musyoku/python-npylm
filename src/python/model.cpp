@@ -1,3 +1,4 @@
+#include <iostream>
 #include "model.h"
 
 namespace npylm {
@@ -8,9 +9,9 @@ namespace npylm {
 				double vpylm_beta_stop, 	// VPYLMのハイパーパラメータ
 				double vpylm_beta_pass){	// VPYLMのハイパーパラメータ
 		_set_locale();
-		int max_sentece_length = dataset->get_max_sentence_length();
+		int max_sentence_length = dataset->get_max_sentence_length();
 		double vpylm_g0 = 1.0 / (double)dataset->_dict->get_num_characters();
-		_npylm = new NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
+		_npylm = new NPYLM(max_word_length, max_sentence_length, vpylm_g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
 	}
 	Model::Model(std::string filename){
 		_set_locale();
@@ -32,6 +33,9 @@ namespace npylm {
 		std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
 		std::wcout.imbue(ctype_default);
 		std::wcin.imbue(ctype_default);
+	}
+	int Model::get_max_word_length(){
+		return _npylm->_max_word_length;
 	}
 	bool Model::load(std::string filename){
 		bool success = false;

@@ -26,14 +26,11 @@ namespace npylm {
 	}
 	// lambda_a, lambda_bは単語長のポアソン分布のハイパーパラメータ
 	// 異なる文字種ごとに違うλを使うが、学習時に個別に推定するため事前分布は共通化する
-	NPYLM::NPYLM(int max_word_length, int max_sentence_length, double g0, double initial_lambda_a, double initial_lambda_b){
+	NPYLM::NPYLM(int max_word_length, int max_sentence_length, double g0, double initial_lambda_a, double initial_lambda_b, double vpylm_beta_stop, double vpylm_beta_pass){
 		_hpylm = new HPYLM(3);		// 3-gram以外を指定すると動かないので注意
-		_vpylm = new VPYLM(g0, max_sentence_length);
+		_vpylm = new VPYLM(g0, max_sentence_length, vpylm_beta_stop, vpylm_beta_pass);
 		_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];	// 文字種ごとの単語長のポアソン分布のハイパーパラメータ
 		_hpylm_parent_pw_cache = new double[3];		// 3-gram
-		_pk_vpylm = NULL;			
-		_character_ids = NULL;
-		_is_ready = false;
 		set_lambda_prior(initial_lambda_a, initial_lambda_b);
 
 		_max_sentence_length = max_sentence_length;
@@ -58,17 +55,6 @@ namespace npylm {
 			delete _vpylm;
 		}
 		_delete_cache();
-	}
-	void NPYLM::_init_cache(int max_word_length, int max_sentence_length){
-		_delete_cache();
-		_max_sentence_length = max_sentence_length;
-		_max_word_length = max_word_length;
-		_character_ids = new wchar_t[max_sentence_length + 2]; 	// <bow>と<eow>を含める
-		_pk_vpylm = new double[max_word_length + 2]; 			// kが1スタート、かつk > max_word_length用の領域も必要なので+2
-		for(int k = 1;k < max_word_length + 2;k++){
-			_pk_vpylm[k] = 0;
-		}
-		_vpylm->_init_cache(max_sentence_length);
 	}
 	void NPYLM::_delete_cache(){
 		if(_character_ids != NULL){
@@ -317,7 +303,7 @@ namespace npylm {
 		}
 		return _pk_vpylm[k];
 	}
-	void NPYLM::sample_pitman_yor_hyperparameters(){
+	void NPYLM::sample_hpylm_vpylm_hyperparameters(){
 		_hpylm->sample_hyperparams();
 		_vpylm->sample_hyperparams();
 	}

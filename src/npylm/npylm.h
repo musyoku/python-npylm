@@ -29,7 +29,13 @@ namespace npylm {
 		double* _hpylm_parent_pw_cache;
 		wchar_t* _character_ids;
 		NPYLM(){}
-		NPYLM(int max_word_length, int max_sentence_length, double g0, double initial_lambda_a, double initial_lambda_b);
+		NPYLM(int max_word_length, 
+			int max_sentence_length, 
+			double g0, 
+			double initial_lambda_a, 
+			double initial_lambda_b, 
+			double vpylm_beta_stop, 
+			double vpylm_beta_pass);
 		~NPYLM();
 		void set_vpylm_g0(double g0);
 		void set_lambda_prior(double a, double b);
@@ -49,7 +55,7 @@ namespace npylm {
 		double compute_g0_substring_at_time_t(wchar_t const* character_ids, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id);
 		double compute_poisson_k_lambda(unsigned int k, double lambda);
 		double compute_Pk_vpylm(int k);
-		void sample_pitman_yor_hyperparameters();
+		void sample_hpylm_vpylm_hyperparameters();
 		double compute_log_Pw(Sentence* sentence);
 		double compute_Pw(Sentence* sentence);
 		double compute_Pw_h(Sentence* sentence, int word_t_index);

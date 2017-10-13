@@ -5,7 +5,7 @@ LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(B
 SOFLAGS = -shared -fPIC
 
 install: ## Python用ライブラリをコンパイル
-	$(CC) $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python/model.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
+	$(CC) $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
 
 install_ubuntu: ## Python用ライブラリをコンパイル
 	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/ihmm/*.cpp src/python/*.cpp -o run/ihmm.so -O3

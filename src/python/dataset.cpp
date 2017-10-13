@@ -1,14 +1,18 @@
+#include <boost/python.hpp>
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
 #include "dataset.h"
-#include "../ithmm/utils.h"
-#include "../ithmm/sampler.h"
+#include "../npylm/sampler.h"
+#include "../npylm/hash.h"
 
-namespace ithmm {
+namespace npylm {
 	Dataset::Dataset(Corpus* corpus, double train_split, int seed){
 		_dict = new Dictionary();
 		_corpus = corpus;
+		_max_sentence_length = 0;
+		_avg_sentence_length = 0;
+		int sum_sentence_length = 0;
 		std::vector<int> rand_indices;
 		for(int i = 0;i < corpus->get_num_sentences();i++){
 			rand_indices.push_back(i);
@@ -20,11 +24,17 @@ namespace ithmm {
 		for(int i = 0;i < rand_indices.size();i++){
 			std::wstring &sentence_str = corpus->_sentence_str_list[rand_indices[i]];
 			if(i < num_train_data){
-				_add_words_to_dataset(sentence_str, _sentence_sequences_train, corpus);
+				_add_words_to_dataset(sentence_str, _sentence_sequences_train);
 			}else{
-				_add_words_to_dataset(sentence_str, _sentence_sequences_dev, corpus);
+				_add_words_to_dataset(sentence_str, _sentence_sequences_dev);
 			}
+			// 統計
+			if(_max_sentence_length == 0 || sentence_str.size() > _max_sentence_length){
+				_max_sentence_length = sentence_str.size();
+			}
+			sum_sentence_length += sentence_str.size();
 		}
+		_avg_sentence_length = sum_sentence_length / (double)corpus->get_num_sentences();
 	}
 	Dataset::~Dataset(){
 		for(int n = 0;n < _sentence_sequences_train.size();n++){
@@ -43,10 +53,47 @@ namespace ithmm {
 			_dict->add_character(character);
 		}
 		Sentence* sentence = new Sentence(sentence_str);
-		dataset.push_back(words);
+		dataset.push_back(sentence);
 	}
 	int Dataset::get_max_sentence_length(){
-		return _corpus->get_max_sentence_length();
+		return _max_sentence_length;
+	}
+	int Dataset::get_average_sentence_length(){
+		return _avg_sentence_length;
+	}
+	int Dataset::detect_hash_collision(int max_word_length){
+		int step = 0;
+		hashmap<id, std::wstring> pool;
+		for(Sentence* sentence: _sentence_sequences_train){
+			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+				return 0;
+			}
+			_detect_collision_of_sentence(sentence, pool, max_word_length);
+			step++;
+		}
+		for(Sentence* sentence: _sentence_sequences_dev){
+			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+				return 0;
+			}
+			_detect_collision_of_sentence(sentence, pool, max_word_length);
+			step++;
+		}
+		return pool.size();
+	}
+	void Dataset::_detect_collision_of_sentence(Sentence* sentence, hashmap<id, std::wstring> &pool, int max_word_length){
+		for(int t = 1;t <= sentence->size();t++){
+			for(int k = 1;k <= std::min(t, max_word_length);k++){
+				id word_id = sentence->get_substr_word_id(t - k, t - 1);
+				std::wstring word = sentence->get_substr_word_str(t - k, t - 1);
+				assert(word_id == hash_wstring(word));
+				auto itr = pool.find(word_id);
+				if(itr == pool.end()){
+					pool[word_id] = word;
+				}else{
+					assert(itr->second == word);
+				}
+			}
+		}
 	}
 	Dictionary &Dataset::get_dict_obj(){
 		return *_dict;
