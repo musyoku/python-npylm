@@ -45,6 +45,9 @@ namespace ithmm {
 		Sentence* sentence = new Sentence(sentence_str);
 		dataset.push_back(words);
 	}
+	int Dataset::get_max_sentence_length(){
+		return _corpus->get_max_sentence_length();
+	}
 	Dictionary &Dataset::get_dict_obj(){
 		return *_dict;
 	}

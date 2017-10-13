@@ -10,6 +10,9 @@ namespace npylm {
 	void Dictionary::add_character(wchar_t character){
 		_all_characters.insert(character);
 	}
+	int Dictionary::get_num_characters(){
+		return _all_characters.size();
+	}
 	bool Dictionary::load(std::string filename){
 		std::string dictionary_filename = filename;
 		std::ifstream ifs(dictionary_filename);

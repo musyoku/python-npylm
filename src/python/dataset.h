@@ -15,6 +15,7 @@ namespace npylm {
 		std::vector<Sentence*> _sentence_sequences_dev;
 		Dataset(Corpus* corpus, double train_split, int seed);
 		~Dataset();
+		int get_max_sentence_length();
 		Dictionary &get_dict_obj();
 	};
 }
