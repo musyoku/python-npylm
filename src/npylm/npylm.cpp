@@ -41,6 +41,10 @@ namespace npylm {
 		for(int k = 1;k < max_word_length + 2;k++){
 			_pk_vpylm[k] = 0;
 		}
+
+		#ifdef __DEBUG__
+		std::cout << "Warning: Debug mode enabled!" << std::endl;
+		#endif
 	}
 	NPYLM::~NPYLM(){
 		if(_hpylm_parent_pw_cache != NULL){
