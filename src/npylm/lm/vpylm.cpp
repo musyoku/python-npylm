@@ -10,6 +10,7 @@
 namespace npylm {
 	namespace lm {
 		VPYLM::VPYLM(double g0, int max_possible_depth, double beta_stop, double beta_pass){
+			assert(g0 > 0);
 			_root = new Node<wchar_t>(0);
 			_root->_depth = 0;	// ルートは深さ0
 			// http://www.ism.ac.jp/~daichi/paper/ipsj07vpylm.pdfによると初期値は(4, 1)
@@ -17,6 +18,7 @@ namespace npylm {
 			_beta_stop = beta_stop;
 			_beta_pass = beta_pass;
 			_depth = 0;
+			_g0 = g0;
 			_max_depth = max_possible_depth;	// 訓練データ中の最大長の文の文字数が可能な最大深さになる
 			_parent_pw_cache = new double[max_possible_depth + 1];
 			_sampling_table = new double[max_possible_depth + 1];

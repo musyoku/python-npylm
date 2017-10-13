@@ -39,7 +39,7 @@ namespace npylm {
 			alpha = NULL;
 		}
 	}
-	Lattice::Lattice(NPYLM* npylm){
+	Lattice::Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length){
 		_npylm = npylm;
 		_word_ids = new id[4];	// 3-gramなので<bos><bos>単語<eos>の最低4つ
 		_is_ready = false;
@@ -50,15 +50,9 @@ namespace npylm {
 		_backward_sampling_table = NULL;
 		_viterbi_backward = NULL;
 		_substring_word_id_cache = NULL;
-	}
-	Lattice::~Lattice(){
-		delete[] _word_ids;
-		_delete_cache();
-	}
-	void Lattice::_init_cache(int max_word_length, int max_sentence_length){
-		_delete_cache();
 		_max_word_length = max_word_length;
 		_max_sentence_length = max_sentence_length;
+		// 必要な配列の初期化
 		int size = max_sentence_length + 1;
 		// 前向き確率の正規化定数
 		_log_z = new double[size];
@@ -109,9 +103,9 @@ namespace npylm {
 				_substring_word_id_cache[i][j] = 0;
 			}
 		}
-		_is_ready = true;
 	}
-	void Lattice::_delete_cache(){
+	Lattice::~Lattice(){
+		delete[] _word_ids;
 		if(_log_z != NULL){
 			delete[] _log_z;
 			_log_z = NULL;

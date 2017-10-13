@@ -22,10 +22,8 @@ namespace npylm {
 		int _max_word_length;
 		int _max_sentence_length;
 		bool _is_ready;
-		Lattice(NPYLM* npylm);
+		Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length);
 		~Lattice();
-		void _init_cache(int max_word_length, int max_sentence_length);
-		void _delete_cache();
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
 		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** normalized_alpha);
 		void forward_filtering(Sentence* sentence, double*** normalized_alpha);
