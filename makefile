@@ -18,7 +18,7 @@ check_includes:	## Python.hの場所を確認
 check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
-running_tests:	## 学習テスト
+running_tests:	## テスト
 	$(CC) test/running_tests/train.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall
 
 .PHONY: help
