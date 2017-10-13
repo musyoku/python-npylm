@@ -1,6 +1,7 @@
 #pragma once
 #include <boost/python.hpp>
 #include <cassert>
+#include "../npylm/lattice.h"
 #include "dataset.h"
 #include "model.h"
 #include "dictionary.h"
@@ -19,8 +20,9 @@ namespace ithmm {
 		Dataset* _dataset;
 		Dictionary* _dict;
 		Model* _model;
-		double** _forward_table;		// 前向き確率計算用
-		double** _decode_table;			// viterbiデコーディング用
+		double** _forward_table;	// 前向き確率計算用
+		double** _decode_table;		// viterbiデコーディング用
+		Lattice* _lattice;			// forward filtering-backward sampling
 	public:
 		Trainer(Dataset* dataset, Model* model);
 		void remove_all_data();
@@ -32,7 +34,6 @@ namespace ithmm {
 		double compute_perplexity_train();
 		double compute_perplexity_dev();
 		void update_hyperparameters();
-		void show_assigned_words_for_each_tag(Dictionary* dict, int number_to_show_for_each_tag, bool show_probability = true);
 		void set_model(Model* model);
 	};
 }

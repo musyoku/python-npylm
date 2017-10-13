@@ -14,6 +14,7 @@ namespace npylm {
 			friend class boost::serialization::access;
 			template <class Archive>
 			void serialize(Archive& archive, unsigned int version);
+			void _delete_node(Node* node);
 		public:
 			double _beta_stop;		// 停止確率q_iのベータ分布の初期パラメータ
 			double _beta_pass;		// 停止確率q_iのベータ分布の初期パラメータ
@@ -22,12 +23,9 @@ namespace npylm {
 			double* _sampling_table;
 			double* _parent_pw_cache;
 			Node<wchar_t>** _path_nodes;
-			VPYLM();
-			VPYLM(int max_possible_depth);
+			VPYLM(){}
+			VPYLM(double g0, int max_possible_depth, double beta_stop, double beta_pass);
 			~VPYLM();
-			void _init();
-			void _init_cache(int max_possible_depth);
-			void _delete_cache();
 			bool add_customer_at_time_t(wchar_t const* character_ids, int t, int depth_t);
 			bool add_customer_at_time_t(wchar_t const* character_ids, int t, int depth_t, double* parent_pw_cache, Node<wchar_t>** path_nodes);
 			bool remove_customer_at_time_t(wchar_t const* character_ids, int t, int depth_t);

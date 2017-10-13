@@ -10,6 +10,9 @@ namespace npylm {
 	void wrap_bow_eow(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids);
 	double factorial(double n);
 	class NPYLM {
+	private:
+		void _init_cache(int max_word_length, int max_sentence_length);
+		void _delete_cache();
 	public:
 		lm::HPYLM* _hpylm;	// 単語n-gram
 		lm::VPYLM* _vpylm;	// 文字n-gram
@@ -25,13 +28,9 @@ namespace npylm {
 		// 計算高速化用
 		double* _hpylm_parent_pw_cache;
 		wchar_t* _character_ids;
-		bool _is_ready;
 		NPYLM(){}
-		NPYLM(int max_word_length, int max_sentence_length, double g0);
+		NPYLM(int max_word_length, int max_sentence_length, double g0, double initial_lambda_a, double initial_lambda_b);
 		~NPYLM();
-		void _init();
-		void _init_cache(int max_word_length, int max_sentence_length);
-		void _delete_cache();
 		void set_vpylm_g0(double g0);
 		void set_lambda_prior(double a, double b);
 		void sample_lambda_with_initial_params();
