@@ -281,7 +281,7 @@ namespace npylm {
 			double poisson = compute_poisson_k_lambda(word_length, lambda);
 			assert(poisson > 0);
 			double g0 = p_w * poisson / p_k_vpylm;
-			if(!(0 < g0 && g0 < 1)){
+			if((0 < g0 && g0 < 1) == false){
 				for(int u = 0;u < character_ids_length;u++){
 					std::wcout << character_ids[u];
 				}

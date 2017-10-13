@@ -11,7 +11,7 @@
 #include <ostream>
 #include <vector>
 namespace pl{
-    template <typename K,typename V>
+    template <typename K,class V>
     class SplayTree
   {
    

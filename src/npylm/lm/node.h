@@ -5,6 +5,7 @@
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <cassert>
