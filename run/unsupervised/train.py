@@ -62,6 +62,9 @@ def main():
 	corpus = build_corpus(args.train_filename, args.train_directory)
 	dataset = npylm.dataset(corpus, args.train_split, args.seed)
 
+	print("#train", dataset.get_num_sentences_train())
+	print("#dev", dataset.get_num_sentences_dev())
+
 	# 単語辞書を保存
 	dictionary = dataset.get_dict()
 	dictionary.save(os.path.join(args.working_directory, "npylm.dict"))
@@ -107,7 +110,7 @@ def main():
 		printr("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
 		if epoch % 100 == 0:
 			printr("")
-			trainer.print_segmentation_train()
+			trainer.print_segmentation_train(10)
 		if epoch % 100 == 0:
 			printr("")
 			model.save(os.path.join(args.working_directory, "npylm.model"))

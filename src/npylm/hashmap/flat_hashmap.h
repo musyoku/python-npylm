@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 #include <cstdint>
 #include <cstddef>
 #include <functional>
@@ -1356,6 +1359,31 @@ private:
             return V();
         }
     };
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &archive, unsigned int version)
+    {
+        boost::serialization::split_member(archive, *this, version);
+    }
+    void save(boost::archive::binary_oarchive &ar, unsigned int version) const {
+        ar & this->size();
+        for(auto itr = this->begin();itr != this->end();itr++){
+            ar & itr->first;
+            ar & itr->second;
+        }
+    }
+    void load(boost::archive::binary_iarchive &ar, unsigned int version) {
+        size_t map_size = 0;
+        ar & map_size;
+        this->clear();
+        for(int i = 0;i < map_size;i++){
+            K key;
+            V value;
+            ar & key;
+            ar & value;
+            (*this)[key] = value;
+        }
+    }
 };
 
 template<typename T, typename H = std::hash<T>, typename E = std::equal_to<T>, typename A = std::allocator<T> >

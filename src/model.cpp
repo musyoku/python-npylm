@@ -4,6 +4,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/unordered_set.hpp>
+#include <boost/serialization/unordered_map.hpp>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
@@ -142,7 +143,7 @@ public:
 	// ハッシュが衝突していないかチェック
 	int detect_collision(){
 		int step = 0;
-		hashmap<id, std::wstring> pool;
+		std::unordered_map<id, std::wstring> pool;
 		for(Sentence* sentence: _dataset_train){
 			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 				return 0;
@@ -161,7 +162,7 @@ public:
 		}
 		return pool.size();
 	}
-	void _detect_collision_of_sentence(Sentence* sentence, hashmap<id, std::wstring> &pool){
+	void _detect_collision_of_sentence(Sentence* sentence, std::unordered_map<id, std::wstring> &pool){
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				id word_id = sentence->get_substr_word_id(t - k, t - 1);

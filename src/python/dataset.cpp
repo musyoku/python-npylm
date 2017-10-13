@@ -1,7 +1,6 @@
 #include <boost/python.hpp>
 #include <iostream>
 #include <fstream>
-#include <unordered_set>
 #include "dataset.h"
 #include "../npylm/sampler.h"
 #include "../npylm/hash.h"
@@ -47,6 +46,12 @@ namespace npylm {
 		}
 		delete _dict;
 	}
+	int Dataset::get_num_sentences_train(){
+		return _sentence_sequences_train.size();
+	}
+	int Dataset::get_num_sentences_dev(){
+		return _sentence_sequences_dev.size();
+	}
 	void Dataset::_add_words_to_dataset(std::wstring &sentence_str, std::vector<Sentence*> &dataset){
 		assert(sentence_str.size() > 0);
 		for(wchar_t character: sentence_str){
@@ -63,7 +68,7 @@ namespace npylm {
 	}
 	int Dataset::detect_hash_collision(int max_word_length){
 		int step = 0;
-		hashmap<id, std::wstring> pool;
+		std::unordered_map<id, std::wstring> pool;
 		for(Sentence* sentence: _sentence_sequences_train){
 			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 				return 0;
@@ -80,7 +85,7 @@ namespace npylm {
 		}
 		return pool.size();
 	}
-	void Dataset::_detect_collision_of_sentence(Sentence* sentence, hashmap<id, std::wstring> &pool, int max_word_length){
+	void Dataset::_detect_collision_of_sentence(Sentence* sentence, std::unordered_map<id, std::wstring> &pool, int max_word_length){
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, max_word_length);k++){
 				id word_id = sentence->get_substr_word_id(t - k, t - 1);

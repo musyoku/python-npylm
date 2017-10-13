@@ -1,4 +1,4 @@
-# NPYLM
+# Nested Pitman-Yor Language Model (NPYLM)
 
 [ベイズ階層言語モデルによる教師なし形態素解析](http://chasen.org/~daiti-m/paper/nl190segment.pdf)のC++実装です。
 
@@ -15,6 +15,8 @@
 ## 動作環境
 
 - Boost
+- C++14
+- Python 3
 
 ## ビルド
 

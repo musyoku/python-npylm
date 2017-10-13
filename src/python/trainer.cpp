@@ -1,5 +1,6 @@
 #include <boost/python.hpp>
 #include <cassert>
+#include <iostream>
 #include "../npylm/sampler.h"
 #include "../npylm/wordtype.h"
 #include "trainer.h"
@@ -145,7 +146,7 @@ namespace npylm {
 			}
 		}
 		for(int k = 1;k <= max_word_length;k++){
-			pk_vpylm[k] = num_words_of_k[k] / sum_words;
+			pk_vpylm[k] = (num_words_of_k[k] + 1) / (sum_words + max_word_length);	// ラプラススムージングを入れておく
 			assert(pk_vpylm[k] > 0);
 		}
 		delete[] num_words_of_k;

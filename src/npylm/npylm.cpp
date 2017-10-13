@@ -222,14 +222,14 @@ namespace npylm {
 				context_id = word_ids[word_t_index - depth];
 			}
 			// 事前に確率を計算
-			double pw = node->compute_p_w_with_parent_p_w(word_t_id, parent_pw, _hpylm->_d_m, _hpylm->_theta_m);
-			parent_pw_cache[depth] = pw;
+			double p_w = node->compute_p_w_with_parent_p_w(word_t_id, parent_pw, _hpylm->_d_m, _hpylm->_theta_m);
+			parent_pw_cache[depth] = p_w;
 			Node<id>* child = node->find_child_node(context_id, generate_node_if_needed);
 			if(child == NULL && return_middle_node == true){
 				return node;
 			}
 			assert(child != NULL);
-			parent_pw = pw;
+			parent_pw = p_w;
 			node = child;
 		}
 		return node;
@@ -260,15 +260,15 @@ namespace npylm {
 			wrap_bow_eow(character_ids, substr_char_t_start, substr_char_t_end, wrapped_character_ids);
 			int wrapped_character_ids_length = substr_char_t_end - substr_char_t_start + 3;
 			// g0を計算
-			double pw = _vpylm->compute_p_w(wrapped_character_ids, wrapped_character_ids_length);
+			double p_w = _vpylm->compute_p_w(wrapped_character_ids, wrapped_character_ids_length);
 			if(word_length > _max_word_length){
-				_g0_cache[word_t_id] = pw;
-				return pw;
+				_g0_cache[word_t_id] = p_w;
+				return p_w;
 			}
 			double p_k_vpylm = compute_p_k_given_vpylm(word_length);
 			if(p_k_vpylm == 0){
-				_g0_cache[word_t_id] = pw;
-				return pw;
+				_g0_cache[word_t_id] = p_w;
+				return p_w;
 			}
 			int type = wordtype::detect_word_type_substr(character_ids, substr_char_t_start, substr_char_t_end);
 			assert(type <= WORDTYPE_NUM_TYPES);
@@ -276,13 +276,13 @@ namespace npylm {
 			double lambda = _lambda_for_type[type];
 			double poisson = compute_poisson_k_lambda(word_length, lambda);
 			assert(poisson > 0);
-			double g0 = pw * poisson / p_k_vpylm;
+			double g0 = p_w * poisson / p_k_vpylm;
 			if(!(0 < g0 && g0 < 1)){
 				for(int u = 0;u < character_ids_length;u++){
 					std::wcout << character_ids[u];
 				}
 				std::wcout << std::endl;
-				std::cout << pw << std::endl;
+				std::cout << p_w << std::endl;
 				std::cout << poisson << std::endl;
 				std::cout << p_k_vpylm << std::endl;
 				std::cout << g0 << std::endl;
@@ -309,18 +309,18 @@ namespace npylm {
 		_vpylm->sample_hyperparams();
 	}
 	double NPYLM::compute_log_p_w(Sentence* sentence){
-		double pw = 0;
+		double p_w = 0;
 		for(int t = 2;t < sentence->get_num_segments();t++){
-			pw += log(compute_p_w_given_h(sentence, t));
+			p_w += log(compute_p_w_given_h(sentence, t));
 		}
-		return pw;
+		return p_w;
 	}
 	double NPYLM::compute_p_w(Sentence* sentence){
-		double pw = 1;
+		double p_w = 1;
 		for(int t = 2;t < sentence->get_num_segments();t++){
-			pw *= compute_p_w_given_h(sentence, t);
+			p_w *= compute_p_w_given_h(sentence, t);
 		}
-		return pw;
+		return p_w;
 	}
 	double NPYLM::compute_p_w_given_h(Sentence* sentence, int word_t_index){
 		assert(word_t_index >= 2);

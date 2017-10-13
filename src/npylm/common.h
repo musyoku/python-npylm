@@ -1,14 +1,17 @@
 #pragma once
 #include <unordered_map>
-#include "hashmap.h"
+#include "hashmap/hashmap.h"
+#include "hashmap/flat_hashmap.h"
 
 #ifdef __NO_INLINE__
 #define __DEBUG__ 1
 #endif
 
-template<class T, class U>
-// using hashmap = std::unordered_map<T, U>;
-using hashmap = emilib::HashMap<T, U>;
+template<class K, class V>
+using hashmap = ska::flat_hash_map<K, V, ska::power_of_two_std_hash<K>>;
+// using hashmap = ska::flat_hash_map<K, V>;
+// using hashmap = std::unordered_map<K, V>;
+// using hashmap = emilib::HashMap<K, V>;
 
 using id = size_t;
 

@@ -1,4 +1,5 @@
 #pragma once
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include "../npylm/common.h"
@@ -11,7 +12,7 @@ namespace npylm {
 	private:
 		Corpus* _corpus;
 		void _add_words_to_dataset(std::wstring &sentence_str, std::vector<Sentence*> &dataset);
-		void _detect_collision_of_sentence(Sentence* sentence, hashmap<id, std::wstring> &pool, int max_word_length);
+		void _detect_collision_of_sentence(Sentence* sentence, std::unordered_map<id, std::wstring> &pool, int max_word_length);
 	public:
 		int _max_sentence_length;
 		int _avg_sentence_length;
@@ -20,6 +21,8 @@ namespace npylm {
 		std::vector<Sentence*> _sentence_sequences_dev;
 		Dataset(Corpus* corpus, double train_split, int seed);
 		~Dataset();
+		int get_num_sentences_train();
+		int get_num_sentences_dev();
 		int get_max_sentence_length();
 		int get_average_sentence_length();
 		int detect_hash_collision(int max_word_length);
