@@ -1,8 +1,7 @@
 #include "hash.h"
 
 namespace npylm{
-	size_t load_bytes(const char* p, int n)
-	{
+	size_t load_bytes(const char* p, int n){
 		size_t result = 0;
 		--n;
 		do{
@@ -33,8 +32,7 @@ namespace npylm{
 			buf += 4;
 			len -= 4;
 		}
-		switch(len)
-		{
+		switch(len){
 			case 3:
 			hash ^= static_cast<unsigned char>(buf[2]) << 16;
 			case 2:
