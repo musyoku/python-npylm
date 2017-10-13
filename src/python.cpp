@@ -17,6 +17,7 @@ BOOST_PYTHON_MODULE(npylm){
 
 	boost::python::class_<Dataset>("dataset", boost::python::init<Corpus*, double, int>())
 	.def("get_max_sentence_length", &Dataset::get_max_sentence_length)
+	.def("detect_hash_collision", &Dataset::detect_hash_collision)
 	.def("get_dict", &Dataset::get_dict_obj, boost::python::return_internal_reference<>());
 
 	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Model*, bool>((arg("dataset"), arg("model"), arg("always_accept_new_segmentation")=true)))
