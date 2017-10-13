@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include "hash.h"
 #include "lattice.h"
 #include "sampler.h"
@@ -217,13 +218,13 @@ namespace npylm {
 
 			#ifdef __DEBUG__
 			if(value == 0){
-				cout << pw_h << endl;
+				std::cout << pw_h << std::endl;
 				if(normalized_alpha == NULL){
-					cout << _alpha[t - k][j][i] << endl;
+					std::cout << _alpha[t - k][j][i] << std::endl;
 				}else{
-					cout << normalized_alpha[t - k][j][i] << " (normalized)" << endl;
+					std::cout << normalized_alpha[t - k][j][i] << " (normalized)" << std::endl;
 				}
-				cout << t << ", " << k << ", " << j << ", " << i << endl;
+				std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 			}
 			#endif
 
@@ -313,8 +314,8 @@ namespace npylm {
 		assert(k > 0 && j > 0);
 		assert(j <= _max_word_length);
 		segments.push_back(j);
-		// cout << "<- " << k << endl;
-		// cout << "<- " << j << endl;
+		// std::cout << "<- " << k << std::endl;
+		// std::cout << "<- " << j << std::endl;
 		t -= k;
 		t -= j;
 		sum += k + j;
@@ -329,14 +330,14 @@ namespace npylm {
 				assert(k <= _max_word_length);
 			}
 			segments.push_back(k);
-			// cout << "<- " << k << endl;
+			// std::cout << "<- " << k << std::endl;
 			t -= k;
 			if(j == 0){
 				assert(t == 0);
 			}else{
 				assert(j <= _max_word_length);
 				segments.push_back(j);
-				// cout << "<- " << j << endl;
+				// std::cout << "<- " << j << std::endl;
 				t -= j;
 			}
 			sum += k + j;
@@ -376,9 +377,9 @@ namespace npylm {
 					#ifdef __DEBUG__
 					double pw_h2 = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
 					if(pw_h != pw_h2){
-						cout << "t = " << t << ", k = " << k << ", j = " << j << endl;
-						cout << "next_word_length = " << next_word_length << endl;
-						cout << "size = " << sentence->size() << endl;
+						std::cout << "t = " << t << ", k = " << k << ", j = " << j << std::endl;
+						std::cout << "next_word_length = " << next_word_length << std::endl;
+						std::cout << "size = " << sentence->size() << std::endl;
 					}
 					assert(pw_h == pw_h2);
 					#endif
@@ -414,9 +415,9 @@ namespace npylm {
 					#ifdef __DEBUG__
 					double pw_h2 = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
 					if(pw_h != pw_h2){
-						cout << "t = " << t << ", k = " << k << ", j = " << 0 << endl;
-						cout << "next_word_length = " << next_word_length << endl;
-						cout << "size = " << sentence->size() << endl;
+						std::cout << "t = " << t << ", k = " << k << ", j = " << 0 << std::endl;
+						std::cout << "next_word_length = " << next_word_length << std::endl;
+						std::cout << "size = " << sentence->size() << std::endl;
 					}
 					assert(pw_h == pw_h2);
 					#endif
@@ -652,7 +653,7 @@ namespace npylm {
 			if(i != 0){
 				segments.push_back(i);
 			}
-			// cout << "<- " << k << endl;
+			// std::cout << "<- " << k << std::endl;
 			t -= k;
 			k = j;
 			j = i;

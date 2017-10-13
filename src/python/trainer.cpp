@@ -15,6 +15,11 @@ namespace npylm {
 		_always_accept_new_segmentation = always_accept_new_segmentation;
 		_num_segmentation_rejection = 0;
 		_num_segmentation_acceptance = 0;
+		
+		for(int data_index = 0;data_index < dataset->_sentence_sequences_train.size();data_index++){
+			_rand_indices_train.push_back(data_index);
+			_added_npylm_train[data_index] = false;
+		}
 	}
 
 	// HPYLM,VPYLMのdとthetaをサンプリング

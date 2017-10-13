@@ -4,6 +4,7 @@
 #include <cmath> 
 #include <cassert> 
 #include "npylm.h"
+#include "hash.h"
 #include "sampler.h"
 #include "wordtype.h"
 
