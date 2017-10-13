@@ -16,6 +16,9 @@ check_includes:	## Python.hの場所を確認
 check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
+running_tests:	## 学習テスト
+	$(CC) test/running_tests/train.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall
+
 .PHONY: help
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

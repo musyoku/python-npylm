@@ -82,7 +82,6 @@ def main():
 		dataset, model, 
 		# NPYLMでは通常、新しい分割結果をもとに単語nグラムモデルを更新する
 		# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に確率的に棄却する
-		# Falseの方が切りすぎない分割結果になるが切りすぎなさすぎることもある
 		always_accept_new_segmentation=True)
 
 	# 文字列の単語IDが衝突しているかどうかをチェック
@@ -90,8 +89,24 @@ def main():
 	# メモリを大量に消費します
 	if True:
 		print("ハッシュの衝突を確認中 ...")
-		num_checked_words = dataset.detect_collision()
+		num_checked_words = dataset.detect_hash_collision(args.max_word_length)
 		print("衝突はありません (総単語数 {})".format(num_checked_words))
+
+	# 学習ループ
+	for epoch in range(1, args.epochs + 1):
+		start = time.time()
+		trainer.gibbs()				# 新しい状態系列をギブスサンプリング
+		trainer.sample_hpylm_vpylm_hyperparameters()	# HPYLMとVPYLMのハイパーパラメータの更新
+		trainer.sample_lambda()		# λの更新
+
+		# ログ
+		elapsed_time = time.time() - start
+		printr("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
+		if epoch % 100 == 0:
+			printr("")
+		if epoch % 100 == 0:
+			printr("")
+			model.save(os.path.join(args.working_directory, "npylm.model"))
 
 if __name__ == "__main__":
 	main()

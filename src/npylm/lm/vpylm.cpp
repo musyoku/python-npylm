@@ -34,9 +34,6 @@ namespace npylm {
 				delete[] _path_nodes;
 			}
 		}
-		void VPYLM::_delete_node(Node<wchar_t>* node){
-			assert(false);
-		}
 		bool VPYLM::add_customer_at_time_t(wchar_t const* character_ids, int t, int depth_t){
 			assert(_parent_pw_cache != NULL);
 			assert(0 <= depth_t && depth_t <= t);
@@ -184,7 +181,6 @@ namespace npylm {
 		double VPYLM::compute_p_w_given_h(wchar_t target_id, wchar_t const* character_ids, int context_substr_start, int context_substr_end){
 			assert(context_substr_start >= 0);
 			assert(context_substr_end >= context_substr_start);
-			int context_size = context_substr_end - context_substr_start + 1;
 			Node<wchar_t>* node = _root;
 			assert(node != NULL);
 			double parent_pass_probability = 1;

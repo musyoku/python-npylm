@@ -101,7 +101,6 @@ namespace npylm {
 			num_words_of_k[i] = 0;
 		}
 		wchar_t* wrapped_character_ids = new wchar_t[max_word_length + 2];
-		int k;
 		double sum_words = 0;
 		double sum_probs = 0;
 		for(int m = 0;m < num_samples;m++){

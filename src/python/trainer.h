@@ -14,8 +14,6 @@ namespace npylm {
 		Dataset* _dataset;
 		Dictionary* _dict;
 		Model* _model;
-		double** _forward_table;	// 前向き確率計算用
-		double** _decode_table;		// viterbiデコーディング用
 		Lattice* _lattice;			// forward filtering-backward sampling
 		double* _vpylm_sampling_probability_table;
 		wchar_t* _vpylm_sampling_id_table;
