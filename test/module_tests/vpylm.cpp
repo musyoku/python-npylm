@@ -14,7 +14,20 @@ using std::cout;
 using std::flush;
 using std::endl;
 
-double vpylm_compute_p_w_given_h(VPYLM* vpylm, wchar_t const* character_ids, int context_start, int context_end){
+bool add_customer_at_time_t(VPYLM* vpylm, wchar_t const* token_ids, int t, int depth_t){
+	assert(0 <= depth_t && depth_t <= t);
+	Node<wchar_t>* node = vpylm->find_node_by_tracing_back_context(token_ids, t, depth_t, true, false);
+	assert(node != NULL);
+	assert(node->_depth == depth_t);
+	if(depth_t > 0){	// ルートノードは特殊なので無視
+		assert(node->_token_id == token_ids[t - depth_t]);
+	}
+	id token_t = token_ids[t];
+	int tabke_k;
+	return node->add_customer(token_t, vpylm->_g0, vpylm->_d_m, vpylm->_theta_m, true, tabke_k);
+}
+
+double compute_p_w_given_h(VPYLM* vpylm, wchar_t const* character_ids, int context_start, int context_end){
 	int context_size = context_end - context_start + 1;
 	Node<wchar_t>* node = vpylm->_root;
 	wchar_t target_id = character_ids[context_end + 1];
@@ -52,7 +65,7 @@ double vpylm_compute_p_w_given_h(VPYLM* vpylm, wchar_t const* character_ids, int
 	return p;
 }
 void test_compute_p_w_given_h(){
-	VPYLM* vpylm = new VPYLM(0.00001, 1000, 4, 1);
+	VPYLM* vpylm = new VPYLM(0.001, 1000, 4, 1);
 	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
 	Sentence* sentence = new Sentence(sentence_str);
 	wchar_t* wrapped_character_ids = new wchar_t[sentence_str.size() + 2];
@@ -65,7 +78,7 @@ void test_compute_p_w_given_h(){
 	for(int end = 0;end < sentence->size() - 1;end++){
 		for(int start = 0;start < end;start++){
 			double a = vpylm->compute_p_w_given_h(wrapped_character_ids, start, end);
-			double b = vpylm_compute_p_w_given_h(vpylm, wrapped_character_ids, start, end);
+			double b = compute_p_w_given_h(vpylm, wrapped_character_ids, start, end);
 			assert(std::abs(a - b) < 1e-16);
 		}
 	}
@@ -75,7 +88,7 @@ void test_compute_p_w_given_h(){
 }
 
 void test_find_node_by_tracing_back_context(){
-	VPYLM* vpylm = new VPYLM(0.00001, 1000, 4, 1);
+	VPYLM* vpylm = new VPYLM(0.001, 1000, 4, 1);
 	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
 	Sentence* sentence = new Sentence(sentence_str);
 	wchar_t* character_ids = new wchar_t[sentence->size() + 2];
@@ -116,14 +129,60 @@ void test_find_node_by_tracing_back_context(){
 			assert(parent_pw_cache[depth_t] == p);
 			assert(node0 == path_nodes_cache[depth_t - 1]);
 		}
-	}
 
+		for(int depth_t = 1;depth_t <= t;depth_t++){
+			path_nodes_cache[t - depth_t] = NULL;
+			Node<wchar_t>* node0 = vpylm->find_node_by_tracing_back_context(character_ids, t, depth_t - 1);
+			Node<wchar_t>* node1 = vpylm->find_node_by_tracing_back_context(character_ids, t, depth_t - 1, path_nodes_cache);
+			assert(node0 != NULL);
+			assert(node1 != NULL);
+			assert(node0 == node1);
+		}
+	}
 
 	delete sentence;
 	delete vpylm;
 	delete[] character_ids;
 	delete[] path_nodes_cache;
 	delete[] parent_pw_cache;
+}
+
+void test_add_customer(){
+	sampler::mt.seed(0);
+	VPYLM* vpylm1 = new VPYLM(0.001, 1000, 4, 1);
+	VPYLM* vpylm2 = new VPYLM(0.001, 1000, 4, 1);
+	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
+	Sentence* sentence = new Sentence(sentence_str);
+	wchar_t* character_ids = new wchar_t[sentence->size() + 2];
+	wrap_bow_eow(sentence->_character_ids, 0, sentence->size() - 1, character_ids);
+	int limit = 100;
+	for(int t = 0;t < sentence->size();t++){
+		for(int depth_t = 0;depth_t <= t;depth_t++){
+			vpylm1->add_customer_at_time_t(character_ids, t, depth_t);
+		}
+	}
+	sampler::mt.seed(0);
+	for(int t = 0;t < sentence->size();t++){
+		for(int depth_t = 0;depth_t <= t;depth_t++){
+			add_customer_at_time_t(vpylm2, character_ids, t, depth_t);
+		}
+	}
+	assert(vpylm1->get_num_nodes() == vpylm2->get_num_nodes());
+	assert(vpylm1->get_num_customers() == vpylm2->get_num_customers());
+	assert(vpylm1->get_num_tables() == vpylm2->get_num_tables());
+	assert(vpylm1->get_sum_stop_counts() == vpylm2->get_sum_stop_counts());
+	assert(vpylm1->get_sum_pass_counts() == vpylm2->get_sum_pass_counts());
+	for(int end = 1;end < sentence->size() + 2;end++){
+		for(int start = 0;start < end;start++){
+			double a = vpylm1->compute_p_w(character_ids, end - start + 1);
+			double b = vpylm2->compute_p_w(character_ids, end - start + 1);
+			assert(a == b);
+		}
+	}
+	delete sentence;
+	delete vpylm1;
+	delete vpylm2;
+	delete[] character_ids;
 }
 
 int main(){
@@ -138,6 +197,8 @@ int main(){
 	test_compute_p_w_given_h();
 	cout << "OK" << endl;
 	test_find_node_by_tracing_back_context();
+	cout << "OK" << endl;
+	test_add_customer();
 	cout << "OK" << endl;
 	return 0;
 }
