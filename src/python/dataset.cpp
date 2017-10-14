@@ -52,6 +52,11 @@ namespace npylm {
 			Sentence* sentence = new Sentence(sentence_str, true);
 			sentence->split(segmentation);		// 分割
 			_sentence_sequences_train.push_back(sentence);
+			// 統計
+			if(_max_sentence_length == 0 || sentence_str.size() > _max_sentence_length){
+				_max_sentence_length = sentence_str.size();
+			}
+			sum_sentence_length += sentence_str.size();
 		}
 		_avg_sentence_length = sum_sentence_length / (double)corpus->get_num_sentences();
 	}

@@ -6,12 +6,14 @@ SOFLAGS = -shared -fPIC -march=native
 
 install: ## Python用ライブラリをコンパイル
 	$(CC) $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
+	cp run/npylm.so run/semi-supervised/npylm.so
 	cp run/npylm.so run/unsupervised/npylm.so
 	rm -rf run/npylm.so
 
 install_ubuntu: ## Python用ライブラリをコンパイル
 	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
 	cp run/npylm.so run/unsupervised/npylm.so
+	cp run/npylm.so run/semi-supervised/npylm.so
 	rm -rf run/npylm.so
 
 check_includes:	## Python.hの場所を確認

@@ -1,4 +1,5 @@
-import argparse, time, os, codecs, sys
+import argparse, sys, os, time, codecs, random
+import MeCab
 import npylm
 
 class stdout:
@@ -14,22 +15,45 @@ def printr(string):
 	sys.stdout.write(string)
 	sys.stdout.flush()
 
-def build_corpus(filepath, directory):
+def build_corpus(filepath, directory, semisupervised_split_ratio):
 	assert filepath is not None or directory is not None
 	corpus = npylm.corpus()
+	sentence_list = []
 
 	if filepath is not None:
 		with codecs.open(filepath, "r", "utf-8") as f:
 			for sentence_str in f:
 				sentence_str = sentence_str.strip()
-				corpus.add_sentence(sentence_str)
+				sentence_list.append(sentence_str)
 
 	if directory is not None:
 		for filename in os.listdir(directory):
 			with codecs.open(os.path.join(directory, filename), "r", "utf-8") as f:
 				for sentence_str in f:
 					sentence_str = sentence_str.strip()
-					corpus.add_sentence(sentence_str)
+					sentence_list.append(sentence_str)
+
+	random.shuffle(sentence_list)
+
+	semisupervised_split = int(len(sentence_list) * semisupervised_split_ratio)
+	sentence_list_l = sentence_list[:semisupervised_split]
+	sentence_list_u = sentence_list[semisupervised_split:]
+
+	tagger = MeCab.Tagger()
+	tagger.parse("")
+	for sentence_str in sentence_list_l:
+		m = tagger.parseToNode(sentence_str)	# 形態素解析
+		words = []
+		while m:
+			word = m.surface
+			if len(word) > 0:
+				words.append(word)
+			m = m.next
+		if len(words) > 0:
+			corpus.add_true_segmentation(words)
+
+	for sentence_str in sentence_list_u:
+		corpus.add_sentence(sentence_str)
 
 	return corpus
 
@@ -43,6 +67,7 @@ def main():
 	parser.add_argument("--epochs", "-e", type=int, default=100000, help="総epoch")
 	parser.add_argument("--working-directory", "-cwd", type=str, default="out", help="ワーキングディレクトリ")
 	parser.add_argument("--train-split", "-split", type=float, default=0.9, help="テキストデータの何割を訓練データにするか")
+	parser.add_argument("--semisupervised-split", "-ssl-split", type=float, default=0.1, help="テキストデータの何割を教師データにするか")
 
 	parser.add_argument("--lambda-a", "-lam-a", type=float, default=4)
 	parser.add_argument("--lambda-b", "-lam-b", type=float, default=1)
@@ -58,7 +83,7 @@ def main():
 		pass
 
 	# 訓練データを追加
-	corpus = build_corpus(args.train_filename, args.train_directory)
+	corpus = build_corpus(args.train_filename, args.train_directory, args.semisupervised_split)
 	dataset = npylm.dataset(corpus, args.train_split, args.seed)
 
 	print("#train", dataset.get_num_sentences_train())
@@ -100,6 +125,7 @@ def main():
 		trainer.gibbs()				# 新しい状態系列をギブスサンプリング
 		trainer.sample_hpylm_vpylm_hyperparameters()	# HPYLMとVPYLMのハイパーパラメータの更新
 		trainer.sample_lambda()		# λの更新
+		trainer.print_segmentation_dev(10)
 
 		if epoch > 3:
 			trainer.update_p_k_given_vpylm()

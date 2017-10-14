@@ -10,7 +10,7 @@ namespace npylm {
 		_npylm = new NPYLM(max_word_length, max_sentence_length, vpylm_g0, 4, 1, VPYLM_BETA_STOP, VPYLM_BETA_PASS);
 	}
 	Model::Model(Dataset* dataset, 
-				int max_word_length, 		// 可能な単語長の最大値. 英語20, 日本語12程度
+				int max_word_length, 		// 可能な単語長の最大値. 英語16, 日本語8程度
 				double initial_lambda_a, 	// 単語長のポアソン分布のλの事前分布のハイパーパラメータ
 				double initial_lambda_b,  	// 単語長のポアソン分布のλの事前分布のハイパーパラメータ
 				double vpylm_beta_stop, 	// VPYLMのハイパーパラメータ
