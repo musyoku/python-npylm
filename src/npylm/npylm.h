@@ -47,6 +47,8 @@ namespace npylm {
 			double vpylm_beta_stop, 
 			double vpylm_beta_pass);
 		~NPYLM();
+		void allocate_arrays(int max_sentence_length);
+		void delete_arrays();
 		void set_vpylm_g0(double g0);
 		void set_lambda_prior(double a, double b);
 		void sample_lambda_with_initial_params();

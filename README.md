@@ -244,37 +244,3 @@ https://twitter.com/daiti_m/status/851810748263157760
 > / と言えば / ギャラホルン / 崩壊 / しそう / 
 
 > / オオクニ欲 / しかった / 
-
-#### Wikipedia
-
-英語版Wikipediaから10万行を抜き出して学習を行いました。
-
-
-> / there / wasalso / for / e / bo / d / ing / in / the / poem / s / , / a / s / ense / that / all / could / yet / come / to / naught / . / 
-
-> / s / hun / n / ing / the / desk / job / that / had / kept / him / from / comb / at / , / spade / equipped / himsel / f / with / gun / s / and / gad / get / s / of / his / own / inven / tion / and / fought / the / nazi / men / ace / as / black / jack / . / 
-
-> / this / makes / s / ense / , / because / ifi=j / then / we / are / consider / ing / the / same / step / . / 
-
-> / abl / ative / ( / s / epa / ration / , / source / , / cause / , / start / point / of / movement / ) / ; / 
-
-> / when / dougla / s / and / the / other / children / s / top / by / for / avisit / , / they / find / free / leigh / dead / , / still / hold / ing / the / phone / . / 
-  / edmonton / es / kim / os / from / 1975 / to / 19 / 8 / 2 / ( / 6 / ch / ampionship / sin / 8 / year / s) / ; / 
-
-> / they / had / just / begun / to / build / the / first / house / s / and / plan / t / thefirst / crop / s / when / the / ne / ighbor / ing / s / an / juan / baut / ist / a / creek / ran / dry / . / 
-
-> / thereare / numerou / s / computer / program / s / , / knowna / s / score / writer / s / , / designe / d / for / writing / , / organiz / ing / , / editing / ,and / print / ing / music / , / though / only / afew / produc / e / result / s / of / a / quality / compar / able / to / p / late / engrav / ing / . / 
-
-> / it / consis / ts / of / an / industri / al / e / state / , / a / shop / , / a / housing / e / state / , / a / number / of / private / d / well / ing / s / and / several / farm / s / . / 
-
-> / inaddition / , / the / earth / quake / gene / ra / ted / at / sun / ami / that / reach / ed / asfaras / japan / . / 
-
-> / 4 / 7 / 8 / ( / 1964 / ) / , / was / a / united / state / s / supreme / court / case / hold / ing / that / crimin / al / suspect / s / have / a / right / to / counsel / during / polic / e / inter / roga / tion / s / . / 
-
-> / this / speech / was / follow / ed / thene / xt / day / by / an / announc / e / m / nt / from / the / dep / artment / of / energy / that / it / wouldbe / funding / 40% / of / the / capital / cost / sof / two / large / ( / 7 / 0 / 0 / ton / per / day / ) / cell / ulos / ice / thanol / dem / onst / ration / plan / t / s / . / 
-
-> / such / person / nel / are / direct / ly / appoint / ed / by / emperor / palpat / ine / and / out / rank / all / imperial / person / nel / , / military / and / civil / . / 
-
-> / its / govern / ingbody / was / the / na / tional / counci / l / ( / na / rod / no / v / i / je / e / ) / , / compos / ed / adhoc / of / influential / politi / cian / s / atthe / time / . / 
-
-> / also / , / lwow / and / gdynia / were / connected / with / the / capital / of / the / protect / or / ate / of / bohemi / a / - / moravia / . / 

@@ -126,20 +126,20 @@ def main():
 		trainer.gibbs()				# 新しい状態系列をギブスサンプリング
 		trainer.sample_hpylm_vpylm_hyperparameters()	# HPYLMとVPYLMのハイパーパラメータの更新
 		trainer.sample_lambda()		# λの更新
-		trainer.print_segmentation_dev(10)
 
+		# p(k|VPYLM)の推定は数イテレーション後にやるほうが精度が良い
 		if epoch > 3:
 			trainer.update_p_k_given_vpylm()
+			
+		model.save(os.path.join(args.working_directory, "npylm.model"))
 
 		# ログ
 		elapsed_time = time.time() - start
 		printr("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
-		if epoch % 100 == 0:
+		if epoch % 10 == 0:
 			printr("")
 			trainer.print_segmentation_train(10)
-		if epoch % 100 == 0:
-			printr("")
-			model.save(os.path.join(args.working_directory, "npylm.model"))
+			print("ppl_dev: {}".format(trainer.compute_perplexity_dev()))
 
 if __name__ == "__main__":
 	main()

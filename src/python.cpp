@@ -30,6 +30,8 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("sample_hpylm_vpylm_hyperparameters", &Trainer::sample_hpylm_vpylm_hyperparameters)
 	.def("sample_lambda", &Trainer::sample_lambda)
 	.def("update_p_k_given_vpylm", &Trainer::update_p_k_given_vpylm)
+	.def("compute_perplexity_train", &Trainer::compute_perplexity_train)
+	.def("compute_perplexity_dev", &Trainer::compute_perplexity_dev)
 	.def("gibbs", &Trainer::gibbs);
 
 	boost::python::class_<Model>("model", boost::python::init<Dataset*, int>())
