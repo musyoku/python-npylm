@@ -16,6 +16,7 @@ namespace npylm {
 		for(int i = 0;i < corpus->get_num_sentences();i++){
 			rand_indices.push_back(i);
 		}
+		// まず教師なし学習用のデータをtrain/devに振り分ける
 		sampler::set_seed(seed);
 		shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
 		train_split = std::min(1.0, std::max(0.0, train_split));
@@ -32,6 +33,25 @@ namespace npylm {
 				_max_sentence_length = sentence_str.size();
 			}
 			sum_sentence_length += sentence_str.size();
+		}
+		// 教師分割データがあればすべてtrainに追加
+		for(int i = 0;i < corpus->get_num_true_segmentations();i++){
+			// 分割から元の文を復元
+			std::vector<std::wstring> &words = corpus->_word_sequence_list[i];
+			std::vector<int> segmentation;
+			std::wstring sentence_str;
+			for(auto word_str: words){
+				sentence_str += word_str;
+				segmentation.push_back(word_str.size());
+			}
+			// 構成文字を辞書に追加
+			for(wchar_t character: sentence_str){
+				_dict->add_character(character);
+			}
+			// データセットに追加
+			Sentence* sentence = new Sentence(sentence_str, true);
+			sentence->split(segmentation);		// 分割
+			_sentence_sequences_train.push_back(sentence);
 		}
 		_avg_sentence_length = sum_sentence_length / (double)corpus->get_num_sentences();
 	}

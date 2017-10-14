@@ -11,13 +11,16 @@ namespace npylm {
 		int _num_segments;	// <bos>2つと<eos>1つを含める
 		int* _segments;		// 各単語の長さが入る. <bos>2つが先頭に来る
 		int* _start;		// <bos>2つが先頭に来る
+		bool _supervised;	// 教師データかどうか
 		wchar_t const* _characters; // _sentence_strの各文字
 		id* _word_ids;		// <bos>2つと<eos>1つを含める
 		std::wstring _sentence_str;	// 生の文データ
 		Sentence(std::wstring sentence);
+		Sentence(std::wstring sentence, bool supervised);
 		~Sentence();
 		Sentence* copy();
 		int size();
+		bool is_supervised();
 		int get_num_segments();
 		int get_num_segments_without_special_tokens();
 		int get_word_length_at(int t);

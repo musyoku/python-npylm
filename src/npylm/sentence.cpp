@@ -28,6 +28,10 @@ namespace npylm {
 		_start[2] = 0;
 		_start[3] = _sentence_str.size();
 		_num_segments = 4;
+		_supervised = false;
+	}
+	Sentence::Sentence(std::wstring sentence, bool supervised): Sentence(sentence){
+		_supervised = supervised;
 	}
 	Sentence::~Sentence(){
 		delete[] _segments;
@@ -37,6 +41,9 @@ namespace npylm {
 	Sentence* Sentence::copy(){
 		Sentence* sentence = new Sentence(_sentence_str);
 		return sentence;
+	}
+	bool Sentence::is_supervised(){
+		return _supervised;
 	}
 	int Sentence::size(){
 		return _sentence_str.size();

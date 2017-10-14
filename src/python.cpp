@@ -13,6 +13,7 @@ BOOST_PYTHON_MODULE(npylm){
 
 	boost::python::class_<Corpus>("corpus")
 	.def("add_textfile", &Corpus::add_textfile)
+	.def("add_true_segmentation", &Corpus::python_add_true_segmentation)
 	.def("add_sentence", &Corpus::add_sentence);
 
 	boost::python::class_<Dataset>("dataset", boost::python::init<Corpus*, double, int>())
