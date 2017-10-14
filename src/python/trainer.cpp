@@ -13,10 +13,10 @@ namespace npylm {
 		_lattice = new Lattice(model->_npylm, model->get_max_word_length(), dataset->get_max_sentence_length());
 		_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
 		_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
-		_added_npylm_train = new bool[dataset->_sentence_sequences_train.size()];
+		_added_to_npylm_train = new bool[dataset->_sentence_sequences_train.size()];
 		for(int data_index = 0;data_index < dataset->_sentence_sequences_train.size();data_index++){
 			_rand_indices_train.push_back(data_index);
-			_added_npylm_train[data_index] = false;
+			_added_to_npylm_train[data_index] = false;
 		}
 		for(int data_index = 0;data_index < dataset->_sentence_sequences_dev.size();data_index++){
 			_rand_indices_dev.push_back(data_index);
@@ -174,8 +174,28 @@ namespace npylm {
 			int data_index = _rand_indices_train[step - 1];
 			assert(data_index < _dataset->_sentence_sequences_train.size());
 			Sentence* sentence = _dataset->_sentence_sequences_train[data_index];
+
+			// 教師あり
+			if(sentence->is_supervised()){
+				// モデルに追加されているかチェック
+				if(_added_to_npylm_train[data_index] == true){
+					// 古い分割をモデルから削除
+					for(int t = 2;t < sentence->get_num_segments();t++){
+						_model->_npylm->remove_customer_at_time_t(sentence, t);
+					}
+				}
+				// 同じ分割結果を再度モデルに追加
+				// ？？？「同じ分割を追加するなら最初から削除しなければ良いのでは？」
+				// 追加と削除を繰り返すことでHPYLMとVPYLMのパラメータ（客の配置）がギブスサンプリングされるので必要
+				for(int t = 2;t < sentence->get_num_segments();t++){
+					_model->_npylm->add_customer_at_time_t(sentence, t);
+				}
+				_added_to_npylm_train[data_index] = true;
+				continue;
+			}
+			// 教師なし
 			// モデルに追加されているかチェック
-			if(_added_npylm_train[data_index] == true){
+			if(_added_to_npylm_train[data_index] == true){
 				double old_log_ps, new_log_ps;
 				// 古い分割をモデルから削除
 				for(int t = 2;t < sentence->get_num_segments();t++){
@@ -211,7 +231,6 @@ namespace npylm {
 				std::vector<int> b = segments;
 				assert(a.size() == b.size());
 				for(int i = 0;i < a.size();i++){
-					// cout << a[i] << "," << b[i] << endl;
 					assert(a[i] == b[i]);
 				}
 				#endif
@@ -236,7 +255,7 @@ namespace npylm {
 			for(int t = 2;t < sentence->get_num_segments();t++){
 				_model->_npylm->add_customer_at_time_t(sentence, t);
 			}
-			_added_npylm_train[data_index] = true;
+			_added_to_npylm_train[data_index] = true;
 		}
 		// 客数チェック
 		assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
@@ -252,7 +271,7 @@ namespace npylm {
 			}
 			Sentence* sentence = _dataset->_sentence_sequences_train[data_index];
 			// 古い分割をモデルから削除
-			if(_added_npylm_train[data_index] == true){
+			if(_added_to_npylm_train[data_index] == true){
 				for(int t = 2;t < sentence->get_num_segments();t++){
 					_model->_npylm->remove_customer_at_time_t(sentence, t);
 				}

@@ -19,7 +19,7 @@ namespace npylm {
 		double* _vpylm_sampling_probability_table;
 		wchar_t* _vpylm_sampling_id_table;
 		bool _always_accept_new_segmentation;
-		bool* _added_npylm_train;
+		bool* _added_to_npylm_train;
 		int _num_segmentation_rejection;
 		int _num_segmentation_acceptance;
 		void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
