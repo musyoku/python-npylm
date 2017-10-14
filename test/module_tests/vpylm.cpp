@@ -241,6 +241,37 @@ void test_add_customer(){
 	delete[] token_ids;
 }
 
+void test_remove_customer(){
+	VPYLM* vpylm = new VPYLM(0.001, 1000, 4, 1);
+	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
+	Sentence* sentence = new Sentence(sentence_str);
+	wchar_t* token_ids = new wchar_t[sentence->size() + 2];
+	wrap_bow_eow(sentence->_characters, 0, sentence->size() - 1, token_ids);
+	for(int n = 0;n < 100;n++){
+		for(int t = 0;t < sentence->size();t++){
+			for(int depth_t = 0;depth_t <= t;depth_t++){
+				vpylm->add_customer_at_time_t(token_ids, t, depth_t);
+			}
+		}
+	}
+	for(int n = 0;n < 100;n++){
+		for(int t = 0;t < sentence->size();t++){
+			for(int depth_t = 0;depth_t <= t;depth_t++){
+				vpylm->remove_customer_at_time_t(token_ids, t, depth_t);
+			}
+		}
+	}
+
+	assert(vpylm->get_num_customers() == 0);
+	assert(vpylm->get_num_tables() == 0);
+	assert(vpylm->get_sum_stop_counts() == 0);
+	assert(vpylm->get_sum_pass_counts() == 0);
+
+	delete sentence;
+	delete vpylm;
+	delete[] token_ids;
+}
+
 void test_sample_depth_at_timestep(){
 	sampler::mt.seed(0);
 	VPYLM* vpylm = new VPYLM(0.001, 1000, 4, 1);
@@ -281,6 +312,8 @@ int main(){
 	test_find_node_by_tracing_back_context();
 	cout << "OK" << endl;
 	test_add_customer();
+	cout << "OK" << endl;
+	test_remove_customer();
 	cout << "OK" << endl;
 	test_sample_depth_at_timestep();
 	cout << "OK" << endl;

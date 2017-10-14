@@ -21,7 +21,12 @@ namespace npylm {
 	public:
 		lm::HPYLM* _hpylm;	// 単語n-gram
 		lm::VPYLM* _vpylm;	// 文字n-gram
-		hashmap<id, std::vector<std::vector<int>>> _prev_depths_for_token_at_table;
+
+		// 単語uni-gramノードで新たなテーブルが作られた時はVPYLMからその単語が生成されたと判断し、単語の文字列をVPYLMに追加する
+		// その時各文字がVPYLMのどの深さに追加されたかを保存する
+		// 単語uni-gramノードのテーブルごと、単語IDごとに保存する必要がある
+		hashmap<id, std::vector<std::vector<int>>> _prev_depth_at_table_of_token;
+
 		hashmap<id, double> _g0_cache;
 		hashmap<id, double> _vpylm_g0_cache;
 		double* _lambda_for_type;

@@ -29,6 +29,6 @@ using id = size_t;
 #define VPYLM_EPS 1e-12
 
 #define ID_BOS 0
-#define ID_EOS 0
 #define ID_BOW 0
-#define ID_EOW 0
+#define ID_EOS 1
+#define ID_EOW 2

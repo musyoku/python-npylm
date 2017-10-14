@@ -39,7 +39,7 @@ namespace npylm {
 		_characters = new wchar_t[max_sentence_length + 2]; 	// <bow>と<eow>を含める
 		_pk_vpylm = new double[max_word_length + 2]; 			// kが1スタート、かつk > max_word_length用の領域も必要なので+2
 		for(int k = 1;k < max_word_length + 2;k++){
-			_pk_vpylm[k] = 0;
+			_pk_vpylm[k] = 1.0 / (max_word_length + 2);
 		}
 
 		#ifdef __DEBUG__
@@ -93,21 +93,21 @@ namespace npylm {
 		int substr_char_t_start = sentence->_start[t];
 		int substr_char_t_end = sentence->_start[t] + sentence->_segments[t] - 1;
 		node->add_customer(token_t, _hpylm_parent_pw_cache, _hpylm->_d_m, _hpylm->_theta_m, true, added_table_k);
-		if(token_t == ID_EOS){
-			int added_to_table_k;
-			_vpylm->_root->add_customer(token_t, _vpylm->_g0, _vpylm->_d_m, _vpylm->_theta_m, true, added_to_table_k);
-			return true;
-		}
 		int num_tables_after = _hpylm->_root->_num_tables;
+		// 単語unigramノードでテーブル数が増えた場合VPYLMに追加
 		if(num_tables_before < num_tables_after){
+			_g0_cache.clear();
+			if(token_t == ID_EOS){
+				_vpylm->_root->add_customer(token_t, _vpylm->_g0, _vpylm->_d_m, _vpylm->_theta_m, true, added_table_k);
+				return true;
+			}
 			assert(added_table_k != -1);
-			std::vector<std::vector<int>> &depths = _prev_depths_for_token_at_table[token_t];
+			std::vector<std::vector<int>> &depths = _prev_depth_at_table_of_token[token_t];
 			assert(depths.size() <= added_table_k);	// 存在してはいけない
 			std::vector<int> prev_depths;
 			vpylm_add_customers(sentence->_characters, substr_char_t_start, substr_char_t_end, _characters, prev_depths);
 			assert(prev_depths.size() == substr_char_t_end - substr_char_t_start + 3);
 			depths.push_back(prev_depths);
-			_g0_cache.clear();
 		}
 		return true;
 	}
@@ -135,15 +135,19 @@ namespace npylm {
 		int substr_char_t_start = sentence->_start[t];
 		int substr_char_t_end = sentence->_start[t] + sentence->_segments[t] - 1;
 		node->remove_customer(token_t, true, removed_from_table_k);
+
+		// 単語unigramノードでテーブル数が増えた場合VPYLMから削除
 		int num_tables_after = _hpylm->_root->_num_tables;
-		if(token_t == ID_EOS){
-			_vpylm->_root->remove_customer(token_t, true, removed_from_table_k);
-			return true;
-		}
 		if(num_tables_before > num_tables_after){
+			_g0_cache.clear();
+			if(token_t == ID_EOS){
+				// <eos>は文字列に分解できないので常にVPYLMのルートノードに追加されている
+				_vpylm->_root->remove_customer(token_t, true, removed_from_table_k);
+				return true;
+			}
 			assert(removed_from_table_k != -1);
-			auto itr = _prev_depths_for_token_at_table.find(token_t);
-			assert(itr != _prev_depths_for_token_at_table.end());
+			auto itr = _prev_depth_at_table_of_token.find(token_t);
+			assert(itr != _prev_depth_at_table_of_token.end());
 			std::vector<std::vector<int>> &depths = itr->second;
 			assert(removed_from_table_k < depths.size());
 			// 客を除外
@@ -152,7 +156,6 @@ namespace npylm {
 			vpylm_remove_customers(sentence->_characters, substr_char_t_start, substr_char_t_end, _characters, prev_depths);
 			// シフト
 			depths.erase(depths.begin() + removed_from_table_k);
-			_g0_cache.clear();
 		}
 		if(node->need_to_remove_from_parent()){
 			node->remove_from_parent();
@@ -269,18 +272,14 @@ namespace npylm {
 				_g0_cache[word_t_id] = pw;
 				return pw;
 			}
-			double p_k_vpylm = compute_p_k_given_vpylm(word_length);
-			if(p_k_vpylm == 0){
-				_g0_cache[word_t_id] = pw;
-				return pw;
-			}
+			double p_k_given_vpylm = compute_p_k_given_vpylm(word_length);
 			int type = wordtype::detect_word_type_substr(characters, substr_char_t_start, substr_char_t_end);
 			assert(type <= WORDTYPE_NUM_TYPES);
 			assert(type > 0);
 			double lambda = _lambda_for_type[type];
 			double poisson = compute_poisson_k_lambda(word_length, lambda);
 			assert(poisson > 0);
-			double g0 = pw * poisson / p_k_vpylm;
+			double g0 = pw * poisson / p_k_given_vpylm;
 			if((0 < g0 && g0 < 1) == false){
 				for(int u = 0;u < character_ids_length;u++){
 					std::wcout << characters[u];
@@ -288,7 +287,7 @@ namespace npylm {
 				std::wcout << std::endl;
 				std::cout << pw << std::endl;
 				std::cout << poisson << std::endl;
-				std::cout << p_k_vpylm << std::endl;
+				std::cout << p_k_given_vpylm << std::endl;
 				std::cout << g0 << std::endl;
 				std::cout << word_length << std::endl;
 			}
