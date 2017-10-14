@@ -260,6 +260,32 @@ namespace npylm {
 		assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
 		delete[] old_segments;
 	}
+	double Trainer::compute_perplexity_train(){
+		return _compute_perplexity(_dataset->_sentence_sequences_train);
+	}
+	double Trainer::compute_perplexity_dev(){
+		return _compute_perplexity(_dataset->_sentence_sequences_dev);
+	}
+	double Trainer::_compute_perplexity(std::vector<Sentence*> &dataset){
+		if(dataset.size() == 0){
+			return 0;
+		}
+		double ppl = 0;
+		int num_sentences = dataset.size();
+		std::vector<int> segments;		// 分割の一時保存用
+		for(int data_index = 0;data_index < num_sentences;data_index++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return 0;		
+			}
+			Sentence* sentence = dataset[data_index]->copy();	// 干渉を防ぐためコピー
+			_model->_lattice->viterbi_decode(sentence, segments);
+			sentence->split(segments);
+			ppl += _model->_npylm->compute_log_p_w(sentence) / ((double)sentence->get_num_segments() - 2);
+			delete sentence;
+		}
+		ppl = exp(-ppl / num_sentences);
+		return ppl;
+	}
 	// デバッグ用
 	void Trainer::remove_all_data(){
 		int max_sentence_length = _dataset->get_max_sentence_length();

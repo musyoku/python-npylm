@@ -101,6 +101,7 @@ def main():
 		trainer.sample_hpylm_vpylm_hyperparameters()	# HPYLMとVPYLMのハイパーパラメータの更新
 		trainer.sample_lambda()		# λの更新
 
+		# p(k|VPYLM)の推定は数イテレーション後にやるほうが精度が良い
 		if epoch > 3:
 			trainer.update_p_k_given_vpylm()
 
@@ -110,6 +111,7 @@ def main():
 		if epoch % 100 == 0:
 			printr("")
 			trainer.print_segmentation_train(10)
+			print("ppl_dev: {}".format(trainer.compute_perplexity_dev()))
 		if epoch % 100 == 0:
 			printr("")
 			model.save(os.path.join(args.working_directory, "npylm.model"))
