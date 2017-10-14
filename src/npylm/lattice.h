@@ -5,8 +5,8 @@
 
 namespace npylm {
 	namespace lattice {
-		void init_alpha(double*** &alpha, int size, int max_word_length);
-		void delete_alpha(double*** &alpha, int size, int max_word_length);
+		void _init_alpha(double*** &alpha, int size, int max_word_length);
+		void _delete_alpha(double*** &alpha, int size, int max_word_length);
 	}
 	class Lattice {
 	public:
@@ -25,6 +25,8 @@ namespace npylm {
 		Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length);
 		~Lattice();
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
+		void allocate_arrays(int max_word_length, int max_sentence_length);
+		void delete_arrays();
 		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** normalized_alpha);
 		void forward_filtering(Sentence* sentence, double*** normalized_alpha);
 		void backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** backward_alpha);

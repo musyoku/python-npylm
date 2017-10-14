@@ -2,7 +2,6 @@
 #include <boost/python.hpp>
 #include <vector>
 #include <cassert>
-#include "../npylm/lattice.h"
 #include "dataset.h"
 #include "model.h"
 #include "dictionary.h"
@@ -15,7 +14,6 @@ namespace npylm {
 		Dataset* _dataset;
 		Dictionary* _dict;
 		Model* _model;
-		Lattice* _lattice;			// forward filtering-backward sampling
 		double* _vpylm_sampling_probability_table;
 		wchar_t* _vpylm_sampling_id_table;
 		bool _always_accept_new_segmentation;

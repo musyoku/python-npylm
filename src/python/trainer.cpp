@@ -10,7 +10,6 @@ namespace npylm {
 		_dataset = dataset;
 		_model = model;
 		_dict = dataset->_dict;
-		_lattice = new Lattice(model->_npylm, model->get_max_word_length(), dataset->get_max_sentence_length());
 		_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
 		_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
 		_added_to_npylm_train = new bool[dataset->_sentence_sequences_train.size()];
@@ -220,14 +219,14 @@ namespace npylm {
 				#endif
 
 				// 新しい分割を取得
-				_lattice->blocked_gibbs(sentence, segments, true);
+				_model->_lattice->blocked_gibbs(sentence, segments, true);
 				sentence->split(segments);
 				
 				#ifdef __DEBUG__
 				// 正規化しない場合の結果と比較
 				std::vector<int> a = segments;
 				sampler::mt.seed(seed);
-				_lattice->blocked_gibbs(sentence, segments, false);
+				_model->_lattice->blocked_gibbs(sentence, segments, false);
 				std::vector<int> b = segments;
 				assert(a.size() == b.size());
 				for(int i = 0;i < a.size();i++){
@@ -295,7 +294,7 @@ namespace npylm {
 			}
 			int data_index = rand_indices[n];
 			Sentence* sentence = dataset[data_index]->copy();
-			_lattice->blocked_gibbs(sentence, segments, true);
+			_model->_lattice->blocked_gibbs(sentence, segments, true);
 			sentence->split(segments);
 			sentence->dump_words();
 			delete sentence;

@@ -75,10 +75,3 @@ namespace npylm {
 			int word_t_index, int substr_char_t_start, int substr_char_t_end);
 	};
 } // namespace npylm
-
-namespace boost { namespace serialization {
-	template<class Archive>
-	void save(Archive &archive, const npylm::NPYLM &npylm, unsigned int version);
-	template<class Archive>
-	void load(Archive &archive, npylm::NPYLM &npylm, unsigned int version);
-}} // namespace boost::serialization

@@ -4,16 +4,16 @@ INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
 LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib
 SOFLAGS = -shared -fPIC -march=native
 
-install: ## Python用ライブラリをコンパイル
+install: ## npylm.soを生成
 	$(CC) $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
 	cp run/npylm.so run/semi-supervised/npylm.so
 	cp run/npylm.so run/unsupervised/npylm.so
 	rm -rf run/npylm.so
 
-install_ubuntu: ## Python用ライブラリをコンパイル
+install_ubuntu: ## npylm.soを生成
 	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
-	cp run/npylm.so run/unsupervised/npylm.so
 	cp run/npylm.so run/semi-supervised/npylm.so
+	cp run/npylm.so run/unsupervised/npylm.so
 	rm -rf run/npylm.so
 
 check_includes:	## Python.hの場所を確認
@@ -32,7 +32,7 @@ module_tests: ## 各モジュールのテスト.
 	$(CC) test/module_tests/hash.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/module_tests/hash $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/hash
 
-running_tests:	## テスト
+running_tests:	## 運用テスト
 	$(CC) test/running_tests/save.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/running_tests/save $(INCLUDE) $(LDFLAGS) -O3 -Wall
 	$(CC) test/running_tests/train.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall
 

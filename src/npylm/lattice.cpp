@@ -10,7 +10,7 @@
 
 namespace npylm {
 	namespace lattice {
-		void init_alpha(double*** &alpha, int size, int max_word_length){
+		void _init_alpha(double*** &alpha, int size, int max_word_length){
 			alpha = new double**[size];
 			assert(alpha != NULL);
 			for(int t = 0;t < size;t++){
@@ -25,7 +25,7 @@ namespace npylm {
 				}
 			}
 		}
-		void delete_alpha(double*** &alpha, int size, int max_word_length){
+		void _delete_alpha(double*** &alpha, int size, int max_word_length){
 			if(alpha == NULL){
 				return;
 			}
@@ -50,6 +50,13 @@ namespace npylm {
 		_backward_sampling_table = NULL;
 		_viterbi_backward = NULL;
 		_substring_word_id_cache = NULL;
+		allocate_arrays(max_word_length, max_sentence_length);
+	}
+	Lattice::~Lattice(){
+		delete[] _word_ids;
+		delete_arrays();
+	}
+	void Lattice::allocate_arrays(int max_word_length, int max_sentence_length){
 		_max_word_length = max_word_length;
 		_max_sentence_length = max_sentence_length;
 		// 必要な配列の初期化
@@ -72,9 +79,9 @@ namespace npylm {
 		_backward_sampling_table = new double[max_word_length * max_word_length];
 		assert(_backward_sampling_table != NULL);
 		// 前向き確率
-		lattice::init_alpha(_alpha, size, max_word_length);
+		lattice::_init_alpha(_alpha, size, max_word_length);
 		// 正規化後の前向き確率
-		lattice::init_alpha(_normalized_alpha, size, max_word_length);
+		lattice::_init_alpha(_normalized_alpha, size, max_word_length);
 		// 3-gram確率のキャッシュ
 		_pw_h = new double***[size];
 		assert(_pw_h != NULL);
@@ -104,49 +111,33 @@ namespace npylm {
 			}
 		}
 	}
-	Lattice::~Lattice(){
-		delete[] _word_ids;
-		if(_log_z != NULL){
-			delete[] _log_z;
-			_log_z = NULL;
-		}
+	void Lattice::delete_arrays(){
+		delete[] _log_z;
 		int size = _max_sentence_length + 1;
-		lattice::delete_alpha(_alpha, size, _max_word_length);
-		lattice::delete_alpha(_normalized_alpha, size, _max_word_length);
-		if(_substring_word_id_cache != NULL){
-			for(int t = 0;t < size;t++){
-				delete[] _substring_word_id_cache[t];
-			}
-			delete[] _substring_word_id_cache;
-			_substring_word_id_cache = NULL;
+		lattice::_delete_alpha(_alpha, size, _max_word_length);
+		lattice::_delete_alpha(_normalized_alpha, size, _max_word_length);
+		for(int t = 0;t < size;t++){
+			delete[] _substring_word_id_cache[t];
 		}
-		if(_viterbi_backward != NULL){
-			for(int t = 0;t < size;t++){
-				for(int k = 0;k < _max_word_length + 1;k++){
-					delete[] _viterbi_backward[t][k];
+		delete[] _substring_word_id_cache;
+		for(int t = 0;t < size;t++){
+			for(int k = 0;k < _max_word_length + 1;k++){
+				delete[] _viterbi_backward[t][k];
+			}
+			delete[] _viterbi_backward[t];
+		}
+		delete[] _viterbi_backward;
+		delete[] _backward_sampling_table;
+		for(int t = 0;t < size;t++){
+			for(int k = 0;k < _max_word_length + 1;k++){
+				for(int j = 0;j < _max_word_length + 1;j++){
+					delete[] _pw_h[t][k][j];
 				}
-				delete[] _viterbi_backward[t];
+				delete[] _pw_h[t][k];
 			}
-			delete[] _viterbi_backward;
-			_viterbi_backward = NULL;
+			delete[] _pw_h[t];
 		}
-		if(_backward_sampling_table != NULL){
-			delete[] _backward_sampling_table;
-			_backward_sampling_table = NULL;
-		}
-		if(_pw_h != NULL){
-			for(int t = 0;t < size;t++){
-				for(int k = 0;k < _max_word_length + 1;k++){
-					for(int j = 0;j < _max_word_length + 1;j++){
-						delete[] _pw_h[t][k][j];
-					}
-					delete[] _pw_h[t][k];
-				}
-				delete[] _pw_h[t];
-			}
-			delete[] _pw_h;
-			_pw_h = NULL;
-		}
+		delete[] _pw_h;
 	}
 	id Lattice::get_substring_word_id_at_t_k(Sentence* sentence, int t, int k){
 		assert(t < _max_sentence_length + 1);

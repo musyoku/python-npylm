@@ -66,7 +66,7 @@ def main():
 	parser.add_argument("--seed", type=int, default=1)
 	parser.add_argument("--epochs", "-e", type=int, default=100000, help="総epoch")
 	parser.add_argument("--working-directory", "-cwd", type=str, default="out", help="ワーキングディレクトリ")
-	parser.add_argument("--train-split", "-split", type=float, default=0.9, help="テキストデータの何割を訓練データにするか")
+	parser.add_argument("--train-split", "-train-split", type=float, default=0.9, help="テキストデータの何割を訓練データにするか")
 	parser.add_argument("--semisupervised-split", "-ssl-split", type=float, default=0.1, help="テキストデータの何割を教師データにするか")
 
 	parser.add_argument("--lambda-a", "-lam-a", type=float, default=4)

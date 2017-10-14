@@ -1,6 +1,7 @@
 #pragma once
 #include <boost/python.hpp>
 #include "../npylm/npylm.h"
+#include "../npylm/lattice.h"
 #include "dataset.h"
 #include "dictionary.h"
 
@@ -10,6 +11,7 @@ namespace npylm {
 		void _set_locale();
 	public:
 		NPYLM* _npylm;
+		Lattice* _lattice;			// forward filtering-backward sampling
 		Model(Dataset* dataset, int max_word_length);
 		Model(Dataset* dataset, 
 			int max_word_length, 
@@ -26,5 +28,6 @@ namespace npylm {
 		void set_vpylm_beta_pass(double pass);
 		bool load(std::string filename);
 		bool save(std::string filename);
+		boost::python::list parse(std::wstring sentence_str);
 	};
 }
