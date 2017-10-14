@@ -1,7 +1,6 @@
 #pragma once
 #include <unordered_map>
 #include "hashmap/hashmap.h"
-// #include "hashmap/splay_map.h"
 #include "hashmap/flat_hashmap.h"
 
 #ifdef __NO_INLINE__
@@ -9,11 +8,10 @@
 #endif
 
 template<class K, class V>
-using hashmap = ska::flat_hash_map<K, V, ska::power_of_two_std_hash<K>>;
+using hashmap = ska::flat_hash_map<K, V, ska::power_of_two_std_hash<K>>;	// これが最速
 // using hashmap = ska::flat_hash_map<K, V>;
-// using hashmap = std::unordered_map<K, V>;
 // using hashmap = emilib::HashMap<K, V>;
-// using hashmap = pl::SplayTree<K, V>;
+// using hashmap = std::unordered_map<K, V>;
 
 using id = size_t;
 

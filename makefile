@@ -31,6 +31,7 @@ module_tests: ## 各モジュールのテスト.
 	./test/module_tests/hash
 
 running_tests:	## テスト
+	$(CC) test/running_tests/save.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/running_tests/save $(INCLUDE) $(LDFLAGS) -O3 -Wall
 	$(CC) test/running_tests/train.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall
 
 .PHONY: help
