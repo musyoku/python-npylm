@@ -54,6 +54,13 @@ namespace npylm {
 		delete[] _characters;
 		delete[] _pk_vpylm;
 	}
+	void NPYLM::allocate_arrays(int max_sentence_length){
+		_max_sentence_length = max_sentence_length;
+		_characters = new wchar_t[max_sentence_length + 2];
+	}
+	void NPYLM::delete_arrays(){
+		delete[] _characters;
+	}
 	void NPYLM::set_vpylm_g0(double g0){
 		_vpylm->set_g0(g0);
 	}
