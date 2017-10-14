@@ -1,7 +1,7 @@
-#pragma once
+#include "hash.h"
+
 namespace npylm{
-	size_t load_bytes(const char* p, int n)
-	{
+	size_t load_bytes(const char* p, int n){
 		size_t result = 0;
 		--n;
 		do{
@@ -32,8 +32,7 @@ namespace npylm{
 			buf += 4;
 			len -= 4;
 		}
-		switch(len)
-		{
+		switch(len){
 			case 3:
 			hash ^= static_cast<unsigned char>(buf[2]) << 16;
 			case 2:
@@ -70,13 +69,13 @@ namespace npylm{
 		return hash;
 	}
 #endif
-	size_t hash_wstring(std::wstring &str){
+	size_t hash_wstring(const std::wstring &str){
 		return hash_bytes(str.data(), str.size() * sizeof(wchar_t));
 	}
 	size_t hash_substring_ptr(wchar_t const* ptr, int start, int end){
 		return hash_bytes(ptr + start, (end - start + 1) * sizeof(wchar_t));
 	}
-	size_t hash_substring(std::wstring &str, int start, int end){
+	size_t hash_substring(const std::wstring &str, int start, int end){
 		wchar_t const* ptr = str.data();
 		return hash_substring_ptr(ptr, start, end);
 	}

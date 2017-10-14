@@ -4,7 +4,6 @@
 //   license: you are granted a perpetual, irrevocable license to copy, modify,
 //   publish, and distribute this file as you see fit.
 #pragma once
-#include "common.h"
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -14,6 +13,7 @@
 #include <cassert>
 #include <iterator>
 #include <utility>
+#include "../common.h"
 
 namespace emilib {
 
@@ -613,7 +613,7 @@ public:
 	int     _max_probe_length = -1; // Our longest bucket-brigade is this long. ONLY when we have zero elements is this ever negative (-1).
 	size_t  _mask             = 0;  // _num_buckets minus one
 
-public:
+	friend class boost::serialization::access;
 	template <class Archive>
 	void serialize(Archive &archive, unsigned int version)
 	{

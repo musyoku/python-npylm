@@ -1,20 +1,4 @@
-#pragma once
-#include <wchar.h>
-#include <string>
-
-// ハードコード感がすごいのでもっといいやり方に変えたい
-
-#define WORDTYPE_NUM_TYPES 9
-
-#define WORDTYPE_ALPHABET 1
-#define WORDTYPE_NUMBER 2
-#define WORDTYPE_SYMBOL 3
-#define WORDTYPE_HIRAGANA 4
-#define WORDTYPE_KATAKANA 5
-#define WORDTYPE_KANJI 6
-#define WORDTYPE_KANJI_HIRAGANA 7
-#define WORDTYPE_KANJI_KATAKANA 8
-#define WORDTYPE_OTHER 9
+#include "wordtype.h"
 
 namespace npylm {
 	namespace wordtype {
@@ -103,7 +87,7 @@ namespace npylm {
 			}
 			return true;
 		}
-		int detect_word_type(wstring &word){
+		int detect_word_type(std::wstring &word){
 			int num_alphabet = 0;
 			int num_number = 0;
 			int num_symbol = 0;
