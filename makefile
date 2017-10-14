@@ -21,7 +21,9 @@ check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
 module_tests: ## 各モジュールのテスト.
+	$(CC) test/module_tests/sentence.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/module_tests/sentence $(INCLUDE) $(LDFLAGS) -O0 -g
 	$(CC) test/module_tests/hash.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/module_tests/hash $(INCLUDE) $(LDFLAGS) -O0 -g
+	./test/module_tests/sentence
 	./test/module_tests/hash
 
 running_tests:	## テスト
