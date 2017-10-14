@@ -162,7 +162,7 @@ namespace npylm {
 	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** normalized_alpha){
 		double*** forward_alpha = (normalized_alpha == NULL) ? _alpha : normalized_alpha;
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
-		wchar_t const* character_ids = sentence->_character_ids;
+		wchar_t const* characters = sentence->_characters;
 		int character_ids_length = sentence->size();
 		assert(t <= _max_sentence_length + 1);
 		assert(k <= _max_word_length);
@@ -174,7 +174,7 @@ namespace npylm {
 			_word_ids[1] = ID_BOS;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			_alpha[t][k][0] = pw_h;
 			_pw_h[t][k][0][0] = pw_h;
@@ -187,7 +187,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(forward_alpha[t - k][j][0] > 0);
 			_alpha[t][k][j] = pw_h * forward_alpha[t - k][j][0];
@@ -204,7 +204,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(i <= _max_word_length);
 			assert(_alpha[t - k][j][i] > 0);
 			double value = pw_h * forward_alpha[t - k][j][i];
@@ -343,7 +343,7 @@ namespace npylm {
 	}
 	void Lattice::sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j, double*** backward_alpha){
 		int table_index = 0;
-		wchar_t const* character_ids = sentence->_character_ids;
+		wchar_t const* characters = sentence->_characters;
 		int character_ids_length = sentence->size();
 		double sum_p = 0;
 		int limit_k = std::min(t, _max_word_length);
@@ -365,11 +365,11 @@ namespace npylm {
 				_word_ids[3] = ID_EOS;
 				double pw_h = 0;
 				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+					pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t);
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][j];
 					#ifdef __DEBUG__
-					double pw_h2 = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
+					double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
 					if(pw_h != pw_h2){
 						std::cout << "t = " << t << ", k = " << k << ", j = " << j << std::endl;
 						std::cout << "next_word_length = " << next_word_length << std::endl;
@@ -403,11 +403,11 @@ namespace npylm {
 				_word_ids[3] = ID_EOS;
 				double pw_h = 0;
 				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+					pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t);
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][0];
 					#ifdef __DEBUG__
-					double pw_h2 = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
+					double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
 					if(pw_h != pw_h2){
 						std::cout << "t = " << t << ", k = " << k << ", j = " << 0 << std::endl;
 						std::cout << "next_word_length = " << next_word_length << std::endl;
@@ -493,7 +493,7 @@ namespace npylm {
 	// ビタビアルゴリズム用
 	void Lattice::viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
-		wchar_t const* character_ids = sentence->_character_ids;
+		wchar_t const* characters = sentence->_characters;
 		int character_ids_length = sentence->size();
 		assert(t <= _max_sentence_length + 1);
 		assert(k <= _max_word_length);
@@ -505,7 +505,7 @@ namespace npylm {
 			_word_ids[1] = ID_BOS;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			_alpha[t][k][0] = log(pw_h);
 			_viterbi_backward[t][k][0] = 0;
@@ -518,7 +518,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(_alpha[t - k][j][0] != 0);
 			_alpha[t][k][j] = log(pw_h) + _alpha[t - k][j][0];
@@ -536,7 +536,7 @@ namespace npylm {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			_word_ids[3] = ID_EOS;
-			double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(i <= _max_word_length);
 			assert(_alpha[t - k][j][i] <= 0);
@@ -566,7 +566,7 @@ namespace npylm {
 	// <eos>に繋がる確率でargmax
 	void Lattice::viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j){
 		assert(t == sentence->size());
-		wchar_t const* character_ids = sentence->_character_ids;
+		wchar_t const* characters = sentence->_characters;
 		int character_ids_length = sentence->size();
 		double max_log_p = 0;
 		argmax_k = 0;
@@ -580,7 +580,7 @@ namespace npylm {
 				_word_ids[1] = word_k_id;
 				_word_ids[2] = ID_EOS;
 				_word_ids[3] = ID_EOS;
-				double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t);
 				assert(_alpha[t][k][j] <= 0);
 				double value = log(pw_h) + _alpha[t][k][j];
 				assert(value <= 0);
@@ -598,7 +598,7 @@ namespace npylm {
 				_word_ids[1] = word_k_id;
 				_word_ids[2] = word_t_id;
 				_word_ids[3] = ID_EOS;
-				double pw_h = _npylm->compute_p_w_given_h(character_ids, character_ids_length, _word_ids, 4, 2, t, t);
+				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t);
 				assert(_alpha[t][k][0] <= 0);
 				double value = log(pw_h) + _alpha[t][k][0];
 				assert(value <= 0);

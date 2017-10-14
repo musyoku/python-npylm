@@ -11,7 +11,7 @@ namespace npylm {
 		int _num_segments;	// <bos>2つと<eos>1つを含める
 		int* _segments;		// 各単語の長さが入る. <bos>2つが先頭に来る
 		int* _start;		// <bos>2つが先頭に来る
-		wchar_t const* _character_ids; // _sentence_strの各文字
+		wchar_t const* _characters; // _sentence_strの各文字
 		id* _word_ids;		// <bos>2つと<eos>1つを含める
 		std::wstring _sentence_str;	// 生の文データ
 		Sentence(std::wstring sentence);

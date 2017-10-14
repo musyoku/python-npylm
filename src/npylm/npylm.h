@@ -32,7 +32,7 @@ namespace npylm {
 		double _lambda_b;
 		// 計算高速化用
 		double* _hpylm_parent_pw_cache;
-		wchar_t* _character_ids;
+		wchar_t* _characters;
 		NPYLM(){}
 		NPYLM(int max_word_length, 
 			int max_sentence_length, 

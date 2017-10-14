@@ -7,7 +7,7 @@
 namespace npylm {
 	Sentence::Sentence(std::wstring sentence){
 		_sentence_str = sentence;
-		_character_ids = _sentence_str.data();
+		_characters = _sentence_str.data();
 		_word_ids = new id[size() + 3];
 		_segments = new int[size() + 3];
 		_start = new int[size() + 3];
@@ -56,7 +56,7 @@ namespace npylm {
 		return _word_ids[t];
 	}
 	id Sentence::get_substr_word_id(int start_index, int end_index){
-		return hash_substring_ptr(_character_ids, start_index, end_index);
+		return hash_substring_ptr(_characters, start_index, end_index);
 	}
 	std::wstring Sentence::get_substr_word_str(int start_index, int end_index){
 		std::wstring str(_sentence_str.begin() + start_index, _sentence_str.begin() + end_index + 1);
@@ -74,7 +74,7 @@ namespace npylm {
 	}
 	void Sentence::dump_characters(){
 		for(int i = 0;i < size();i++){
-			std::cout << _character_ids[i] << ",";
+			std::cout << _characters[i] << ",";
 		}
 		std::cout << std::endl;
 	}
@@ -82,7 +82,7 @@ namespace npylm {
 		std::wcout << L" / ";
 		for(int i = 2;i < _num_segments - 1;i++){
 			for(int j = 0;j < _segments[i];j++){
-				std::wcout << _character_ids[j + _start[i]];
+				std::wcout << _characters[j + _start[i]];
 			}
 			std::wcout << L" / ";
 		}

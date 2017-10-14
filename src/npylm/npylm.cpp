@@ -11,13 +11,13 @@
 namespace npylm {
 	using namespace lm;
 	// character_idsのsubstr_char_t_startからsubstr_char_t_endまでの文字列を<bow>と<eow>で挟んでwrapped_character_idsの先頭に格納
-	void wrap_bow_eow(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids){
-		wrapped_character_ids[0] = ID_BOW;
+	void wrap_bow_eow(wchar_t const* characters, int substr_char_t_start, int substr_char_t_end, wchar_t* token_ids){
+		token_ids[0] = ID_BOW;
 		int i = 0;
 		for(;i < substr_char_t_end - substr_char_t_start + 1;i++){
-			wrapped_character_ids[i + 1] = character_ids[i + substr_char_t_start];
+			token_ids[i + 1] = characters[i + substr_char_t_start];
 		}
-		wrapped_character_ids[i + 1] = ID_EOW;
+		token_ids[i + 1] = ID_EOW;
 	}
 	double factorial(double n) {
 		if (n == 0){
@@ -36,7 +36,7 @@ namespace npylm {
 
 		_max_sentence_length = max_sentence_length;
 		_max_word_length = max_word_length;
-		_character_ids = new wchar_t[max_sentence_length + 2]; 	// <bow>と<eow>を含める
+		_characters = new wchar_t[max_sentence_length + 2]; 	// <bow>と<eow>を含める
 		_pk_vpylm = new double[max_word_length + 2]; 			// kが1スタート、かつk > max_word_length用の領域も必要なので+2
 		for(int k = 1;k < max_word_length + 2;k++){
 			_pk_vpylm[k] = 0;
@@ -62,8 +62,8 @@ namespace npylm {
 		_delete_cache();
 	}
 	void NPYLM::_delete_cache(){
-		if(_character_ids != NULL){
-			delete[] _character_ids;
+		if(_characters != NULL){
+			delete[] _characters;
 		}
 		if(_pk_vpylm != NULL){
 			delete[] _pk_vpylm;
@@ -83,7 +83,7 @@ namespace npylm {
 		}
 	}
 	bool NPYLM::add_customer_at_time_t(Sentence* sentence, int t){
-		assert(_character_ids != NULL);
+		assert(_characters != NULL);
 		assert(t >= 2);
 		id token_t = sentence->get_word_id_at(t);
 		Node<id>* node = find_node_by_tracing_back_context_from_time_t(sentence, t, _hpylm_parent_pw_cache, true, false);
@@ -104,28 +104,28 @@ namespace npylm {
 			std::vector<std::vector<int>> &depths = _prev_depths_for_token_at_table[token_t];
 			assert(depths.size() <= added_table_k);	// 存在してはいけない
 			std::vector<int> prev_depths;
-			vpylm_add_customers(sentence->_character_ids, substr_char_t_start, substr_char_t_end, _character_ids, prev_depths);
+			vpylm_add_customers(sentence->_characters, substr_char_t_start, substr_char_t_end, _characters, prev_depths);
 			assert(prev_depths.size() == substr_char_t_end - substr_char_t_start + 3);
 			depths.push_back(prev_depths);
 			_g0_cache.clear();
 		}
 		return true;
 	}
-	void NPYLM::vpylm_add_customers(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids, std::vector<int> &prev_depths){
+	void NPYLM::vpylm_add_customers(wchar_t const* characters, int substr_char_t_start, int substr_char_t_end, wchar_t* token_ids, std::vector<int> &prev_depths){
 		assert(prev_depths.size() == 0);
 		// 先頭に<bow>をつける
 		assert(substr_char_t_end < _max_sentence_length);
-		wrap_bow_eow(character_ids, substr_char_t_start, substr_char_t_end, wrapped_character_ids);
-		int wrapped_character_ids_length = substr_char_t_end - substr_char_t_start + 3;	// <bow>と<eow>を考慮
+		wrap_bow_eow(characters, substr_char_t_start, substr_char_t_end, token_ids);
+		int token_ids_length = substr_char_t_end - substr_char_t_start + 3;	// <bow>と<eow>を考慮
 		// 客を追加
-		for(int char_t = 0;char_t < wrapped_character_ids_length;char_t++){
-			int depth_t = _vpylm->sample_depth_at_time_t(wrapped_character_ids, char_t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);
-			_vpylm->add_customer_at_time_t(wrapped_character_ids, char_t, depth_t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);	// キャッシュを使って追加
+		for(int char_t = 0;char_t < token_ids_length;char_t++){
+			int depth_t = _vpylm->sample_depth_at_time_t(token_ids, char_t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);
+			_vpylm->add_customer_at_time_t(token_ids, char_t, depth_t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);	// キャッシュを使って追加
 			prev_depths.push_back(depth_t);
 		}
 	}
 	bool NPYLM::remove_customer_at_time_t(Sentence* sentence, int t){
-		assert(_character_ids != NULL);
+		assert(_characters != NULL);
 		assert(t >= 2);
 		id token_t = sentence->get_word_id_at(t);
 		Node<id>* node = find_node_by_tracing_back_context_from_time_t(sentence->_word_ids, sentence->get_num_segments(), t, false, false);
@@ -149,7 +149,7 @@ namespace npylm {
 			// 客を除外
 			std::vector<int> &prev_depths = depths[removed_from_table_k];
 			assert(prev_depths.size() > 0);
-			vpylm_remove_customers(sentence->_character_ids, substr_char_t_start, substr_char_t_end, _character_ids, prev_depths);
+			vpylm_remove_customers(sentence->_characters, substr_char_t_start, substr_char_t_end, _characters, prev_depths);
 			// シフト
 			depths.erase(depths.begin() + removed_from_table_k);
 			_g0_cache.clear();
@@ -159,17 +159,17 @@ namespace npylm {
 		}
 		return true;
 	}
-	void NPYLM::vpylm_remove_customers(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids, std::vector<int> &prev_depths){
+	void NPYLM::vpylm_remove_customers(wchar_t const* characters, int substr_char_t_start, int substr_char_t_end, wchar_t* token_ids, std::vector<int> &prev_depths){
 		assert(prev_depths.size() > 0);
 		// 先頭に<bow>をつける
 		assert(substr_char_t_end < _max_sentence_length);
-		wrap_bow_eow(character_ids, substr_char_t_start, substr_char_t_end, wrapped_character_ids);
-		int wrapped_character_ids_length = substr_char_t_end - substr_char_t_start + 3;	// <bow>と<eow>を考慮
+		wrap_bow_eow(characters, substr_char_t_start, substr_char_t_end, token_ids);
+		int token_ids_length = substr_char_t_end - substr_char_t_start + 3;	// <bow>と<eow>を考慮
 		// 客を除外
-		assert(prev_depths.size() == wrapped_character_ids_length);
+		assert(prev_depths.size() == token_ids_length);
 		auto prev_depth_t = prev_depths.begin();
-		for(int char_t = 0;char_t < wrapped_character_ids_length;char_t++){
-			_vpylm->remove_customer_at_time_t(wrapped_character_ids, char_t, *prev_depth_t);
+		for(int char_t = 0;char_t < token_ids_length;char_t++){
+			_vpylm->remove_customer_at_time_t(token_ids, char_t, *prev_depth_t);
 			prev_depth_t++;
 		}
 	}
@@ -201,14 +201,14 @@ namespace npylm {
 		int substr_char_t_start = sentence->_start[word_t_index];
 		int substr_char_t_end = sentence->_start[word_t_index] + sentence->_segments[word_t_index] - 1;
 		return find_node_by_tracing_back_context_from_time_t(
-			sentence->_character_ids, sentence->size(), 
+			sentence->_characters, sentence->size(), 
 			sentence->_word_ids, sentence->get_num_segments(), 
 			word_t_index, substr_char_t_start, substr_char_t_end, 
 			parent_pw_cache, generate_node_if_needed, return_middle_node);
 	}
 	// 効率のためノードを探しながら確率も計算する
 	Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(
-			wchar_t const* character_ids, int character_ids_length, 
+			wchar_t const* characters, int character_ids_length, 
 			id const* word_ids, int word_ids_length, 
 			int word_t_index, int substr_char_t_start, int substr_char_t_end, 
 			double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node){
@@ -218,7 +218,7 @@ namespace npylm {
 		assert(substr_char_t_end >= substr_char_t_start);
 		Node<id>* node = _hpylm->_root;
 		id word_t_id = word_ids[word_t_index];
-		double parent_pw = compute_g0_substring_at_time_t(character_ids, character_ids_length, substr_char_t_start, substr_char_t_end, word_t_id);
+		double parent_pw = compute_g0_substring_at_time_t(characters, character_ids_length, substr_char_t_start, substr_char_t_end, word_t_id);
 		parent_pw_cache[0] = parent_pw;
 		for(int depth = 1;depth <= 2;depth++){
 			id context_id = ID_BOS;
@@ -239,14 +239,14 @@ namespace npylm {
 		return node;
 	}
 	// word_idは既知なので再計算を防ぐ
-	double NPYLM::compute_g0_substring_at_time_t(wchar_t const* character_ids, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id){
-		assert(_character_ids != NULL);
+	double NPYLM::compute_g0_substring_at_time_t(wchar_t const* characters, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id){
+		assert(_characters != NULL);
 		if(word_t_id == ID_EOS){
 			return _vpylm->_g0;
 		}
 
 		#ifdef __DEBUG__
-		id a = hash_substring_ptr(character_ids, substr_char_t_start, substr_char_t_end);
+		id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
 		assert(a == word_t_id);
 		#endif
 
@@ -260,11 +260,11 @@ namespace npylm {
 		auto itr = _g0_cache.find(word_t_id);
 		if(itr == _g0_cache.end()){
 			// 先頭に<bow>をつける
-			wchar_t* wrapped_character_ids = _character_ids;
-			wrap_bow_eow(character_ids, substr_char_t_start, substr_char_t_end, wrapped_character_ids);
-			int wrapped_character_ids_length = substr_char_t_end - substr_char_t_start + 3;
+			wchar_t* token_ids = _characters;
+			wrap_bow_eow(characters, substr_char_t_start, substr_char_t_end, token_ids);
+			int token_ids_length = substr_char_t_end - substr_char_t_start + 3;
 			// g0を計算
-			double pw = _vpylm->compute_p_w(wrapped_character_ids, wrapped_character_ids_length);
+			double pw = _vpylm->compute_p_w(token_ids, token_ids_length);
 			if(word_length > _max_word_length){
 				_g0_cache[word_t_id] = pw;
 				return pw;
@@ -274,7 +274,7 @@ namespace npylm {
 				_g0_cache[word_t_id] = pw;
 				return pw;
 			}
-			int type = wordtype::detect_word_type_substr(character_ids, substr_char_t_start, substr_char_t_end);
+			int type = wordtype::detect_word_type_substr(characters, substr_char_t_start, substr_char_t_end);
 			assert(type <= WORDTYPE_NUM_TYPES);
 			assert(type > 0);
 			double lambda = _lambda_for_type[type];
@@ -283,7 +283,7 @@ namespace npylm {
 			double g0 = pw * poisson / p_k_vpylm;
 			if((0 < g0 && g0 < 1) == false){
 				for(int u = 0;u < character_ids_length;u++){
-					std::wcout << character_ids[u];
+					std::wcout << characters[u];
 				}
 				std::wcout << std::endl;
 				std::cout << pw << std::endl;
@@ -332,10 +332,10 @@ namespace npylm {
 		assert(sentence->_segments[word_t_index] > 0);
 		int substr_char_t_start = sentence->_start[word_t_index];
 		int substr_char_t_end = sentence->_start[word_t_index] + sentence->_segments[word_t_index] - 1;
-		return compute_p_w_given_h(sentence->_character_ids, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_char_t_start, substr_char_t_end);
+		return compute_p_w_given_h(sentence->_characters, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_char_t_start, substr_char_t_end);
 	}
 	double NPYLM::compute_p_w_given_h(
-			wchar_t const* character_ids, int character_ids_length, 
+			wchar_t const* characters, int character_ids_length, 
 			id const* word_ids, int word_ids_length, 
 			int word_t_index, int substr_char_t_start, int substr_char_t_end){
 		assert(word_t_index < word_ids_length);
@@ -348,13 +348,13 @@ namespace npylm {
 			if(word_id != ID_EOS){
 				assert(substr_char_t_end < character_ids_length);
 				#ifdef __DEBUG__
-				id a = hash_substring_ptr(character_ids, substr_char_t_start, substr_char_t_end);
+				id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
 				assert(a == word_id);
 				#endif
 			}
 		}
 		// ノードを探しながら_hpylm_parent_pw_cacheをセット
-		Node<id>* node = find_node_by_tracing_back_context_from_time_t(character_ids, character_ids_length, word_ids, word_ids_length, word_t_index, substr_char_t_start, substr_char_t_end, _hpylm_parent_pw_cache, false, true);
+		Node<id>* node = find_node_by_tracing_back_context_from_time_t(characters, character_ids_length, word_ids, word_ids_length, word_t_index, substr_char_t_start, substr_char_t_end, _hpylm_parent_pw_cache, false, true);
 		assert(node != NULL);
 		double parent_pw = _hpylm_parent_pw_cache[node->_depth];
 		// 効率のため親の確率のキャッシュから計算
