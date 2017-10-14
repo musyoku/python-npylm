@@ -47,27 +47,12 @@ namespace npylm {
 		#endif
 	}
 	NPYLM::~NPYLM(){
-		if(_hpylm_parent_pw_cache != NULL){
-			delete[] _hpylm_parent_pw_cache;
-		}
-		if(_lambda_for_type != NULL){
-			delete[] _lambda_for_type;
-		}
-		if(_hpylm != NULL){
-			delete _hpylm;
-		}
-		if(_vpylm != NULL){
-			delete _vpylm;
-		}
-		_delete_cache();
-	}
-	void NPYLM::_delete_cache(){
-		if(_characters != NULL){
-			delete[] _characters;
-		}
-		if(_pk_vpylm != NULL){
-			delete[] _pk_vpylm;
-		}
+		delete _hpylm;
+		delete _vpylm;
+		delete[] _hpylm_parent_pw_cache;
+		delete[] _lambda_for_type;
+		delete[] _characters;
+		delete[] _pk_vpylm;
 	}
 	void NPYLM::set_vpylm_g0(double g0){
 		_vpylm->set_g0(g0);
@@ -384,7 +369,6 @@ namespace npylm {
 		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
 			archive & _lambda_for_type[type];
 		}
-
 		for(int k = 0;k <= _max_word_length + 1;k++){
 			archive & _pk_vpylm[k];
 		}
@@ -400,10 +384,12 @@ namespace npylm {
 		_pk_vpylm = new double[_max_word_length + 2];
 		_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
 
+		_hpylm_parent_pw_cache = new double[3];
+		_characters = new wchar_t[_max_sentence_length + 2];
+
 		for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
 			archive & _lambda_for_type[type];
 		}
-
 		for(int k = 0;k <= _max_word_length + 1;k++){
 			archive & _pk_vpylm[k];
 		}

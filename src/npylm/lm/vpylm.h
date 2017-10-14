@@ -14,6 +14,8 @@ namespace npylm {
 			friend class boost::serialization::access;
 			template <class Archive>
 			void serialize(Archive& archive, unsigned int version);
+			void save(boost::archive::binary_oarchive &archive, unsigned int version) const;
+			void load(boost::archive::binary_iarchive &archive, unsigned int version);
 		public:
 			double _beta_stop;		// 停止確率q_iのベータ分布の初期パラメータ
 			double _beta_pass;		// 停止確率q_iのベータ分布の初期パラメータ

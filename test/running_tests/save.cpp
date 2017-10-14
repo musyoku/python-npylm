@@ -11,7 +11,7 @@ using std::flush;
 using std::endl;
 
 template<typename T>
-void compare_node(Node<T>* a, Node<T>* b){
+void compare_node(lm::Node<T>* a, lm::Node<T>* b){
 	assert(a->_num_tables == b->_num_tables);
 	assert(a->_num_customers == b->_num_customers);
 	assert(a->_stop_count == b->_stop_count);
@@ -19,18 +19,25 @@ void compare_node(Node<T>* a, Node<T>* b){
 	assert(a->_depth == b->_depth);
 	assert(a->_token_id == b->_token_id);
 	assert(a->_arrangement.size() == b->_arrangement.size());
-	for(int i = 0;i < a->_arrangement.size();i++){
-		assert(a->_arrangement[i] == b->_arrangement[i]);
+	for(auto elem: a->_arrangement){
+		T key = elem.first;
+		std::vector<int> &table_a = elem.second;
+		std::vector<int> &table_b = b->_arrangement[key];
+		assert(table_a.size() == table_b.size());
 	}
-	assert(a->_children.size() == b->_children.size());
-	for(int i = 0;i < a->_children.size();i++){
-		compare_node(a->_children[i], b->_children[i]);
+	for(auto elem: a->_children){
+		T key = elem.first;
+		lm::Node<T>* children_a = elem.second;
+		lm::Node<T>* children_b = b->_children[key];
+		compare_node(children_a, children_b);
 	}
 }
 
 void compare_npylm(NPYLM* a, NPYLM* b){
+	assert(a != NULL);
+	assert(b != NULL);
 	compare_node(a->_hpylm->_root, b->_hpylm->_root);
-	compare_node(a->_vpylm->_root, b->_vpylm->_root)
+	compare_node(a->_vpylm->_root, b->_vpylm->_root);
 }
 
 int main(int argc, char *argv[]){
@@ -46,6 +53,7 @@ int main(int argc, char *argv[]){
 	Trainer* trainer = new Trainer(dataset, model, false);
 
 	for(int epoch = 0;epoch < 1000;epoch++){
+		cout << "\r" << epoch << flush;
 		trainer->gibbs();
 		trainer->sample_hpylm_vpylm_hyperparameters();
 		trainer->sample_lambda();

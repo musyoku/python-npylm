@@ -2,7 +2,7 @@ CC = g++
 BOOST = /usr/local/Cellar/boost/1.65.0
 INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
 LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib
-SOFLAGS = -shared -fPIC
+SOFLAGS = -shared -fPIC -march=native
 
 install: ## Python用ライブラリをコンパイル
 	$(CC) $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3

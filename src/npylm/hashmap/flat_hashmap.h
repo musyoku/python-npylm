@@ -5,6 +5,7 @@
 #pragma once
 
 #include <boost/serialization/serialization.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <cstdint>

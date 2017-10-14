@@ -1,3 +1,4 @@
+#include <boost/serialization/split_member.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
@@ -26,15 +27,9 @@ namespace npylm {
 		}
 		VPYLM::~VPYLM(){
 			_delete_node(_root);
-			if(_sampling_table != NULL){
-				delete[] _sampling_table;
-			}
-			if(_parent_pw_cache != NULL){
-				delete[] _parent_pw_cache;
-			}
-			if(_path_nodes != NULL){
-				delete[] _path_nodes;
-			}
+			delete[] _sampling_table;
+			delete[] _parent_pw_cache;
+			delete[] _path_nodes;
 		}
 		bool VPYLM::add_customer_at_time_t(wchar_t const* character_ids, int t, int depth_t){
 			assert(_parent_pw_cache != NULL);
@@ -293,8 +288,13 @@ namespace npylm {
 			return _sampling_table[sampling_table_size - 1];
 		}
 		template <class Archive>
-		void VPYLM::serialize(Archive& archive, unsigned int version)
+		void VPYLM::serialize(Archive &archive, unsigned int version)
 		{
+			boost::serialization::split_member(archive, *this, version);
+		}
+		template void VPYLM::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
+		template void VPYLM::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
+		void VPYLM::save(boost::archive::binary_oarchive &archive, unsigned int version) const {
 			archive & _root;
 			archive & _depth;
 			archive & _max_depth;
@@ -308,7 +308,22 @@ namespace npylm {
 			archive & _alpha_m;
 			archive & _beta_m;
 		}
-		template void VPYLM::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
-		template void VPYLM::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
+		void VPYLM::load(boost::archive::binary_iarchive &archive, unsigned int version) {
+			archive & _root;
+			archive & _depth;
+			archive & _max_depth;
+			archive & _beta_stop;
+			archive & _beta_pass;
+			archive & _g0;
+			archive & _d_m;
+			archive & _theta_m;
+			archive & _a_m;
+			archive & _b_m;
+			archive & _alpha_m;
+			archive & _beta_m;
+			_parent_pw_cache = new double[_max_depth + 1];
+			_sampling_table = new double[_max_depth + 1];
+			_path_nodes = new Node<wchar_t>*[_max_depth + 1];
+		}
 	};
 } // namespace npylm
