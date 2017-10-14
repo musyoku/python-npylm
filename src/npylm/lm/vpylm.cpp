@@ -57,12 +57,12 @@ namespace npylm {
 			Node<wchar_t>* node = find_node_by_tracing_back_context(character_ids, t, depth_t, path_nodes);
 			assert(node != NULL);
 			if(depth_t > 0){	// ルートノードは特殊なので無視
-				if(node->_token_id != character_ids[t - depth_t]){
-					for(int i = 0;i <= t;i++){
-						std::wcout << character_ids[i];
-					}
-					std::wcout << std::endl;
-				}
+				// if(node->_token_id != character_ids[t - depth_t]){
+				// 	for(int i = 0;i <= t;i++){
+				// 		std::wcout << character_ids[i];
+				// 	}
+				// 	std::wcout << std::endl;
+				// }
 				assert(node->_token_id == character_ids[t - depth_t]);
 			}
 			assert(node->_depth == depth_t);
@@ -108,6 +108,9 @@ namespace npylm {
 				node = child;
 			}
 			assert(node->_depth == depth_t);
+			if(depth_t > 0){
+				assert(node->_token_id == character_ids[t - depth_t]);
+			}
 			return node;
 		}
 		// add_customer用
@@ -133,6 +136,9 @@ namespace npylm {
 				node = child;
 			}
 			assert(node->_depth == depth_t);
+			if(depth_t > 0){
+				assert(node->_token_id == character_ids[t - depth_t]);
+			}
 			return node;
 		}
 		// すでに辿ったノードのキャッシュを使いながら辿る
@@ -155,6 +161,9 @@ namespace npylm {
 				}
 			}
 			assert(node != NULL);
+			if(depth_t > 0){
+				assert(node->_token_id == character_ids[t - depth_t]);
+			}
 			return node;
 		}
 		double VPYLM::compute_p_w(wchar_t const* character_ids, int character_ids_length){
