@@ -18,10 +18,60 @@
 - C++14
 - Python 3
 
-## ビルド
+
+## 準備
+
+### macOS
+
+macOSの場合、PythonとBoostはともにbrewでインストールする必要があります。
+
+#### Python 3のインストール
+
+```
+brew install python3
+```
+
+`PYTHONPATH`を変更する必要があるかもしれません。
+
+#### Boostのインストール
+
+```
+brew install boost-python --with-python3
+```
+
+### Ubuntu
+
+#### Boostのインストール
+
+```
+./bootstrap.sh --with-python=python3 --with-python-version=3.5
+./b2 python=3.5 -d2 -j4 --prefix YOUR_BOOST_DIR install
+```
+
+Pythonのバージョンを自身のものと置き換えてください。
+
+### ビルド
+
+以下のコマンドで`ithmm.so`が生成され、Pythonから利用できるようになります。
 
 ```
 make install
+```
+
+`makefile`内のBoostのパスを自身の環境に合わせて書き換えてください。
+
+Ubuntuでエラーが出る場合は代わりに以下を実行します。
+
+```
+make install_ubuntu
+```
+
+### MeCabのインストール
+
+半教師あり学習をする場合は必要です。
+
+```
+pip install mecab-python3
 ```
 
 ## 実行

@@ -112,7 +112,10 @@ namespace npylm {
 		wchar_t* wrapped_character_ids = new wchar_t[max_word_length + 2];
 		double sum_words = 0;
 		double sum_probs = 0;
-		for(int m = 0;m < num_samples;m++){
+		for(int m = 1;m <= num_samples;m++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return;		
+			}
 			// wcout << "m = " << m << endl;
 			wrapped_character_ids[0] = ID_BOW;
 			int k = 0;
@@ -131,8 +134,9 @@ namespace npylm {
 			}
 			assert(k <= max_word_length);
 			num_words_of_k[k] += 1;
-			// すべてのkが生成されているかをチェック
-			if(m % 100 == 99){
+
+			// すべてのkが生成されていたら早期終了
+			if(m % 100 == 0){
 				bool stop = true;
 				for(int k = 1;k <= max_word_length;k++){
 					if(num_words_of_k[k] < early_stopping_threshold){

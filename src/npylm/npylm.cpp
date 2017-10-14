@@ -194,6 +194,7 @@ namespace npylm {
 			}
 			node = child;
 		}
+		assert(node->_depth == 2);
 		return node;
 	}
 	// add_customer用
@@ -239,6 +240,7 @@ namespace npylm {
 			parent_pw = pw;
 			node = child;
 		}
+		assert(node->_depth == 2);
 		return node;
 	}
 	// word_idは既知なので再計算を防ぐ
@@ -268,10 +270,13 @@ namespace npylm {
 			int token_ids_length = substr_char_t_end - substr_char_t_start + 3;
 			// g0を計算
 			double pw = _vpylm->compute_p_w(token_ids, token_ids_length);
+
+			// 学習の最初のイテレーションでは文が丸ごと1単語になるので補正する意味はない
 			if(word_length > _max_word_length){
 				_g0_cache[word_t_id] = pw;
 				return pw;
 			}
+
 			double p_k_given_vpylm = compute_p_k_given_vpylm(word_length);
 			int type = wordtype::detect_word_type_substr(characters, substr_char_t_start, substr_char_t_end);
 			assert(type <= WORDTYPE_NUM_TYPES);
@@ -280,6 +285,8 @@ namespace npylm {
 			double poisson = compute_poisson_k_lambda(word_length, lambda);
 			assert(poisson > 0);
 			double g0 = pw * poisson / p_k_given_vpylm;
+
+			// ごく稀にポアソン補正で1を超えることがある
 			if((0 < g0 && g0 < 1) == false){
 				for(int u = 0;u < character_ids_length;u++){
 					std::wcout << characters[u];

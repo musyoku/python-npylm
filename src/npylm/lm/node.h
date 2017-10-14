@@ -21,7 +21,7 @@ namespace npylm {
 			public:
 			hashmap<T, Node*> _children;				// 子の文脈木
 			hashmap<T, std::vector<int>> _arrangement;		// 客の配置 std::vector<int>のk番目の要素がテーブルkの客数を表す
-			Node* _parent;								// 親ノード
+			Node<T>* _parent;								// 親ノード
 			int _num_tables;							// 総テーブル数
 			int _num_customers;							// 客の総数
 			int _stop_count;							// 停止回数. VPYLM用

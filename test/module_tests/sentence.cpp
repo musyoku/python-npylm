@@ -46,7 +46,7 @@ void test_split_by_array(){
 	Sentence* sentence = new Sentence(sentence_str);
 	int* segments_without_special_tokens = new int[4];
 	for(int i = 1;i <= sentence_str.size() - 3;i++){
-		for(int m = 1;m <= sentence_str.size() - i - 1;m++){
+		for(int m = 1;m <= sentence_str.size() - i - 2;m++){
 			for(int k = 1;k <= sentence_str.size() - i - m - 1;k++){
 				int n = sentence_str.size() - i - m - k;
 				assert(i + m + k + n == sentence_str.size());
@@ -91,7 +91,7 @@ void test_split_by_vector(){
 	Sentence* sentence = new Sentence(sentence_str);
 	std::vector<int> segments_without_special_tokens{0, 0, 0, 0};
 	for(int i = 1;i <= sentence_str.size() - 3;i++){
-		for(int m = 1;m <= sentence_str.size() - i - 1;m++){
+		for(int m = 1;m <= sentence_str.size() - i - 2;m++){
 			for(int k = 1;k <= sentence_str.size() - i - m - 1;k++){
 				int n = sentence_str.size() - i - m - k;
 				assert(i + m + k + n == sentence_str.size());
