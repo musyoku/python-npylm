@@ -16,12 +16,14 @@ namespace npylm {
 	public:
 		int _max_sentence_length;
 		int _avg_sentence_length;
+		int _num_supervised_data;
 		Dictionary* _dict;
 		std::vector<Sentence*> _sentence_sequences_train;
 		std::vector<Sentence*> _sentence_sequences_dev;
 		Dataset(Corpus* corpus, double train_split, int seed);
 		~Dataset();
 		int get_num_sentences_train();
+		int get_num_sentences_supervised();
 		int get_num_sentences_dev();
 		int get_max_sentence_length();
 		int get_average_sentence_length();

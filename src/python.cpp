@@ -21,6 +21,7 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("detect_hash_collision", &Dataset::detect_hash_collision)
 	.def("get_num_sentences_train", &Dataset::get_num_sentences_train)
 	.def("get_num_sentences_dev", &Dataset::get_num_sentences_dev)
+	.def("get_num_sentences_supervised", &Dataset::get_num_sentences_supervised)
 	.def("get_dict", &Dataset::get_dict_obj, boost::python::return_internal_reference<>());
 
 	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Model*, bool>((arg("dataset"), arg("model"), arg("always_accept_new_segmentation")=true)))

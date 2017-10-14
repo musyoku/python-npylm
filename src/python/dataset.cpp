@@ -35,6 +35,7 @@ namespace npylm {
 			sum_sentence_length += sentence_str.size();
 		}
 		// 教師分割データがあればすべてtrainに追加
+		_num_supervised_data = corpus->get_num_true_segmentations();
 		for(int i = 0;i < corpus->get_num_true_segmentations();i++){
 			// 分割から元の文を復元
 			std::vector<std::wstring> &words = corpus->_word_sequence_list[i];
@@ -76,6 +77,9 @@ namespace npylm {
 	}
 	int Dataset::get_num_sentences_dev(){
 		return _sentence_sequences_dev.size();
+	}
+	int Dataset::get_num_sentences_supervised(){
+		return _num_supervised_data;
 	}
 	void Dataset::_add_words_to_dataset(std::wstring &sentence_str, std::vector<Sentence*> &dataset){
 		assert(sentence_str.size() > 0);

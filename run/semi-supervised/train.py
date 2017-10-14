@@ -87,6 +87,7 @@ def main():
 	dataset = npylm.dataset(corpus, args.train_split, args.seed)
 
 	print("#train", dataset.get_num_sentences_train())
+	print("#train (supervised)", dataset.get_num_sentences_supervised())
 	print("#dev", dataset.get_num_sentences_dev())
 
 	# 単語辞書を保存

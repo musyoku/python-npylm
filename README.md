@@ -18,7 +18,6 @@
 - C++14
 - Python 3
 
-
 ## 準備
 
 ### macOS
@@ -74,7 +73,7 @@ make install_ubuntu
 pip install mecab-python3
 ```
 
-## 実行
+## 学習（教師なし）
 
 ```
 python train.py -f textfile.txt -l 16
