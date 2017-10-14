@@ -14,6 +14,63 @@ using std::cout;
 using std::flush;
 using std::endl;
 
+int sample_depth_at_time_t(VPYLM* vpylm, wchar_t const* token_ids, int t){
+	if(t == 0){
+		return 0;
+	}
+	wchar_t token_t = token_ids[t];
+
+	// この値を下回れば打ち切り
+	double eps = VPYLM_EPS;
+	
+	double sum = 0;
+	double p_pass = 0;
+	double parent_pw = vpylm->_g0;
+	int sampling_table_size = 0;
+	Node<wchar_t>* node = vpylm->_root;
+	for(int n = 0;n <= t;n++){
+		if(node){
+			double pw = node->compute_p_w(token_t, vpylm->_g0, vpylm->_d_m, vpylm->_theta_m);
+			double p_stop = node->stop_probability(vpylm->_beta_stop, vpylm->_beta_pass);
+			p_pass = node->pass_probability(vpylm->_beta_stop, vpylm->_beta_pass);
+			double p = pw * p_stop;
+			parent_pw = pw;
+			vpylm->_sampling_table[n] = p;
+			sampling_table_size += 1;
+			sum += p;
+			if(p_stop < eps){
+				break;
+			}
+			if(n < t){
+				wchar_t context_token_id = token_ids[t - n - 1];
+				node = node->find_child_node(context_token_id);
+			}
+		}else{
+			double p_stop = p_pass * vpylm->_beta_stop / (vpylm->_beta_stop + vpylm->_beta_pass);
+			double p = parent_pw * p_stop;
+			// probs.push_back(p);
+			vpylm->_sampling_table[n] = p;
+			sampling_table_size += 1;
+			sum += p;
+			p_pass *= vpylm->_beta_pass / (vpylm->_beta_stop + vpylm->_beta_pass);
+			if(p_stop < eps){
+				break;
+			}
+		}
+	}
+	// assert(sampling_table_size == t + 1);
+	double normalizer = 1.0 / sum;
+	double bernoulli = sampler::uniform(0, 1);
+	double stack = 0;
+	for(int n = 0;n < sampling_table_size;n++){
+		stack += vpylm->_sampling_table[n] * normalizer;
+		if(bernoulli < stack){
+			return n;
+		}
+	}
+	return vpylm->_sampling_table[sampling_table_size - 1];
+}
+
 bool add_customer_at_time_t(VPYLM* vpylm, wchar_t const* token_ids, int t, int depth_t){
 	assert(0 <= depth_t && depth_t <= t);
 	Node<wchar_t>* node = vpylm->find_node_by_tracing_back_context(token_ids, t, depth_t, true, false);
@@ -185,6 +242,33 @@ void test_add_customer(){
 	delete[] character_ids;
 }
 
+void test_sample_depth_at_timestep(){
+	sampler::mt.seed(0);
+	VPYLM* vpylm = new VPYLM(0.001, 1000, 4, 1);
+	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
+	Sentence* sentence = new Sentence(sentence_str);
+	wchar_t* character_ids = new wchar_t[sentence->size() + 2];
+	wrap_bow_eow(sentence->_character_ids, 0, sentence->size() - 1, character_ids);
+	int limit = 100;
+	for(int t = 0;t < sentence->size();t++){
+		for(int depth_t = 0;depth_t <= t;depth_t++){
+			vpylm->add_customer_at_time_t(character_ids, t, depth_t);
+		}
+	}
+	for(int t = 0;t < sentence->size();t++){
+		for(int seed = 0;seed < 256;seed++){
+			sampler::mt.seed(seed);
+			int a = vpylm->sample_depth_at_time_t(character_ids, t, vpylm->_parent_pw_cache, vpylm->_path_nodes);
+			sampler::mt.seed(seed);
+			int b = sample_depth_at_time_t(vpylm, character_ids, t);
+			assert(a == b);
+		}
+	}
+	delete sentence;
+	delete vpylm;
+	delete[] character_ids;
+}
+
 int main(){
 	setlocale(LC_CTYPE, "ja_JP.UTF-8");
 	std::ios_base::sync_with_stdio(false);
@@ -199,6 +283,8 @@ int main(){
 	test_find_node_by_tracing_back_context();
 	cout << "OK" << endl;
 	test_add_customer();
+	cout << "OK" << endl;
+	test_sample_depth_at_timestep();
 	cout << "OK" << endl;
 	return 0;
 }
