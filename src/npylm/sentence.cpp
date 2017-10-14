@@ -55,11 +55,11 @@ namespace npylm {
 		assert(t < _num_segments);
 		return _word_ids[t];
 	}
-	id Sentence::get_substr_word_id(int start, int end){
-		return hash_substring_ptr(_character_ids, start, end);
+	id Sentence::get_substr_word_id(int start_index, int end_index){
+		return hash_substring_ptr(_character_ids, start_index, end_index);
 	}
-	std::wstring Sentence::get_substr_word_str(int start, int end){
-		std::wstring str(_sentence_str.begin() + start, _sentence_str.begin() + end + 1);
+	std::wstring Sentence::get_substr_word_str(int start_index, int end_index){
+		std::wstring str(_sentence_str.begin() + start_index, _sentence_str.begin() + end_index + 1);
 		return str;
 	}
 	// <bos>を考慮

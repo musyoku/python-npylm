@@ -10,13 +10,19 @@ install: ## Python用ライブラリをコンパイル
 	rm -rf run/npylm.so
 
 install_ubuntu: ## Python用ライブラリをコンパイル
-	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/ihmm/*.cpp src/python/*.cpp -o run/ihmm.so -O3
+	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
+	cp run/npylm.so run/unsupervised/npylm.so
+	rm -rf run/npylm.so
 
 check_includes:	## Python.hの場所を確認
 	python3-config --includes
 
 check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
+
+module_tests: ## 各モジュールのテスト.
+	$(CC) test/module_tests/hash.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/module_tests/hash $(INCLUDE) $(LDFLAGS) -O0 -g
+	./test/module_tests/hash
 
 running_tests:	## テスト
 	$(CC) test/running_tests/train.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall

@@ -22,8 +22,8 @@ namespace npylm {
 		int get_num_segments_without_special_tokens();
 		int get_word_length_at(int t);
 		id get_word_id_at(int t);
-		id get_substr_word_id(int start, int end);
-		std::wstring get_substr_word_str(int start, int end);
+		id get_substr_word_id(int start_index, int end_index);				// end_indexを含む
+		std::wstring get_substr_word_str(int start_index, int end_index);	// endを含む
 		// <bos>を考慮
 		std::wstring get_word_str_at(int t);
 		void dump_characters();
