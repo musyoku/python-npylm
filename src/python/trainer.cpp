@@ -110,7 +110,6 @@ namespace npylm {
 		}
 		wchar_t* wrapped_character_ids = new wchar_t[max_word_length + 2];
 		double sum_words = 0;
-		double sum_probs = 0;
 		for(int m = 1;m <= num_samples;m++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return;		

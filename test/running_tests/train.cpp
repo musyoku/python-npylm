@@ -10,7 +10,7 @@ using std::cout;
 using std::flush;
 using std::endl;
 
-int main(int argc, char *argv[]){
+void run_training_loop(){
 	std::string filename = "../../dataset/test.txt";
 	Corpus* corpus = new Corpus();
 	corpus->add_textfile(filename);
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]){
 	dictionary->save("npylm.dict");
 	Trainer* trainer = new Trainer(dataset, model, false);
 
-	for(int epoch = 0;epoch < 1000;epoch++){
+	for(int epoch = 0;epoch < 20;epoch++){
 	    auto start_time = std::chrono::system_clock::now();
 		trainer->gibbs();
 	    auto diff = std::chrono::system_clock::now() - start_time;
@@ -32,5 +32,11 @@ int main(int argc, char *argv[]){
 		if(epoch % 10 == 0){
 			trainer->print_segmentation_train(10);
 		}
+	}
+}
+
+int main(int argc, char *argv[]){
+	for(int i = 0;i < 10;i++){
+		run_training_loop();
 	}
 }

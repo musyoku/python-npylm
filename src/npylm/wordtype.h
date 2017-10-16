@@ -2,8 +2,6 @@
 #include <wchar.h>
 #include <string>
 
-// ハードコード感がすごいのでもっといいやり方に変えたい
-
 #define WORDTYPE_NUM_TYPES 9
 
 #define WORDTYPE_ALPHABET 1

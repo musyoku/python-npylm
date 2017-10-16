@@ -1,73 +1,98 @@
+#include "ctype.h"
 #include "wordtype.h"
 
 namespace npylm {
 	namespace wordtype {
 		bool is_dash(wchar_t character){
-			if(character == 12540){
+			if(character == 0x30FC){
 				return true;
 			}
 			return false;
 		}
 		bool is_hiragana(wchar_t character){
-			if(character > 12352){
-				if(character < 12439){
-					return true;
-				}
+			int type = chartype::get_type(character);
+			if(type == CTYPE_HIRAGANA){
+				return true;
 			}
 			return is_dash(character);	// 長音はひらがなとカタカナ両方で使われる
 		}
 		bool is_katakana(wchar_t character){
-			if(character > 12448){
-				if(character < 12539){
-					return true;
-				}
+			int type = chartype::get_type(character);
+			if(type == CTYPE_KATAKANA){
+				return true;
+			}
+			if(type == CTYPE_KATAKANA_PHONETIC_EXTENSIONS){
+				return true;
 			}
 			return is_dash(character);	// 長音はひらがなとカタカナ両方で使われる
 		}
-		// 割りと大雑把に判定
 		bool is_kanji(wchar_t character){
-			if(character > 11903){
-				if(character < 12246){
-					return true;
-				}
+			int type = chartype::get_type(character);
+			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS){
+				return true;
 			}
-			if(character > 13311){
-				if(character < 19894){
-					return true;
-				}
+			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A){
+				return true;
 			}
-			if(character > 19967){
-				if(character < 40909){
-					return true;
-				}
+			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B){
+				return true;
 			}
-			if(character > 131071){
-				if(character < 173783){
-
-				}
+			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C){
+				return true;
+			}
+			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D){
+				return true;
+			}
+			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E){
+				return true;
+			}
+			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F){
+				return true;
+			}
+			if(type == CTYPE_CJK_RADICALS_SUPPLEMENT){
+				return true;
 			}
 			return false;
 
 		}
 		bool is_number(wchar_t character){
-			if(character < 48){
+			int type = chartype::get_type(character);
+			if(type == CTYPE_BASIC_LATIN){
+				if(0x30 <= character && character <= 0x39){
+					return true;
+				}
 				return false;
 			}
-			if(character > 57){
-				return false;
+			if(type == CTYPE_NUMBER_FORMS){
+				return true;
+			}
+			if(type == CTYPE_COMMON_INDIC_NUMBER_FORMS){
+				return true;
+			}
+			if(type == CTYPE_AEGEAN_NUMBERS){
+				return true;
+			}
+			if(type == CTYPE_ANCIENT_GREEK_NUMBERS){
+				return true;
+			}
+			if(type == CTYPE_COPTIC_EPACT_NUMBERS){
+				return true;
+			}
+			if(type == CTYPE_SINHALA_ARCHAIC_NUMBERS){
+				return true;
+			}
+			if(type == CTYPE_CUNEIFORM_NUMBERS_AND_PUNCTUATION){
+				return true;
 			}
 			return true;
 		}
 		bool is_alphabet(wchar_t character){
-			if(character > 64){
-				if(character < 91){
+			int type = chartype::get_type(character);
+			if(type == CTYPE_BASIC_LATIN){
+				if(0x41 <= character && character <= 0x5a){
 					return true;
 				}
-			}
-			if(character > 96){
-				if(character < 123){
-					return true;
-				}
+				return false;
 			}
 			return false;
 
