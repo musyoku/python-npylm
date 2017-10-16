@@ -110,7 +110,7 @@ def main():
 		dataset, model, 
 		# NPYLMでは通常、新しい分割結果をもとに単語nグラムモデルを更新する
 		# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に確率的に棄却する
-		always_accept_new_segmentation=True)
+		always_accept_new_segmentation=False)
 
 	# 文字列の単語IDが衝突しているかどうかをチェック
 	# 時間の無駄なので一度したらしなくてよい

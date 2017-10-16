@@ -105,6 +105,7 @@ namespace npylm {
 	}
 	void NPYLM::vpylm_add_customers(wchar_t const* characters, int substr_char_t_start, int substr_char_t_end, wchar_t* token_ids, std::vector<int> &prev_depths){
 		assert(prev_depths.size() == 0);
+		assert(substr_char_t_end >= substr_char_t_start);
 		// 先頭に<bow>をつける
 		assert(substr_char_t_end < _max_sentence_length);
 		wrap_bow_eow(characters, substr_char_t_start, substr_char_t_end, token_ids);
@@ -156,6 +157,7 @@ namespace npylm {
 	}
 	void NPYLM::vpylm_remove_customers(wchar_t const* characters, int substr_char_t_start, int substr_char_t_end, wchar_t* token_ids, std::vector<int> &prev_depths){
 		assert(prev_depths.size() > 0);
+		assert(substr_char_t_end >= substr_char_t_start);
 		// 先頭に<bow>をつける
 		assert(substr_char_t_end < _max_sentence_length);
 		wrap_bow_eow(characters, substr_char_t_start, substr_char_t_end, token_ids);
