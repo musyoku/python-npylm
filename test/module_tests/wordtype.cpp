@@ -4,6 +4,7 @@
 #include <cassert>
 #include <unordered_set>
 #include <string>
+#include "../../src/npylm/ctype.h"
 #include "../../src/npylm/wordtype.h"
 using std::cout;
 using std::flush;
@@ -43,12 +44,17 @@ void test_wordtype(){
 	type = npylm::wordtype::detect_word_type_substr(sentence_str.data(), 9, 11);
 	assert(type == WORDTYPE_KANJI_KATAKANA);
 	type = npylm::wordtype::detect_word_type_substr(sentence_str.data(), 9, 12);
-	cout << (int)sentence_str.data()[12] << endl;
 	assert(type == WORDTYPE_KANJI_KATAKANA);
 	type = npylm::wordtype::detect_word_type_substr(sentence_str.data(), 11, 11);
 	assert(type == WORDTYPE_KATAKANA);
 	type = npylm::wordtype::detect_word_type_substr(sentence_str.data(), 11, 12);
 	assert(type == WORDTYPE_KATAKANA);
+	type = npylm::wordtype::detect_word_type_substr(sentence_str.data(), 13, 14);
+	assert(type == WORDTYPE_OTHER);
+	type = npylm::wordtype::detect_word_type_substr(sentence_str.data(), 17, 18);
+	assert(type == WORDTYPE_ALPHABET);
+	type = npylm::wordtype::detect_word_type_substr(sentence_str.data(), 26, 27);
+	assert(type == WORDTYPE_OTHER);
 }
 
 int main(){

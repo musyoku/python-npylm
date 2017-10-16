@@ -88,15 +88,13 @@ namespace npylm {
 			return false;
 		}
 		bool is_alphabet(wchar_t character){
-			int type = ctype::get_type(character);
-			if(type == CTYPE_BASIC_LATIN){
-				if(0x41 <= character && character <= 0x5a){
-					return true;
-				}
-				return false;
+			if(0x41 <= character && character <= 0x5a){
+				return true;
+			}
+			if(0x61 <= character && character <= 0x7a){
+				return true;
 			}
 			return false;
-
 		}
 		bool is_symbol(wchar_t character){
 			if(is_alphabet(character)){
@@ -114,66 +112,7 @@ namespace npylm {
 			return true;
 		}
 		int detect_word_type(std::wstring &word){
-			int num_alphabet = 0;
-			int num_number = 0;
-			int num_symbol = 0;
-			int num_hiragana = 0;
-			int num_katakana = 0;
-			int num_kanji = 0;
-			int num_dash = 0;
-			int size = word.size();
-			for(wchar_t const target: word){
-				if(is_alphabet(target)){
-					num_alphabet += 1;
-					continue;
-				}
-				 if(is_number(target)){
-					num_number += 1;
-					continue;
-				}
-				 if(is_dash(target)){
-					num_dash += 1;
-					continue;
-				}
-				 if(is_hiragana(target)){
-					num_hiragana += 1;
-					continue;
-				}
-				 if(is_katakana(target)){
-					num_katakana += 1;
-					continue;
-				}
-				 if(is_kanji(target)){
-					num_kanji += 1;
-					continue;
-				}
-				num_symbol += 1;
-			}
-			if(num_alphabet == size){
-				return WORDTYPE_ALPHABET;
-			}
-			if(num_number == size){
-				return WORDTYPE_NUMBER;
-			}
-			if(num_hiragana + num_dash == size){
-				return WORDTYPE_HIRAGANA;
-			}
-			if(num_katakana + num_dash == size){
-				return WORDTYPE_KATAKANA;
-			}
-			if(num_kanji == size){
-				return WORDTYPE_KANJI;
-			}
-			if(num_symbol == size){
-				return WORDTYPE_SYMBOL;
-			}
-			if(num_hiragana + num_kanji == size){
-				return WORDTYPE_KANJI_HIRAGANA;
-			}
-			if(num_katakana + num_kanji == size){
-				return WORDTYPE_KANJI_KATAKANA;
-			}
-			return WORDTYPE_OTHER;
+			return detect_word_type_substr(word.data(), 0, word.size() - 1);
 		}
 		// 文字列の指定範囲の単語種判定
 		int detect_word_type_substr(wchar_t const* characters, int substr_start, int substr_end){
