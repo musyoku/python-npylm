@@ -1,3 +1,4 @@
+#include <cassert>
 #include "ctype.h"
 #include "wordtype.h"
 
@@ -10,14 +11,14 @@ namespace npylm {
 			return false;
 		}
 		bool is_hiragana(wchar_t character){
-			int type = chartype::get_type(character);
+			int type = ctype::get_type(character);
 			if(type == CTYPE_HIRAGANA){
 				return true;
 			}
 			return is_dash(character);	// 長音はひらがなとカタカナ両方で使われる
 		}
 		bool is_katakana(wchar_t character){
-			int type = chartype::get_type(character);
+			int type = ctype::get_type(character);
 			if(type == CTYPE_KATAKANA){
 				return true;
 			}
@@ -27,7 +28,7 @@ namespace npylm {
 			return is_dash(character);	// 長音はひらがなとカタカナ両方で使われる
 		}
 		bool is_kanji(wchar_t character){
-			int type = chartype::get_type(character);
+			int type = ctype::get_type(character);
 			if(type == CTYPE_CJK_UNIFIED_IDEOGRAPHS){
 				return true;
 			}
@@ -56,7 +57,7 @@ namespace npylm {
 
 		}
 		bool is_number(wchar_t character){
-			int type = chartype::get_type(character);
+			int type = ctype::get_type(character);
 			if(type == CTYPE_BASIC_LATIN){
 				if(0x30 <= character && character <= 0x39){
 					return true;
@@ -84,10 +85,10 @@ namespace npylm {
 			if(type == CTYPE_CUNEIFORM_NUMBERS_AND_PUNCTUATION){
 				return true;
 			}
-			return true;
+			return false;
 		}
 		bool is_alphabet(wchar_t character){
-			int type = chartype::get_type(character);
+			int type = ctype::get_type(character);
 			if(type == CTYPE_BASIC_LATIN){
 				if(0x41 <= character && character <= 0x5a){
 					return true;
@@ -124,19 +125,29 @@ namespace npylm {
 			for(wchar_t const target: word){
 				if(is_alphabet(target)){
 					num_alphabet += 1;
-				}else if(is_number(target)){
-					num_number += 1;
-				}else if(is_dash(target)){
-					num_dash += 1;
-				}else if(is_hiragana(target)){
-					num_hiragana += 1;
-				}else if(is_katakana(target)){
-					num_katakana += 1;
-				}else if(is_kanji(target)){
-					num_kanji += 1;
-				}else{
-					num_symbol += 1;
+					continue;
 				}
+				 if(is_number(target)){
+					num_number += 1;
+					continue;
+				}
+				 if(is_dash(target)){
+					num_dash += 1;
+					continue;
+				}
+				 if(is_hiragana(target)){
+					num_hiragana += 1;
+					continue;
+				}
+				 if(is_katakana(target)){
+					num_katakana += 1;
+					continue;
+				}
+				 if(is_kanji(target)){
+					num_kanji += 1;
+					continue;
+				}
+				num_symbol += 1;
 			}
 			if(num_alphabet == size){
 				return WORDTYPE_ALPHABET;
@@ -166,6 +177,7 @@ namespace npylm {
 		}
 		// 文字列の指定範囲の単語種判定
 		int detect_word_type_substr(wchar_t const* characters, int substr_start, int substr_end){
+			assert(substr_end >= substr_start);
 			int num_alphabet = 0;
 			int num_number = 0;
 			int num_symbol = 0;
@@ -175,22 +187,32 @@ namespace npylm {
 			int num_dash = 0;
 			int size = substr_end - substr_start + 1;
 			for(int i = substr_start;i <= substr_end;i++){
-				wchar_t target = characters[i];
+				const wchar_t target = characters[i];
 				if(is_alphabet(target)){
 					num_alphabet += 1;
-				}else if(is_number(target)){
-					num_number += 1;
-				}else if(is_dash(target)){
-					num_dash += 1;
-				}else if(is_hiragana(target)){
-					num_hiragana += 1;
-				}else if(is_katakana(target)){
-					num_katakana += 1;
-				}else if(is_kanji(target)){
-					num_kanji += 1;
-				}else{
-					num_symbol += 1;
+					continue;
 				}
+				if(is_number(target)){
+					num_number += 1;
+					continue;
+				}
+				if(is_dash(target)){
+					num_dash += 1;
+					continue;
+				}
+				if(is_hiragana(target)){
+					num_hiragana += 1;
+					continue;
+				}
+				if(is_katakana(target)){
+					num_katakana += 1;
+					continue;
+				}
+				if(is_kanji(target)){
+					num_kanji += 1;
+					continue;
+				}
+				num_symbol += 1;
 			}
 			if(num_alphabet == size){
 				return WORDTYPE_ALPHABET;
@@ -210,11 +232,23 @@ namespace npylm {
 			if(num_symbol == size){
 				return WORDTYPE_SYMBOL;
 			}
-			if(num_hiragana + num_kanji == size){
-				return WORDTYPE_KANJI_HIRAGANA;
-			}
-			if(num_katakana + num_kanji == size){
-				return WORDTYPE_KANJI_KATAKANA;
+			if(num_kanji > 0){
+				if(num_hiragana + num_kanji == size){
+					return WORDTYPE_KANJI_HIRAGANA;
+				}
+				if(num_hiragana > 0){
+					if(num_hiragana + num_kanji + num_dash == size){
+						return WORDTYPE_KANJI_HIRAGANA;
+					}
+				}
+				if(num_katakana + num_kanji == size){
+					return WORDTYPE_KANJI_KATAKANA;
+				}
+				if(num_katakana){
+					if(num_katakana + num_kanji + num_dash == size){
+						return WORDTYPE_KANJI_KATAKANA;
+					}
+				}
 			}
 			return WORDTYPE_OTHER;
 		}

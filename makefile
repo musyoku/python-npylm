@@ -5,13 +5,13 @@ LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(B
 SOFLAGS = -shared -fPIC -march=native
 
 install: ## npylm.soを生成
-	$(CC) $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
+	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp $(LDFLAGS) -o run/npylm.so -O3
 	cp run/npylm.so run/semi-supervised/npylm.so
 	cp run/npylm.so run/unsupervised/npylm.so
 	rm -rf run/npylm.so
 
 install_ubuntu: ## npylm.soを生成
-	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(LDFLAGS) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o run/npylm.so -O3
+	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp $(LDFLAGS) -o run/npylm.so -O3
 	cp run/npylm.so run/semi-supervised/npylm.so
 	cp run/npylm.so run/unsupervised/npylm.so
 	rm -rf run/npylm.so
@@ -23,6 +23,8 @@ check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
 module_tests: ## 各モジュールのテスト.
+	$(CC) test/module_tests/wordtype.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/module_tests/wordtype $(INCLUDE) $(LDFLAGS) -O0 -g
+	./test/module_tests/wordtype
 	$(CC) test/module_tests/npylm.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/module_tests/npylm $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm
 	$(CC) test/module_tests/vpylm.cpp src/npylm/*.cpp src/npylm/lm/*.cpp -o test/module_tests/vpylm $(INCLUDE) $(LDFLAGS) -O0 -g

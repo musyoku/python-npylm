@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #define CTYPE_UNKNOWN 0
 #define CTYPE_BASIC_LATIN 1
 #define CTYPE_LATIN_1_SUPPLEMENT 2
