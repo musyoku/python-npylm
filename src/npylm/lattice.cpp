@@ -42,7 +42,6 @@ namespace npylm {
 	Lattice::Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length){
 		_npylm = npylm;
 		_word_ids = new id[4];	// 3-gramなので<bos><bos>単語<eos>の最低4つ
-		_is_ready = false;
 		_alpha = NULL;
 		_normalized_alpha = NULL;
 		_pw_h = NULL;

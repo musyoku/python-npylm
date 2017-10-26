@@ -21,7 +21,6 @@ namespace npylm {
 		int*** _viterbi_backward;
 		int _max_word_length;
 		int _max_sentence_length;
-		bool _is_ready;
 		Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length);
 		~Lattice();
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
