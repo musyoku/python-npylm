@@ -28,8 +28,8 @@ namespace npylm {
 		~Lattice();
 		void reserve(int max_word_length, int max_sentence_length);
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
-		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** normalized_alpha);
-		void forward_filtering(Sentence* sentence, double*** normalized_alpha);
+		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** forward_table);
+		void forward_filtering(Sentence* sentence, bool normalize);
 		void backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** backward_alpha);
 		void sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j, double*** backward_alpha);
 		void blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize = true);

@@ -157,9 +157,10 @@ namespace npylm {
 		}
 		return word_id;
 	}
+	// α[t-k][j][i]は正規化されている場合とされていない場合があるので、直接_alpha[t-k][j][i]（未正規化）を参照してはいけない
+	// そのためforward_tableの参照先を_alphaとnormalized_alphaのどちらかに切り替え、α[t-k][j][i]の値はforward_tableを経由して取得する
 	// 正規化定数をここでは掛けないことに注意
-	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** normalized_alpha){
-		double*** forward_alpha = (normalized_alpha == NULL) ? _alpha : normalized_alpha;
+	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** forward_table){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		int character_ids_length = sentence->size();
@@ -188,8 +189,8 @@ namespace npylm {
 			_word_ids[3] = ID_EOS;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
-			assert(forward_alpha[t - k][j][0] > 0);
-			_alpha[t][k][j] = pw_h * forward_alpha[t - k][j][0];
+			assert(forward_table[t - k][j][0] > 0);
+			_alpha[t][k][j] = pw_h * forward_table[t - k][j][0]; // _alpha[t - k][j][0]としてはいけない
 			assert(_alpha[t][k][j] > 0);
 			_pw_h[t][k][j][0] = pw_h;
 			return;
@@ -206,17 +207,13 @@ namespace npylm {
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(i <= _max_word_length);
 			assert(_alpha[t - k][j][i] > 0);
-			double value = pw_h * forward_alpha[t - k][j][i];
+			double value = pw_h * forward_table[t - k][j][i]; // _alpha[t - k][j][i]としてはいけない
 			assert(pw_h > 0);
 
 			#ifdef __DEBUG__
 				if(value == 0){
 					std::cout << pw_h << std::endl;
-					if(normalized_alpha == NULL){
-						std::cout << _alpha[t - k][j][i] << std::endl;
-					}else{
-						std::cout << normalized_alpha[t - k][j][i] << " (normalized)" << std::endl;
-					}
+					std::cout << forward_table[t - k][j][i] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
@@ -228,19 +225,21 @@ namespace npylm {
 		assert(sum > 0);
 		_alpha[t][k][j] = sum;
 	}
-	void Lattice::forward_filtering(Sentence* sentence, double*** normalized_alpha){
+	void Lattice::forward_filtering(Sentence* sentence, bool normalize){
+		double*** forward_table = (normalize == true) ? _normalized_alpha : _alpha;
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				if(t - k == 0){
-					sum_alpha_t_k_j(sentence, t, k, 0, normalized_alpha);
+					sum_alpha_t_k_j(sentence, t, k, 0, forward_table);
 				}
 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-					sum_alpha_t_k_j(sentence, t, k, j, normalized_alpha);
+					sum_alpha_t_k_j(sentence, t, k, j, forward_table);
 				}
 			}
 			// 正規化
 			// 分配関数はkとjを網羅する
-			if(normalized_alpha != NULL){
+			// _alpha[t][k][j]の値を正規化して_normalized_alpha[t][k][j]にセットする
+			if(normalize == true){
 				// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
 				double log_sum = 0;
 				// 最大値を求める
@@ -277,13 +276,13 @@ namespace npylm {
 				assert(log_sum != 0);
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					if(t - k == 0){
-						normalized_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + _log_z[t - k] - log_sum);
-						assert(normalized_alpha[t][k][0] > 0);
+						_normalized_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + _log_z[t - k] - log_sum);
+						assert(_normalized_alpha[t][k][0] > 0);
 						continue;
 					}
 					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						normalized_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + _log_z[t - k] - log_sum);
-						assert(normalized_alpha[t][k][j] > 0);
+						_normalized_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + _log_z[t - k] - log_sum);
+						assert(_normalized_alpha[t][k][j] > 0);
 					}
 				}
 				assert(t <= _max_sentence_length + 1);
@@ -485,9 +484,8 @@ namespace npylm {
 				_substring_word_id_cache[i][j] = 0;
 			}
 		}
-		double*** normalized_alpha = normalize ? _normalized_alpha : NULL;
+		forward_filtering(sentence, normalize);
 		double*** backward_alpha = normalize ? _normalized_alpha : _alpha;
-		forward_filtering(sentence, normalized_alpha);
 		backward_sampling(sentence, segments, backward_alpha);
 	}
 	// ビタビアルゴリズム用
@@ -701,7 +699,6 @@ namespace npylm {
 				_substring_word_id_cache[i][j] = 0;
 			}
 		}
-		double*** normalized_alpha = normalize ? _normalized_alpha : NULL;
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
 				_log_z[t] = 0;
@@ -713,13 +710,13 @@ namespace npylm {
 				}
 			}
 		#endif 
-		forward_filtering(sentence, normalized_alpha);
+		forward_filtering(sentence, normalize);
 		double sum_probability = 0;
 		int t = sentence->size();
 		for(int k = 1;k <= std::min(t, _max_word_length);k++){
 			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 				if(normalize){
-					sum_probability += normalized_alpha[t][k][j];
+					sum_probability += _normalized_alpha[t][k][j];
 				}else{
 					sum_probability += _alpha[t][k][j];
 				}
