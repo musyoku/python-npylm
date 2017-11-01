@@ -150,6 +150,7 @@ namespace npylm {
 		for(int k = 1;k <= max_word_length;k++){
 			pk_vpylm[k] = (num_words_of_k[k] + 1) / (sum_words + max_word_length);	// ラプラススムージングを入れておく
 			assert(pk_vpylm[k] > 0);
+			std::cout << k << ": " << pk_vpylm[k] << std::endl;
 		}
 		delete[] num_words_of_k;
 		delete[] wrapped_character_ids;

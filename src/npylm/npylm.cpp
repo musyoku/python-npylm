@@ -290,7 +290,7 @@ namespace npylm {
 
 			// ごく稀にポアソン補正で1を超えることがある
 			if((0 < g0 && g0 < 1) == false){
-				for(int u = 0;u < character_ids_length;u++){
+				for(int u = substr_char_t_start;u <= substr_char_t_end;u++){
 					std::wcout << characters[u];
 				}
 				std::wcout << std::endl;
