@@ -40,7 +40,7 @@ BOOST_PYTHON_MODULE(npylm){
 	.def("set_initial_lambda_b", &Model::set_initial_lambda_b)
 	.def("set_vpylm_beta_stop", &Model::set_vpylm_beta_stop)
 	.def("set_vpylm_beta_pass", &Model::set_vpylm_beta_pass)
-	.def("parse", &Model::parse)
+	.def("parse", &Model::python_parse)
 	.def("save", &Model::save)
 	.def("load", &Model::load);
 }

@@ -43,7 +43,7 @@ namespace npylm {
 		}
 
 		#ifdef __DEBUG__
-		std::cout << "Warning: Debug mode enabled!" << std::endl;
+			std::cout << "warning: debug mode enabled!" << std::endl;
 		#endif
 	}
 	NPYLM::~NPYLM(){
@@ -54,11 +54,19 @@ namespace npylm {
 		delete[] _characters;
 		delete[] _pk_vpylm;
 	}
-	void NPYLM::allocate_arrays(int max_sentence_length){
+	void NPYLM::reserve(int max_sentence_length){
+		if(max_sentence_length <= _max_sentence_length){
+			return;
+		}
+		_delete_capacity();
+		_allocate_capacity(max_sentence_length);
+		_max_sentence_length = max_sentence_length;
+	}
+	void NPYLM::_allocate_capacity(int max_sentence_length){
 		_max_sentence_length = max_sentence_length;
 		_characters = new wchar_t[max_sentence_length + 2];
 	}
-	void NPYLM::delete_arrays(){
+	void NPYLM::_delete_capacity(){
 		delete[] _characters;
 	}
 	void NPYLM::set_vpylm_g0(double g0){
@@ -245,8 +253,8 @@ namespace npylm {
 		}
 
 		#ifdef __DEBUG__
-		id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
-		assert(a == word_t_id);
+			id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
+			assert(a == word_t_id);
 		#endif
 
 		assert(substr_char_t_end < _max_sentence_length);
@@ -282,7 +290,7 @@ namespace npylm {
 
 			// ごく稀にポアソン補正で1を超えることがある
 			if((0 < g0 && g0 < 1) == false){
-				for(int u = 0;u < character_ids_length;u++){
+				for(int u = substr_char_t_start;u <= substr_char_t_end;u++){
 					std::wcout << characters[u];
 				}
 				std::wcout << std::endl;
@@ -342,16 +350,12 @@ namespace npylm {
 		assert(substr_char_t_start >= 0);
 		id word_id = word_ids[word_t_index];
 
-		if(word_t_index == word_ids_length - 1){
-			assert(word_id == ID_EOS);
-		}else{
-			if(word_id != ID_EOS){
-				assert(substr_char_t_end < character_ids_length);
-				#ifdef __DEBUG__
+		if(word_id != ID_EOS){
+			assert(substr_char_t_end < character_ids_length);
+			#ifdef __DEBUG__
 				id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
 				assert(a == word_id);
-				#endif
-			}
+			#endif
 		}
 		// ノードを探しながら_hpylm_parent_pw_cacheをセット
 		Node<id>* node = find_node_by_tracing_back_context_from_time_t(characters, character_ids_length, word_ids, word_ids_length, word_t_index, substr_char_t_start, substr_char_t_end, _hpylm_parent_pw_cache, false, true);

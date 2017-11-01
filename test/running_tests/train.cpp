@@ -16,13 +16,13 @@ void run_training_loop(){
 	corpus->add_textfile(filename);
 	int seed = 0;
 	Dataset* dataset = new Dataset(corpus, 1, seed);
-	int max_word_length = 8;
+	int max_word_length = 16;
 	Model* model = new Model(dataset, max_word_length);
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
 	Trainer* trainer = new Trainer(dataset, model, false);
 
-	for(int epoch = 0;epoch < 20;epoch++){
+	for(int epoch = 1;epoch <= 200;epoch++){
 	    auto start_time = std::chrono::system_clock::now();
 		trainer->gibbs();
 	    auto diff = std::chrono::system_clock::now() - start_time;

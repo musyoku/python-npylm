@@ -8,9 +8,12 @@ namespace npylm {
 		std::wifstream ifs(filename.c_str());
 		std::wstring sentence_str;
 		assert(ifs.fail() == false);
-		while (getline(ifs, sentence_str) && !sentence_str.empty()){
+		while (getline(ifs, sentence_str)){
 			if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 				return;
+			}
+			if(sentence_str.empty()){
+				continue;
 			}
 			add_sentence(sentence_str);
 		}
