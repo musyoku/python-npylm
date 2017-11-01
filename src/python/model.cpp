@@ -84,15 +84,9 @@ namespace npylm {
 		return success;
 	}
 	boost::python::list Model::parse(std::wstring sentence_str){
-		// キャッシュの再確保
-		if(sentence_str.size() > _lattice->_max_sentence_length){
-			_lattice->delete_arrays();
-			_lattice->allocate_arrays(_npylm->_max_word_length, sentence_str.size());
-		}
-		if(sentence_str.size() > _npylm->_max_sentence_length){
-			_npylm->delete_arrays();
-			_npylm->allocate_arrays(sentence_str.size());
-		}
+		// 領域の再確保
+		_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
+		_npylm->reserve(sentence_str.size());
 		std::vector<int> segments;		// 分割の一時保存用
 		Sentence* sentence = new Sentence(sentence_str);
 		_lattice->viterbi_decode(sentence, segments);
@@ -104,5 +98,15 @@ namespace npylm {
 		}
 		delete sentence;
 		return words;
+	}
+	// normalize=trueならアンダーフローを防ぐ
+	double Model::compute_forward_probability(std::wstring sentence_str, bool normalize){
+		// キャッシュの再確保
+		_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
+		_npylm->reserve(sentence_str.size());
+		Sentence* sentence = new Sentence(sentence_str);
+		double probability = _lattice->compute_forward_probability(sentence, normalize);
+		delete sentence;
+		return probability;
 	}
 }

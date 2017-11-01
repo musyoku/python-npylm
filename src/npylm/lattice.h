@@ -9,6 +9,9 @@ namespace npylm {
 		void _delete_alpha(double*** &alpha, int size, int max_word_length);
 	}
 	class Lattice {
+	private:
+		void _allocate_capacity(int max_word_length, int max_sentence_length);
+		void _delete_capacity();
 	public:
 		NPYLM* _npylm;
 		id* _word_ids;
@@ -23,9 +26,8 @@ namespace npylm {
 		int _max_sentence_length;
 		Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length);
 		~Lattice();
+		void reserve(int max_word_length, int max_sentence_length);
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
-		void allocate_arrays(int max_word_length, int max_sentence_length);
-		void delete_arrays();
 		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** normalized_alpha);
 		void forward_filtering(Sentence* sentence, double*** normalized_alpha);
 		void backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** backward_alpha);
@@ -36,5 +38,6 @@ namespace npylm {
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
+		double compute_forward_probability(Sentence* sentence, bool normalize = true);
 	};
 } // namespace npylm

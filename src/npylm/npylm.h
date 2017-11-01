@@ -11,13 +11,13 @@ namespace npylm {
 	double factorial(double n);
 	class NPYLM {
 	private:
-		void _init_cache(int max_word_length, int max_sentence_length);
-		void _delete_cache();
 		friend class boost::serialization::access;
 		template <class Archive>
 		void serialize(Archive &archive, unsigned int version);
 		void save(boost::archive::binary_oarchive &archive, unsigned int version) const;
 		void load(boost::archive::binary_iarchive &archive, unsigned int version);
+		void _allocate_capacity(int max_sentence_length);
+		void _delete_capacity();
 	public:
 		lm::HPYLM* _hpylm;	// 単語n-gram
 		lm::VPYLM* _vpylm;	// 文字n-gram
@@ -47,8 +47,7 @@ namespace npylm {
 			double vpylm_beta_stop, 
 			double vpylm_beta_pass);
 		~NPYLM();
-		void allocate_arrays(int max_sentence_length);
-		void delete_arrays();
+		void reserve(int max_sentence_length);
 		void set_vpylm_g0(double g0);
 		void set_lambda_prior(double a, double b);
 		void sample_lambda_with_initial_params();
