@@ -161,7 +161,6 @@ void test_remove_customer_at_time_t(){
 	NPYLM* npylm = new NPYLM(20, 10000, 0.001, 4, 1, 4, 1);
 	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
 	Sentence* sentence = new Sentence(sentence_str);
-	wchar_t* token_ids = new wchar_t[sentence_str.size() + 2];
 	int* segments_without_special_tokens = new int[4];
 	add_costmers(npylm, sentence, segments_without_special_tokens);
 	remove_costmers(npylm, sentence, segments_without_special_tokens);
@@ -184,7 +183,6 @@ void test_find_node_by_tracing_back_context_from_time_t(){
 	NPYLM* npylm = new NPYLM(20, 10000, 0.001, 4, 1, 4, 1);
 	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
 	Sentence* sentence = new Sentence(sentence_str);
-	wchar_t* token_ids = new wchar_t[sentence_str.size() + 2];
 	int* segments_without_special_tokens = new int[4];
 	add_costmers(npylm, sentence, segments_without_special_tokens);
 	double* parent_pw_cache = new double[3];
@@ -208,7 +206,6 @@ void test_compute_p_w_given_h(){
 	NPYLM* npylm = new NPYLM(20, 10000, 0.001, 4, 1, 4, 1);
 	std::wstring sentence_str = L"本論文では, 教師データや辞書を必要とせず, あらゆる言語に適用できる教師なし形態素解析器および言語モデルを提案する.";
 	Sentence* sentence = new Sentence(sentence_str);
-	wchar_t* token_ids = new wchar_t[sentence_str.size() + 2];
 	int* segments_without_special_tokens = new int[4];
 	add_costmers(npylm, sentence, segments_without_special_tokens);
 	double* parent_pw_cache = new double[3];

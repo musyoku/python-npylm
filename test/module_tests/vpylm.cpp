@@ -85,7 +85,6 @@ bool add_customer_at_time_t(VPYLM* vpylm, wchar_t const* token_ids, int t, int d
 }
 
 double compute_p_w_given_h(VPYLM* vpylm, wchar_t const* token_ids, int context_start, int context_end){
-	int context_size = context_end - context_start + 1;
 	Node<wchar_t>* node = vpylm->_root;
 	wchar_t target_id = token_ids[context_end + 1];
 	assert(node != NULL);

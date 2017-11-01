@@ -25,8 +25,6 @@ check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
 module_tests: ## 各モジュールのテスト.
-	$(CC) test/module_tests/lattice.cpp $(SOURCES) -o test/module_tests/lattice $(INCLUDE) $(LDFLAGS) $(TESTFLAGS)
-	./test/module_tests/lattice
 	$(CC) test/module_tests/wordtype.cpp $(SOURCES) -o test/module_tests/wordtype $(INCLUDE) $(LDFLAGS) $(TESTFLAGS)
 	./test/module_tests/wordtype
 	$(CC) test/module_tests/npylm.cpp $(SOURCES) -o test/module_tests/npylm $(INCLUDE) $(LDFLAGS) $(TESTFLAGS)
@@ -37,6 +35,8 @@ module_tests: ## 各モジュールのテスト.
 	./test/module_tests/sentence
 	$(CC) test/module_tests/hash.cpp $(SOURCES) -o test/module_tests/hash $(INCLUDE) $(LDFLAGS) $(TESTFLAGS)
 	./test/module_tests/hash
+	$(CC) test/module_tests/lattice.cpp $(SOURCES) -o test/module_tests/lattice $(INCLUDE) $(LDFLAGS) $(TESTFLAGS)
+	./test/module_tests/lattice
 
 running_tests:	## 運用テスト
 	$(CC) test/running_tests/save.cpp $(SOURCES) -o test/running_tests/save $(INCLUDE) $(LDFLAGS) $(TESTFLAGS)
