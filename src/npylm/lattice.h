@@ -17,7 +17,6 @@ namespace npylm {
 		id* _word_ids;
 		id** _substring_word_id_cache;
 		double*** _alpha;		// 前向き確率
-		double*** _normalized_alpha;	// 正規化後の前向き確率
 		double**** _pw_h;		// キャッシュ
 		double* _log_z;			// 正規化定数
 		double* _backward_sampling_table;
@@ -28,10 +27,10 @@ namespace npylm {
 		~Lattice();
 		void reserve(int max_word_length, int max_sentence_length);
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
-		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** forward_table);
+		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j);
 		void forward_filtering(Sentence* sentence, bool normalize);
-		void backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** backward_alpha);
-		void sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j, double*** backward_alpha);
+		void backward_sampling(Sentence* sentence, std::vector<int> &segments);
+		void sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j);
 		void blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize = true);
 		void viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j);
 		void viterbi_forward(Sentence* sentence);

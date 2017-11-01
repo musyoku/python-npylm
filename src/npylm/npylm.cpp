@@ -350,16 +350,12 @@ namespace npylm {
 		assert(substr_char_t_start >= 0);
 		id word_id = word_ids[word_t_index];
 
-		if(word_t_index == word_ids_length - 1){
-			assert(word_id == ID_EOS);
-		}else{
-			if(word_id != ID_EOS){
-				assert(substr_char_t_end < character_ids_length);
-				#ifdef __DEBUG__
-					id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
-					assert(a == word_id);
-				#endif
-			}
+		if(word_id != ID_EOS){
+			assert(substr_char_t_end < character_ids_length);
+			#ifdef __DEBUG__
+				id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
+				assert(a == word_id);
+			#endif
 		}
 		// ノードを探しながら_hpylm_parent_pw_cacheをセット
 		Node<id>* node = find_node_by_tracing_back_context_from_time_t(characters, character_ids_length, word_ids, word_ids_length, word_t_index, substr_char_t_start, substr_char_t_end, _hpylm_parent_pw_cache, false, true);

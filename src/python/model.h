@@ -29,6 +29,7 @@ namespace npylm {
 		double compute_forward_probability(std::wstring sentence_str, bool normalize = true);
 		bool load(std::string filename);
 		bool save(std::string filename);
-		boost::python::list parse(std::wstring sentence_str);
+		void parse(std::wstring sentence_str, std::vector<std::wstring> &words);
+		boost::python::list python_parse(std::wstring sentence_str);
 	};
 }
