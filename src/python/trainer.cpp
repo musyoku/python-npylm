@@ -212,9 +212,9 @@ namespace npylm {
 				}
 				
 				#ifdef __DEBUG__
-				// 正規化しない場合の結果と比較するためシードを合わせる
-				int seed = (unsigned int)time(NULL);
-				sampler::mt.seed(seed);
+					// 正規化しない場合の結果と比較するためシードを合わせる
+					int seed = (unsigned int)time(NULL);
+					sampler::mt.seed(seed);
 				#endif
 
 				// 新しい分割を取得
@@ -222,15 +222,15 @@ namespace npylm {
 				sentence->split(segments);
 				
 				#ifdef __DEBUG__
-				// 正規化しない場合の結果と比較
-				std::vector<int> a = segments;
-				sampler::mt.seed(seed);
-				_model->_lattice->blocked_gibbs(sentence, segments, false);
-				std::vector<int> b = segments;
-				assert(a.size() == b.size());
-				for(int i = 0;i < a.size();i++){
-					assert(a[i] == b[i]);
-				}
+					// 正規化しない場合の結果と比較
+					std::vector<int> a = segments;
+					sampler::mt.seed(seed);
+					_model->_lattice->blocked_gibbs(sentence, segments, false);
+					std::vector<int> b = segments;
+					assert(a.size() == b.size());
+					for(int i = 0;i < a.size();i++){
+						assert(a[i] == b[i]);
+					}
 				#endif
 
 				// 以前の分割結果と現在の分割結果の確率を求める
@@ -276,10 +276,14 @@ namespace npylm {
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return 0;		
 			}
-			Sentence* sentence = dataset[data_index]->copy();	// 干渉を防ぐためコピー
-			_model->_lattice->viterbi_decode(sentence, segments);
-			sentence->split(segments);
-			ppl += _model->_npylm->compute_log_p_w(sentence) / ((double)sentence->get_num_segments() - 2);
+			Sentence* sentence = dataset[data_index];
+			double log_px = _model->_lattice->compute_forward_probability(sentence, true);
+			#ifdef __DEBUG__
+				double _log_px = _model->_lattice->compute_forward_probability(sentence, false);
+				std::cout << log_px << " == " << _log_px << std::endl;
+				assert(log_px == _log_px);
+			#endif
+			ppl += log_px / ((double)sentence->get_num_segments() - 2);
 			delete sentence;
 		}
 		ppl = exp(-ppl / num_sentences);

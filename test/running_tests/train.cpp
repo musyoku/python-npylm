@@ -29,6 +29,7 @@ void run_training_loop(){
 	    cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;
 		trainer->sample_hpylm_vpylm_hyperparameters();
 		trainer->sample_lambda();
+		cout << "log_px: " << trainer->compute_perplexity_train() << endl;
 		if(epoch % 10 == 0){
 			trainer->print_segmentation_train(10);
 		}

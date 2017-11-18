@@ -19,6 +19,7 @@ namespace npylm {
 		double*** _alpha;		// 前向き確率
 		double**** _pw_h;		// キャッシュ
 		double* _log_z;			// 正規化定数
+		double* _scaling;		// スケーリング係数
 		double* _backward_sampling_table;
 		int*** _viterbi_backward;
 		int _max_word_length;
@@ -27,11 +28,13 @@ namespace npylm {
 		~Lattice();
 		void reserve(int max_word_length, int max_sentence_length);
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
-		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j);
+		void sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double prod_scaling);
 		void forward_filtering(Sentence* sentence, bool normalize);
+		void _forward_filtering(Sentence* sentence, bool normalize);
 		void backward_sampling(Sentence* sentence, std::vector<int> &segments);
 		void sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j);
 		void blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize = true);
+		void _blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize = true);
 		void viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j);
 		void viterbi_forward(Sentence* sentence);
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);
