@@ -485,7 +485,6 @@ namespace npylm {
 
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
-				_log_z[t] = 0;
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
 						_alpha[t][k][j] = -1;
@@ -499,8 +498,6 @@ namespace npylm {
 			}
 		#endif
 
-		_alpha[0][0][0] = 1;
-		_log_z[0] = 0;
 		for(int i = 0;i < size;i++){
 			for(int j = 0;j < _max_word_length + 1;j++){
 				_substring_word_id_cache[i][j] = 0;
@@ -758,7 +755,6 @@ namespace npylm {
 		int character_ids_length = sentence->size();
 		// <eos>未満の前向き確率を計算
 		forward_filtering(sentence, normalize);
-		std::cout << _alpha[sentence->size() - 1][5][5] << std::endl;
 		// <eos>への接続を考える
 		double alpha_t_k_0 = 0;
 		int t = sentence->size() + 1; // <eos>を指す
@@ -770,17 +766,32 @@ namespace npylm {
 				_word_ids[2] = ID_EOS;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 				assert(pw_h > 0);
-				alpha_t_k_0 += pw_h * _alpha[t][j][i];
+				alpha_t_k_0 += pw_h * _alpha[t - k][j][i];
 			}
 		}
 		if(normalize == false){		// スケーリング係数を使わない場合
-			return log(alpha_t_k_0);
+			return alpha_t_k_0;
 		}
 		// スケーリング係数を計算している場合は全時刻の係数の対数を足すと系列の確率になる
-		double log_px = 0;
+		double px = 1;
 		_scaling[t] = 1.0 / alpha_t_k_0;
-		for(int t = 0;t <= sentence->size();t++){
-			log_px += log(_scaling[t]);
+		for(int m = 1;m <= t;m++){
+			px *= 1.0 / _scaling[m];
+		}
+		return px;
+	}
+	double Lattice::compute_log_forward_probability(Sentence* sentence, bool normalize){
+		double px = compute_forward_probability(sentence, normalize);
+		assert(px > 0);
+		if(normalize == false){		// スケーリング係数を使わない場合
+			return log(px);
+		}
+		// スケーリング係数を計算している場合は全時刻の係数の対数を足すと系列の確率になる
+		int t = sentence->size() + 1; // <eos>を指す
+		double log_px = 0;
+		_scaling[t] = 1.0 / px;
+		for(int m = 1;m <= t;m++){
+			log_px += log(1.0 / _scaling[m]);
 		}
 		return log_px;
 	}

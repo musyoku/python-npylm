@@ -41,5 +41,6 @@ namespace npylm {
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
 		double compute_forward_probability(Sentence* sentence, bool normalize = true);
+		double compute_log_forward_probability(Sentence* sentence, bool normalize = true);
 	};
 } // namespace npylm

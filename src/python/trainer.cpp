@@ -277,14 +277,12 @@ namespace npylm {
 				return 0;		
 			}
 			Sentence* sentence = dataset[data_index];
-			double log_px = _model->_lattice->compute_forward_probability(sentence, true);
+			double log_px = _model->_lattice->compute_log_forward_probability(sentence, true);
 			#ifdef __DEBUG__
-				double _log_px = _model->_lattice->compute_forward_probability(sentence, false);
-				std::cout << log_px << " == " << _log_px << std::endl;
-				assert(log_px == _log_px);
+				double _log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
+				assert(abs(log_px - _log_px) < 1e-8);
 			#endif
-			ppl += log_px / ((double)sentence->get_num_segments() - 2);
-			delete sentence;
+			ppl += log_px / (double)(sentence->get_num_segments() - 2);	// <bos>２つを引いておく
 		}
 		ppl = exp(-ppl / num_sentences);
 		return ppl;
