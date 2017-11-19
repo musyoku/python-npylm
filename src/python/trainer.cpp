@@ -218,7 +218,7 @@ namespace npylm {
 				#endif
 
 				// 新しい分割を取得
-				_model->_lattice->blocked_gibbs(sentence, segments, true);
+				_model->_lattice->blocked_gibbs(sentence, segments, false);
 				sentence->split(segments);
 				
 				#ifdef __DEBUG__
@@ -277,7 +277,7 @@ namespace npylm {
 				return 0;		
 			}
 			Sentence* sentence = dataset[data_index];
-			double log_px = _model->_lattice->compute_log_forward_probability(sentence, true);
+			double log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
 			#ifdef __DEBUG__
 				double _log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
 				assert(abs(log_px - _log_px) < 1e-8);
