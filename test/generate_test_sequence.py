@@ -4,8 +4,7 @@ import numpy as np
 
 def main(args):
 	words = [char + char + char for char in ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]]
-	prob = (np.random.randint(0, 100, size=(len(words), len(words))) ** 3).astype(np.float32)
-	prob /= np.sum(prob, axis=1)[:, None]
+	prob = np.full((len(words), len(words)), 1.0 / len(words), dtype=np.float32)
 	with codecs.open("../dataset/test.txt", "w", "utf-8") as f:
 		for n in range(args.num_seq):
 			sequence = ""

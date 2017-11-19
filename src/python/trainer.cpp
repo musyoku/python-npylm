@@ -271,7 +271,6 @@ namespace npylm {
 		}
 		double ppl = 0;
 		int num_sentences = dataset.size();
-		std::vector<int> segments;		// 分割の一時保存用
 		for(int data_index = 0;data_index < num_sentences;data_index++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 				return 0;		
@@ -280,6 +279,11 @@ namespace npylm {
 			double log_px = _model->_lattice->compute_log_forward_probability(sentence, true);
 			#ifdef __DEBUG__
 				double _log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
+				if(isnan(_log_px) || abs(log_px - _log_px) >= 1e-8){
+					std::cout << log_px << " - " << _log_px << std::endl;
+				}
+				std::cout << log_px << " - " << _log_px << std::endl;
+				std::cout << "AAAAAAAAA" << std::endl;
 				assert(abs(log_px - _log_px) < 1e-8);
 			#endif
 			ppl += log_px / (double)(sentence->get_num_segments() - 2);	// <bos>２つを引いておく

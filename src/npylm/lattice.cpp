@@ -90,7 +90,7 @@ namespace npylm {
 		_backward_sampling_table = new double[max_word_length * max_word_length];
 		assert(_backward_sampling_table != NULL);
 		// 前向き確率
-		lattice::_init_alpha(_alpha, size, max_word_length);
+		lattice::_init_alpha(_alpha, size + 1, max_word_length);
 		// 正規化後の前向き確率
 		// 3-gram確率のキャッシュ
 		_pw_h = new double***[size];
@@ -160,7 +160,7 @@ namespace npylm {
 		return word_id;
 	}
 	// alpha[t-k][j][i]自体は正規化されている場合があるが、alpha[t][k][j]の正規化はここでは行わない
-	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double prod_scaling){
+	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, double*** alpha, double**** pw_h_t_k_j_i, int t, int k, int j, double prod_scaling){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		int character_ids_length = sentence->size();
@@ -175,8 +175,8 @@ namespace npylm {
 			_word_ids[2] = word_k_id;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
-			_alpha[t][k][0] = pw_h * prod_scaling;
-			_pw_h[t][k][0][0] = pw_h;
+			alpha[t][k][0] = pw_h * prod_scaling;
+			pw_h_t_k_j_i[t][k][0][0] = pw_h;
 			return;
 		}
 		// i=0に相当
@@ -187,10 +187,10 @@ namespace npylm {
 			_word_ids[2] = word_k_id;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
-			assert(_alpha[t - k][j][0] > 0);
-			_alpha[t][k][j] = pw_h * _alpha[t - k][j][0] * prod_scaling;
-			assert(_alpha[t][k][j] > 0);
-			_pw_h[t][k][j][0] = pw_h;
+			assert(alpha[t - k][j][0] > 0);
+			alpha[t][k][j] = pw_h * alpha[t - k][j][0] * prod_scaling;
+			assert(alpha[t][k][j] > 0);
+			pw_h_t_k_j_i[t][k][j][0] = pw_h;
 			return;
 		}
 		// それ以外の場合は周辺化
@@ -203,52 +203,52 @@ namespace npylm {
 			_word_ids[2] = word_k_id;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(i <= _max_word_length);
-			assert(_alpha[t - k][j][i] > 0);
-			double value = pw_h * _alpha[t - k][j][i];
+			assert(alpha[t - k][j][i] > 0);
+			double value = pw_h * alpha[t - k][j][i];
 			assert(pw_h > 0);
 
 			#ifdef __DEBUG__
 				if(value <= 0){
 					std::cout << value << std::endl;
 					std::cout << pw_h << std::endl;
-					std::cout << _alpha[t - k][j][i] << std::endl;
+					std::cout << alpha[t - k][j][i] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
 
 			assert(value > 0);
 			sum += value;
-			_pw_h[t][k][j][i] = pw_h;
+			pw_h_t_k_j_i[t][k][j][i] = pw_h;
 		}
 		assert(sum > 0);
-		_alpha[t][k][j] = sum * prod_scaling;
+		alpha[t][k][j] = sum * prod_scaling;
 	}
-	void Lattice::forward_filtering(Sentence* sentence, bool normalize){
-		_alpha[0][0][0] = 1;
+	void Lattice::_forward_filtering(Sentence* sentence, double*** alpha, double* scaling, bool use_scaling){
+		alpha[0][0][0] = 1;
 		for(int t = 1;t <= sentence->size();t++){
 			double prod_scaling = 1;
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
-				if(normalize == true && k > 1){
-					prod_scaling *= _scaling[t - k + 1];
+				if(use_scaling == true && k > 1){
+					prod_scaling *= scaling[t - k + 1];
 				}
 				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-					_alpha[t][k][j] = 0;
-					sum_alpha_t_k_j(sentence, t, k, j, prod_scaling);
+					alpha[t][k][j] = 0;
+					_sum_alpha_t_k_j(sentence, _alpha, _pw_h, t, k, j, prod_scaling);
 				}
 			}
 			// スケーリング
-			if(normalize == true){
+			if(use_scaling == true){
 				double sum_alpha = 0;
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-						sum_alpha += _alpha[t][k][j];
+						sum_alpha += alpha[t][k][j];
 					}
 				}
 				assert(sum_alpha > 0);
-				_scaling[t] = 1.0 / sum_alpha;
+				scaling[t] = 1.0 / sum_alpha;
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-						_alpha[t][k][j] *= _scaling[t];
+						alpha[t][k][j] *= scaling[t];
 					}
 				}
 			}
@@ -256,68 +256,68 @@ namespace npylm {
 	}
 	// logsumexpで正規化
 	// 重いので廃止
-	void Lattice::_forward_filtering(Sentence* sentence, bool normalize){
-		for(int t = 1;t <= sentence->size();t++){
-			for(int k = 1;k <= std::min(t, _max_word_length);k++){
-				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-					sum_alpha_t_k_j(sentence, t, k, j, 1);
-				}
-			}
-			// 正規化
-			// 分配関数はkとjを網羅する
-			// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
-			if(normalize == true){
-				double log_sum = 0;
-				// 最大値を求める
-				double max_log_z = 0;
-				for(int k = 1;k <= std::min(t, _max_word_length);k++){
-					if(t - k == 0){
-						assert(_alpha[t][k][0] > 0);
-						double tmp = log(_alpha[t][k][0]) + _log_z[t - k];
-						if(max_log_z == 0 || tmp > max_log_z){
-							max_log_z = tmp;
-						}
-					}
-					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						assert(_alpha[t][k][j] > 0);
-						double tmp = log(_alpha[t][k][j]) + _log_z[t - k];
-						if(max_log_z == 0 || tmp > max_log_z){
-							max_log_z = tmp;
-						}
-					}
-				}
-				// 求めた最大値をもとにlogsumexp
-				for(int k = 1;k <= std::min(t, _max_word_length);k++){
-					if(t - k == 0){
-						log_sum += exp(log(_alpha[t][k][0]) + _log_z[t - k] - max_log_z);
-						continue;
-					}
-					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						assert(_alpha[t][k][j] > 0);
-						log_sum += exp(log(_alpha[t][k][j]) + _log_z[t - k] - max_log_z);
-					}
-				}
-				log_sum = log(log_sum) + max_log_z;
-				// 正規化
-				assert(log_sum != 0);
-				for(int k = 1;k <= std::min(t, _max_word_length);k++){
-					if(t - k == 0){
-						_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + _log_z[t - k] - log_sum);
-						assert(_alpha[t][k][0] > 0);
-						continue;
-					}
-					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + _log_z[t - k] - log_sum);
-						assert(_alpha[t][k][j] > 0);
-					}
-				}
-				assert(t <= _max_sentence_length + 1);
-				_log_z[t] = log_sum;
-			}else{
-				_log_z[t] = 1;
-			}
-		}
-	}
+	// void Lattice::forward_filtering(Sentence* sentence, bool use_scaling){
+	// 	for(int t = 1;t <= sentence->size();t++){
+	// 		for(int k = 1;k <= std::min(t, _max_word_length);k++){
+	// 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
+	// 				sum_alpha_t_k_j(sentence, t, k, j, 1);
+	// 			}
+	// 		}
+	// 		// 正規化
+	// 		// 分配関数はkとjを網羅する
+	// 		// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
+	// 		if(use_scaling == true){
+	// 			double log_sum = 0;
+	// 			// 最大値を求める
+	// 			double max_log_z = 0;
+	// 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
+	// 				if(t - k == 0){
+	// 					assert(_alpha[t][k][0] > 0);
+	// 					double tmp = log(_alpha[t][k][0]) + _log_z[t - k];
+	// 					if(max_log_z == 0 || tmp > max_log_z){
+	// 						max_log_z = tmp;
+	// 					}
+	// 				}
+	// 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+	// 					assert(_alpha[t][k][j] > 0);
+	// 					double tmp = log(_alpha[t][k][j]) + _log_z[t - k];
+	// 					if(max_log_z == 0 || tmp > max_log_z){
+	// 						max_log_z = tmp;
+	// 					}
+	// 				}
+	// 			}
+	// 			// 求めた最大値をもとにlogsumexp
+	// 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
+	// 				if(t - k == 0){
+	// 					log_sum += exp(log(_alpha[t][k][0]) + _log_z[t - k] - max_log_z);
+	// 					continue;
+	// 				}
+	// 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+	// 					assert(_alpha[t][k][j] > 0);
+	// 					log_sum += exp(log(_alpha[t][k][j]) + _log_z[t - k] - max_log_z);
+	// 				}
+	// 			}
+	// 			log_sum = log(log_sum) + max_log_z;
+	// 			// 正規化
+	// 			assert(log_sum != 0);
+	// 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
+	// 				if(t - k == 0){
+	// 					_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + _log_z[t - k] - log_sum);
+	// 					assert(_alpha[t][k][0] > 0);
+	// 					continue;
+	// 				}
+	// 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+	// 					_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + _log_z[t - k] - log_sum);
+	// 					assert(_alpha[t][k][j] > 0);
+	// 				}
+	// 			}
+	// 			assert(t <= _max_sentence_length + 1);
+	// 			_log_z[t] = log_sum;
+	// 		}else{
+	// 			_log_z[t] = 1;
+	// 		}
+	// 	}
+	// }
 	void Lattice::backward_sampling(Sentence* sentence, std::vector<int> &segments){
 		segments.clear();
 		int k = 0;
@@ -480,7 +480,7 @@ namespace npylm {
 	}
 	// Blocked Gibbs Samplingによる分割のサンプリング
 	// 分割結果が確率的に決まる
-	void Lattice::blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize){
+	void Lattice::blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 
@@ -504,39 +504,7 @@ namespace npylm {
 				_substring_word_id_cache[i][j] = 0;
 			}
 		}
-		forward_filtering(sentence, normalize);
-		backward_sampling(sentence, segments);
-	}
-	// logsumexp版
-	// 重いので廃止
-	void Lattice::_blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize){
-		assert(sentence->size() <= _max_sentence_length);
-		int size = sentence->size() + 1;
-
-		#ifdef __DEBUG__
-			for(int t = 0;t < size;t++){
-				_log_z[t] = 0;
-				for(int k = 0;k < _max_word_length + 1;k++){
-					for(int j = 0;j < _max_word_length + 1;j++){
-						_alpha[t][k][j] = -1;
-					}
-				}
-			}
-			for(int k = 0;k < _max_word_length;k++){
-				for(int j = 0;j < _max_word_length;j++){
-					_backward_sampling_table[k * _max_word_length + j] = -1;
-				}
-			}
-		#endif
-
-		_alpha[0][0][0] = 1;
-		_log_z[0] = 0;
-		for(int i = 0;i < size;i++){
-			for(int j = 0;j < _max_word_length + 1;j++){
-				_substring_word_id_cache[i][j] = 0;
-			}
-		}
-		_forward_filtering(sentence, normalize);
+		_forward_filtering(sentence, _alpha, _scaling, use_scaling);
 		backward_sampling(sentence, segments);
 	}
 	// ビタビアルゴリズム用
@@ -733,8 +701,29 @@ namespace npylm {
 		viterbi_forward(sentence);
 		viterbi_backward(sentence, segments);
 	}
-	// 文の可能な分割全てを考慮した前向き確率
-	double Lattice::compute_forward_probability(Sentence* sentence, bool normalize){
+	double Lattice::compute_log_forward_probability(Sentence* sentence, bool use_scaling){
+		_enumerate_forward_variables(sentence, _alpha, _scaling, use_scaling);
+		if(use_scaling == false){
+			int t = sentence->size() + 1; // <eos>を指す
+			int k = 1;	// ここでは<eos>の長さを1と考える
+			double alpha_eos = 0;	
+			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+				assert(_alpha[t][k][j] > 0);
+				alpha_eos += _alpha[t][k][j];
+			}
+			assert(alpha_eos > 0);
+			return log(alpha_eos);
+		}
+		// スケーリング係数は全時刻の値の対数を足すと系列の確率になる
+		int t = sentence->size() + 1; // <eos>を指す
+		double log_px = 0;
+		for(int m = 1;m <= t;m++){
+			log_px += log(1.0 / _scaling[m]);
+		}
+		return log_px;
+	}
+	// 前向き確率とスケーリング係数を計算
+	void Lattice::_enumerate_forward_variables(Sentence* sentence, double*** alpha, double* scaling, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		for(int i = 0;i < size;i++){
@@ -743,56 +732,40 @@ namespace npylm {
 			}
 		}
 		#ifdef __DEBUG__
+			// 変な値を入れる
 			for(int t = 0;t < size;t++){
-				_scaling[t] = 0;
+				scaling[t] = -1;
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
-						_alpha[t][k][j] = -1;
+						alpha[t][k][j] = -1;
 					}
 				}
 			}
 		#endif 
+
 		wchar_t const* characters = sentence->_characters;
 		int character_ids_length = sentence->size();
 		// <eos>未満の前向き確率を計算
-		forward_filtering(sentence, normalize);
+		_forward_filtering(sentence, _alpha, _scaling, use_scaling);
 		// <eos>への接続を考える
-		double alpha_t_k_0 = 0;
+		double alpha_eos = 0;
 		int t = sentence->size() + 1; // <eos>を指す
 		int k = 1;	// ここでは<eos>の長さを1と考える
 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			double sum_prob = 0;
 			for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, _max_word_length);i++){
 				_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);
 				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
 				_word_ids[2] = ID_EOS;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 				assert(pw_h > 0);
-				alpha_t_k_0 += pw_h * _alpha[t - k][j][i];
+				sum_prob += pw_h * alpha[t - k][j][i];
 			}
+			alpha[t][k][j] = sum_prob;
+			alpha_eos += sum_prob;
 		}
-		if(normalize == false){		// スケーリング係数を使わない場合
-			return alpha_t_k_0;
+		if(use_scaling){
+			scaling[t] = 1.0 / alpha_eos;
 		}
-		// スケーリング係数を計算している場合は全時刻の係数の対数を足すと系列の確率になる
-		double px = 1;
-		_scaling[t] = 1.0 / alpha_t_k_0;
-		for(int m = 1;m <= t;m++){
-			px *= 1.0 / _scaling[m];
-		}
-		return px;
-	}
-	double Lattice::compute_log_forward_probability(Sentence* sentence, bool normalize){
-		double px = compute_forward_probability(sentence, normalize);
-		if(normalize == false){		// スケーリング係数を使わない場合
-			assert(px > 0);
-			return log(px);
-		}
-		// スケーリング係数を計算している場合は全時刻の係数の対数を足すと系列の確率になる
-		int t = sentence->size() + 1; // <eos>を指す
-		double log_px = 0;
-		for(int m = 1;m <= t;m++){
-			log_px += log(1.0 / _scaling[m]);
-		}
-		return log_px;
 	}
 }
