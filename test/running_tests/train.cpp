@@ -11,12 +11,12 @@ using std::flush;
 using std::endl;
 
 void run_training_loop(){
-	std::string filename = "../../dataset/test.txt";
+	std::string filename = "../../dataset/aozora/kokoro.txt";
 	Corpus* corpus = new Corpus();
 	corpus->add_textfile(filename);
 	int seed = 0;
 	Dataset* dataset = new Dataset(corpus, 1, seed);
-	int max_word_length = 16;
+	int max_word_length = 12;
 	Model* model = new Model(dataset, max_word_length);
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
@@ -30,9 +30,7 @@ void run_training_loop(){
 		trainer->sample_hpylm_vpylm_hyperparameters();
 		trainer->sample_lambda();
 		cout << "log_px: " << trainer->compute_perplexity_train() << endl;
-		if(epoch % 10 == 0){
-			trainer->print_segmentation_train(10);
-		}
+		trainer->print_segmentation_train(10);
 	}
 }
 

@@ -218,7 +218,7 @@ namespace npylm {
 				#endif
 
 				// 新しい分割を取得
-				_model->_lattice->blocked_gibbs(sentence, segments, false);
+				_model->_lattice->blocked_gibbs(sentence, segments, true);
 				sentence->split(segments);
 				
 				#ifdef __DEBUG__
@@ -277,7 +277,7 @@ namespace npylm {
 				return 0;		
 			}
 			Sentence* sentence = dataset[data_index];
-			double log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
+			double log_px = _model->_lattice->compute_log_forward_probability(sentence, true);
 			#ifdef __DEBUG__
 				double _log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
 				assert(abs(log_px - _log_px) < 1e-8);
@@ -321,7 +321,7 @@ namespace npylm {
 			}
 			int data_index = rand_indices[n];
 			Sentence* sentence = dataset[data_index]->copy();
-			_model->_lattice->blocked_gibbs(sentence, segments, true);
+			_model->_lattice->viterbi_decode(sentence, segments);
 			sentence->split(segments);
 			sentence->dump_words();
 			delete sentence;

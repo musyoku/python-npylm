@@ -208,7 +208,8 @@ namespace npylm {
 			assert(pw_h > 0);
 
 			#ifdef __DEBUG__
-				if(value == 0){
+				if(value <= 0){
+					std::cout << value << std::endl;
 					std::cout << pw_h << std::endl;
 					std::cout << _alpha[t - k][j][i] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
@@ -782,14 +783,13 @@ namespace npylm {
 	}
 	double Lattice::compute_log_forward_probability(Sentence* sentence, bool normalize){
 		double px = compute_forward_probability(sentence, normalize);
-		assert(px > 0);
 		if(normalize == false){		// スケーリング係数を使わない場合
+			assert(px > 0);
 			return log(px);
 		}
 		// スケーリング係数を計算している場合は全時刻の係数の対数を足すと系列の確率になる
 		int t = sentence->size() + 1; // <eos>を指す
 		double log_px = 0;
-		_scaling[t] = 1.0 / px;
 		for(int m = 1;m <= t;m++){
 			log_px += log(1.0 / _scaling[m]);
 		}
