@@ -37,6 +37,8 @@ void run_training_loop(){
 			cout << "ppl: " << trainer->compute_perplexity_train() << endl;
 			trainer->print_segmentation_dev(10);
 			cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
+			cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
+			cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
 		}
 	}
 }

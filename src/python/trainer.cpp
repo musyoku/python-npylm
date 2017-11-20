@@ -265,11 +265,38 @@ namespace npylm {
 	double Trainer::compute_perplexity_dev(){
 		return _compute_perplexity(_dataset->_sentence_sequences_dev);
 	}
+	// ビタビアルゴリズムによる最尤分割のパープレキシティ
 	double Trainer::_compute_perplexity(std::vector<Sentence*> &dataset){
 		if(dataset.size() == 0){
 			return 0;
 		}
 		double ppl = 0;
+		int num_sentences = dataset.size();
+		std::vector<int> segments;		// 分割の一時保存用
+		for(int data_index = 0;data_index < num_sentences;data_index++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return 0;		
+			}
+			Sentence* sentence = dataset[data_index]->copy();	// 干渉を防ぐためコピー
+			_model->_lattice->viterbi_decode(sentence, segments);
+			sentence->split(segments);
+			ppl += _model->_npylm->compute_log_p_w(sentence) / ((double)sentence->get_num_segments() - 2);
+			delete sentence;
+		}
+		ppl = exp(-ppl / num_sentences);
+		return ppl;
+	}
+	double Trainer::compute_log_likelihood_train(){
+		return _compute_log_likelihood(_dataset->_sentence_sequences_train);
+	}
+	double Trainer::compute_log_likelihood_dev(){
+		return _compute_log_likelihood(_dataset->_sentence_sequences_dev);
+	}
+	double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset){
+		if(dataset.size() == 0){
+			return 0;
+		}
+		double sum_log_likelihood = 0;
 		int num_sentences = dataset.size();
 		for(int data_index = 0;data_index < num_sentences;data_index++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
@@ -279,15 +306,11 @@ namespace npylm {
 			double log_px = _model->_lattice->compute_log_forward_probability(sentence, true);
 			#ifdef __DEBUG__
 				double _log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
-				if(isnan(_log_px) || abs(log_px - _log_px) >= 1e-8){
-					std::cout << log_px << " - " << _log_px << std::endl;
-				}
 				assert(abs(log_px - _log_px) < 1e-8);
 			#endif
-			ppl += log_px / (double)(sentence->get_num_segments() - 2);	// <bos>２つを引いておく
+			sum_log_likelihood += log_px;
 		}
-		ppl = exp(-ppl / num_sentences);
-		return ppl;
+		return sum_log_likelihood;
 	}
 	// デバッグ用
 	void Trainer::remove_all_data(){
