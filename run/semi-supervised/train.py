@@ -106,11 +106,7 @@ def main():
 	model.set_vpylm_beta_pass(args.vpylm_beta_pass);
 
 	# 学習の準備
-	trainer = npylm.trainer(
-		dataset, model, 
-		# NPYLMでは通常、新しい分割結果をもとに単語nグラムモデルを更新する
-		# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に確率的に棄却する
-		always_accept_new_segmentation=True)
+	trainer = npylm.trainer(dataset, model)
 
 	# 文字列の単語IDが衝突しているかどうかをチェック
 	# 時間の無駄なので一度したらしなくてよい
