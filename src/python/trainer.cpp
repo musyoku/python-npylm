@@ -282,8 +282,6 @@ namespace npylm {
 				if(isnan(_log_px) || abs(log_px - _log_px) >= 1e-8){
 					std::cout << log_px << " - " << _log_px << std::endl;
 				}
-				std::cout << log_px << " - " << _log_px << std::endl;
-				std::cout << "AAAAAAAAA" << std::endl;
 				assert(abs(log_px - _log_px) < 1e-8);
 			#endif
 			ppl += log_px / (double)(sentence->get_num_segments() - 2);	// <bos>２つを引いておく
