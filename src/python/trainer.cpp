@@ -212,9 +212,9 @@ namespace npylm {
 				}
 				
 				#ifdef __DEBUG__
-				// 正規化しない場合の結果と比較するためシードを合わせる
-				int seed = (unsigned int)time(NULL);
-				sampler::mt.seed(seed);
+					// 正規化しない場合の結果と比較するためシードを合わせる
+					int seed = (unsigned int)time(NULL);
+					sampler::mt.seed(seed);
 				#endif
 
 				// 新しい分割を取得
@@ -222,15 +222,15 @@ namespace npylm {
 				sentence->split(segments);
 				
 				#ifdef __DEBUG__
-				// 正規化しない場合の結果と比較
-				std::vector<int> a = segments;
-				sampler::mt.seed(seed);
-				_model->_lattice->blocked_gibbs(sentence, segments, false);
-				std::vector<int> b = segments;
-				assert(a.size() == b.size());
-				for(int i = 0;i < a.size();i++){
-					assert(a[i] == b[i]);
-				}
+					// 正規化しない場合の結果と比較
+					std::vector<int> a = segments;
+					sampler::mt.seed(seed);
+					_model->_lattice->blocked_gibbs(sentence, segments, false);
+					std::vector<int> b = segments;
+					assert(a.size() == b.size());
+					for(int i = 0;i < a.size();i++){
+						assert(a[i] == b[i]);
+					}
 				#endif
 
 				// 以前の分割結果と現在の分割結果の確率を求める
@@ -265,6 +265,7 @@ namespace npylm {
 	double Trainer::compute_perplexity_dev(){
 		return _compute_perplexity(_dataset->_sentence_sequences_dev);
 	}
+	// ビタビアルゴリズムによる最尤分割のパープレキシティ
 	double Trainer::_compute_perplexity(std::vector<Sentence*> &dataset){
 		if(dataset.size() == 0){
 			return 0;
@@ -284,6 +285,32 @@ namespace npylm {
 		}
 		ppl = exp(-ppl / num_sentences);
 		return ppl;
+	}
+	double Trainer::compute_log_likelihood_train(){
+		return _compute_log_likelihood(_dataset->_sentence_sequences_train);
+	}
+	double Trainer::compute_log_likelihood_dev(){
+		return _compute_log_likelihood(_dataset->_sentence_sequences_dev);
+	}
+	double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset){
+		if(dataset.size() == 0){
+			return 0;
+		}
+		double sum_log_likelihood = 0;
+		int num_sentences = dataset.size();
+		for(int data_index = 0;data_index < num_sentences;data_index++){
+			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+				return 0;		
+			}
+			Sentence* sentence = dataset[data_index];
+			double log_px = _model->_lattice->compute_log_forward_probability(sentence, true);
+			#ifdef __DEBUG__
+				double _log_px = _model->_lattice->compute_log_forward_probability(sentence, false);
+				assert(abs(log_px - _log_px) < 1e-8);
+			#endif
+			sum_log_likelihood += log_px;
+		}
+		return sum_log_likelihood;
 	}
 	// デバッグ用
 	void Trainer::remove_all_data(){
@@ -319,7 +346,7 @@ namespace npylm {
 			}
 			int data_index = rand_indices[n];
 			Sentence* sentence = dataset[data_index]->copy();
-			_model->_lattice->blocked_gibbs(sentence, segments, true);
+			_model->_lattice->viterbi_decode(sentence, segments);
 			sentence->split(segments);
 			sentence->dump_words();
 			delete sentence;

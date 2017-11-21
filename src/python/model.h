@@ -26,7 +26,7 @@ namespace npylm {
 		void set_initial_lambda_b(double lambda);
 		void set_vpylm_beta_stop(double stop);
 		void set_vpylm_beta_pass(double pass);
-		double compute_forward_probability(std::wstring sentence_str, bool normalize = true);
+		double compute_log_forward_probability(std::wstring sentence_str, bool use_scaling = true);
 		bool load(std::string filename);
 		bool save(std::string filename);
 		void parse(std::wstring sentence_str, std::vector<std::wstring> &words);

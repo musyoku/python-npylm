@@ -15,12 +15,12 @@ void run_training_loop(){
 	Corpus* corpus = new Corpus();
 	corpus->add_textfile(filename);
 	int seed = 0;
-	Dataset* dataset = new Dataset(corpus, 1, seed);
-	int max_word_length = 16;
+	Dataset* dataset = new Dataset(corpus, 0.95, seed);
+	int max_word_length = 12;
 	Model* model = new Model(dataset, max_word_length);
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
-	Trainer* trainer = new Trainer(dataset, model, false);
+	Trainer* trainer = new Trainer(dataset, model, true);
 
 	for(int epoch = 1;epoch <= 200;epoch++){
 	    auto start_time = std::chrono::system_clock::now();
@@ -29,8 +29,16 @@ void run_training_loop(){
 	    cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;
 		trainer->sample_hpylm_vpylm_hyperparameters();
 		trainer->sample_lambda();
+		if(epoch > 3){
+			trainer->update_p_k_given_vpylm();
+		}
 		if(epoch % 10 == 0){
 			trainer->print_segmentation_train(10);
+			cout << "ppl: " << trainer->compute_perplexity_train() << endl;
+			trainer->print_segmentation_dev(10);
+			cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
+			cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
+			cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
 		}
 	}
 }

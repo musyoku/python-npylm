@@ -114,14 +114,14 @@ namespace npylm {
 		delete sentence;
 		return words;
 	}
-	// normalize=trueならアンダーフローを防ぐ
-	double Model::compute_forward_probability(std::wstring sentence_str, bool normalize){
+	// use_scaling=trueならアンダーフローを防ぐ
+	double Model::compute_log_forward_probability(std::wstring sentence_str, bool use_scaling){
 		// キャッシュの再確保
 		_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 		_npylm->reserve(sentence_str.size());
 		Sentence* sentence = new Sentence(sentence_str);
-		double probability = _lattice->compute_forward_probability(sentence, normalize);
+		double log_px = _lattice->compute_log_forward_probability(sentence, use_scaling);
 		delete sentence;
-		return probability;
+		return log_px;
 	}
 }
