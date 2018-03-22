@@ -5,8 +5,26 @@
 
 namespace npylm {
 	namespace lattice {
-		void _init_alpha(double*** &alpha, int size, int max_word_length);
-		void _delete_alpha(double*** &alpha, int size, int max_word_length);
+		template<typename T>
+		void _init_table(T*** &table, int size, int max_word_length);
+		template<typename T>
+		void _delete_table(T*** &table, int size, int max_word_length);
+		template<typename T>
+		void _init_array(T* &array, int size_i);
+		template<typename T>
+		void _init_array(T** &array, int size_i, int size_j);
+		template<typename T>
+		void _init_array(T*** &array, int size_i, int size_j, int size_k);
+		template<typename T>
+		void _init_array(T**** &array, int size_i, int size_j, int size_k, int size_l);
+		template<typename T>
+		void _delete_array(T* &array, int size_i);
+		template<typename T>
+		void _delete_array(T** &array, int size_i, int size_j);
+		template<typename T>
+		void _delete_array(T*** &array, int size_i, int size_j, int size_k);
+		template<typename T>
+		void _delete_array(T**** &array, int size_i, int size_j, int size_k, int size_l);
 	}
 	class Lattice {
 	private:
@@ -18,7 +36,6 @@ namespace npylm {
 		id** _substring_word_id_cache;
 		double*** _alpha;		// 前向き確率
 		double**** _pw_h;		// キャッシュ
-		double* _log_z;			// 正規化定数
 		double* _scaling;		// スケーリング係数
 		double* _backward_sampling_table;
 		int*** _viterbi_backward;
@@ -36,9 +53,9 @@ namespace npylm {
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
 		double compute_log_forward_probability(Sentence* sentence, bool use_scaling);
 		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double* scaling, bool use_scaling);
-		void _sum_alpha_t_k_j(Sentence* sentence, double*** alpha, double**** pw_h_t_k_j_i, int t, int k, int j, double prod_scaling);
-		void _forward_filtering(Sentence* sentence, double*** alpha, double* scaling, double**** pw_h_t_k_j_i, bool use_scaling = true);
-		void _backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** alpha, double**** pw_h_t_k_j_i);
-		void _sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** pw_h_t_k_j_i, int t, int next_word_length, int &sampled_k, int &sampled_j);
+		void _sum_alpha_t_k_j(Sentence* sentence, double*** alpha, double**** pw_h_tkji, int t, int k, int j, double prod_scaling);
+		void _forward_filtering(Sentence* sentence, double*** alpha, double* scaling, double**** pw_h_tkji, bool use_scaling = true);
+		void _backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** alpha, double**** pw_h_tkji);
+		void _sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** pw_h_tkji, int t, int next_word_length, int &sampled_k, int &sampled_j);
 	};
 } // namespace npylm
