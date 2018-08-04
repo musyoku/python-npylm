@@ -1,5 +1,10 @@
-import argparse, os, codecs, sys
+import argparse
+import codecs
+import os
+import sys
+
 import npylm
+
 
 def main():
 	parser = argparse.ArgumentParser()

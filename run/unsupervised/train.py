@@ -1,5 +1,11 @@
-import argparse, time, os, codecs, sys
+import argparse
+import codecs
+import os
+import sys
+import time
+
 import npylm
+
 
 class stdout:
 	BOLD = "\033[1m"
