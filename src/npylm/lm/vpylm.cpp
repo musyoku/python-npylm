@@ -302,7 +302,7 @@ namespace lm {
                 return n;
             }
         }
-        return _sampling_table[sampling_table_size - 1];
+        return sampling_table_size - 1;
     }
     template <class Archive>
     void VPYLM::serialize(Archive& archive, unsigned int version)
