@@ -31,5 +31,6 @@ namespace npylm {
 		bool save(std::string filename);
 		void parse(std::wstring sentence_str, std::vector<std::wstring> &words);
 		boost::python::list python_parse(std::wstring sentence_str);
+        boost::python::list python_get_lambda();
 	};
 }
