@@ -1,5 +1,5 @@
 CC = g++
-BOOST = /home/takafumihorie/boost
+BOOST = /your/path_to/compiled_boost
 INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
 LDFLAGS = `python3-config --ldflags --embed` -lboost_serialization -lboost_python38 -L$(BOOST)/lib
 SOFLAGS = -shared -fPIC -march=native

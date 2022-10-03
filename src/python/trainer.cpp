@@ -154,8 +154,12 @@ namespace npylm {
 		delete[] num_words_of_k;
 		delete[] wrapped_character_ids;
 	}
+
 	// 単語分割のギブスサンプリング
-	void Trainer::gibbs(){
+	// モデル同士を接続するために, 分節結果をリターンする
+	boost::python::list Trainer::gibbs(){
+		/// ---- 準備 ----
+		// ギブスサンプリングに関するパラメータ
 		int num_sentences = _dataset->_sentence_sequences_train.size();
 		assert(num_sentences > 0);
 		int max_sentence_length = _dataset->get_max_sentence_length();
@@ -163,10 +167,14 @@ namespace npylm {
 		shuffle(_rand_indices_train.begin(), _rand_indices_train.end(), sampler::mt);		// データをシャッフル
 		int* old_segments = new int[max_sentence_length + 3];
 		int num_old_segments;
-		// モデルパラメータを更新
+
+		// 分節結果のリターンに関するパラメータ
+		boost::python::list gibbs_segment_results;
+
+		/// ---- モデルパラメータを更新 ----
 		for(int step = 1;step <= num_sentences;step++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
-				return;		
+				return gibbs_segment_results;		
 			}
 			// 訓練データを一つ取り出す
 			int data_index = _rand_indices_train[step - 1];
@@ -254,10 +262,20 @@ namespace npylm {
 				_model->_npylm->add_customer_at_time_t(sentence, t);
 			}
 			_added_to_npylm_train[data_index] = true;
+
+			// 選択結果を保持しておく
+			boost::python::list gibbs_segment_now_result;
+				for (int n = 0; n < sentence->get_num_segments_without_special_tokens(); n++) {
+					std::wstring word = sentence->get_word_str_at(n + 2);
+					gibbs_segment_now_result.append(word);
+				}
+			gibbs_segment_results.append(gibbs_segment_now_result);
 		}
-		// 客数チェック
+
+		// 客数チェック+追加した選択結果をリターン
 		assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
 		delete[] old_segments;
+		return gibbs_segment_results;
 	}
 	double Trainer::compute_perplexity_train(){
 		return _compute_perplexity(_dataset->_sentence_sequences_train);
