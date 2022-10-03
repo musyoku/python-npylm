@@ -169,12 +169,12 @@ namespace npylm {
 		int num_old_segments;
 
 		// 分節結果のリターンに関するパラメータ
-		boost::python::list gibbs_segment_results;
+		std::vector<boost::python::list> gibbs_segment_results(num_sentences);
 
 		/// ---- モデルパラメータを更新 ----
 		for(int step = 1;step <= num_sentences;step++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
-				return gibbs_segment_results;		
+				return boost::python::list();		
 			}
 			// 訓練データを一つ取り出す
 			int data_index = _rand_indices_train[step - 1];
@@ -264,25 +264,22 @@ namespace npylm {
 			_added_to_npylm_train[data_index] = true;
 
 			// 選択結果を保持しておく
+			// データはシャッフルされているので, 元の順番に戻しておく
 			boost::python::list gibbs_segment_now_result;
 			for (int n = 0; n < sentence->get_num_segments_without_special_tokens(); n++) {
 				std::wstring word = sentence->get_word_str_at(n + 2);
 				gibbs_segment_now_result.append(word);
 			}
-			gibbs_segment_results.append(gibbs_segment_now_result);
+			gibbs_segment_results[data_index] = gibbs_segment_now_result;
 		}
 
 		/// ---- 事後処理 ----
-		// 客数チェック
+		// 客数チェックとデータセーブ
 		assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
 		delete[] old_segments;
-
-		// データはシャッフルされているので, 元の順番に戻してからリターン
 		boost::python::list dishuffled_result;
 		for (int step = 0; step < num_sentences; step++){
-			// std::cout << _rand_indices_train[step] << std::endl;
-			// std::cout << "!!";
-			dishuffled_result.append(gibbs_segment_results[_rand_indices_train[step] - 1]);
+			dishuffled_result.append(gibbs_segment_results[step]);
 		}
 		return dishuffled_result;
 	}

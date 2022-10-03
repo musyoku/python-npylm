@@ -17,8 +17,9 @@ namespace npylm {
 			rand_indices.push_back(i);
 		}
 		// まず教師なし学習用のデータをtrain/devに振り分ける
+		// 他のモデルと接続するために, データはシャッフルしない
 		sampler::set_seed(seed);
-		shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
+		// shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
 		train_split = std::min(1.0, std::max(0.0, train_split));
 		int num_train_data = corpus->get_num_sentences() * train_split;
 		for(int i = 0;i < rand_indices.size();i++){
