@@ -265,17 +265,26 @@ namespace npylm {
 
 			// 選択結果を保持しておく
 			boost::python::list gibbs_segment_now_result;
-				for (int n = 0; n < sentence->get_num_segments_without_special_tokens(); n++) {
-					std::wstring word = sentence->get_word_str_at(n + 2);
-					gibbs_segment_now_result.append(word);
-				}
+			for (int n = 0; n < sentence->get_num_segments_without_special_tokens(); n++) {
+				std::wstring word = sentence->get_word_str_at(n + 2);
+				gibbs_segment_now_result.append(word);
+			}
 			gibbs_segment_results.append(gibbs_segment_now_result);
 		}
 
-		// 客数チェック+追加した選択結果をリターン
+		/// ---- 事後処理 ----
+		// 客数チェック
 		assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
 		delete[] old_segments;
-		return gibbs_segment_results;
+
+		// データはシャッフルされているので, 元の順番に戻してからリターン
+		boost::python::list dishuffled_result;
+		for (int step = 0; step < num_sentences; step++){
+			// std::cout << _rand_indices_train[step] << std::endl;
+			// std::cout << "!!";
+			dishuffled_result.append(gibbs_segment_results[_rand_indices_train[step] - 1]);
+		}
+		return dishuffled_result;
 	}
 	double Trainer::compute_perplexity_train(){
 		return _compute_perplexity(_dataset->_sentence_sequences_train);
