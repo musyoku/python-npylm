@@ -47,6 +47,8 @@ brew install boost-python --with-python3
 
 #### Boostのインストール
 
+boostを[公式HP](https://www.boost.org/doc/libs/1_80_0/index.html)からダウンロードし, その中にあるファイルを使ってboostをインストールします.
+
 ```
 ./bootstrap.sh --with-python=python3 --with-python-version=3.5
 ./b2 python=3.5 -d2 -j4 --prefix YOUR_BOOST_DIR install

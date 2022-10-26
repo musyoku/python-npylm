@@ -1,7 +1,7 @@
 CC = g++
-BOOST = /usr/local/Cellar/boost/1.65.0
+BOOST = /your/path_to/compiled_boost
 INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
-LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib
+LDFLAGS = `python3-config --ldflags --embed` -lboost_serialization -lboost_python38 -L$(BOOST)/lib
 SOFLAGS = -shared -fPIC -march=native
 TESTFLAGS = -O0 -g -Wall
 SOURCES = src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp
@@ -13,7 +13,7 @@ install: ## npylm.soを生成
 	rm -rf run/npylm.so
 
 install_ubuntu: ## npylm.soを生成
-	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npylm.so -O3
+	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npylm.so -O0 -g
 	cp run/npylm.so run/semi-supervised/npylm.so
 	cp run/npylm.so run/unsupervised/npylm.so
 	rm -rf run/npylm.so
