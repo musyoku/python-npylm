@@ -157,7 +157,7 @@ namespace npylm {
 
 	// 単語分割のギブスサンプリング
 	// モデル同士を接続するために, 分節結果をリターンする
-	boost::python::list Trainer::gibbs(){
+	boost::python::list Trainer::gibbs(int seed){
 		/// ---- 準備 ----
 		// ギブスサンプリングに関するパラメータ
 		int num_sentences = _dataset->_sentence_sequences_train.size();
@@ -219,27 +219,31 @@ namespace npylm {
 					old_log_ps = _model->_npylm->compute_log_p_w(sentence);
 				}
 				
-				#ifdef __DEBUG__
-					// 正規化しない場合の結果と比較するためシードを合わせる
-					int seed = (unsigned int)time(NULL);
-					sampler::mt.seed(seed);
-				#endif
+				// #ifdef __DEBUG__
+				// 	// 正規化しない場合の結果と比較するためシードを合わせる
+				// 	int seed = (unsigned int)time(NULL);
+				// 	sampler::mt.seed(seed);
+				// #endif
+				if(seed < 0){
+					seed = (unsigned int)time(NULL);
+				}
+				sampler::mt.seed(seed);
 
 				// 新しい分割を取得
 				_model->_lattice->blocked_gibbs(sentence, segments, true);
 				sentence->split(segments);
 				
-				#ifdef __DEBUG__
-					// 正規化しない場合の結果と比較
-					std::vector<int> a = segments;
-					sampler::mt.seed(seed);
-					_model->_lattice->blocked_gibbs(sentence, segments, false);
-					std::vector<int> b = segments;
-					assert(a.size() == b.size());
-					for(int i = 0;i < a.size();i++){
-						assert(a[i] == b[i]);
-					}
-				#endif
+				// #ifdef __DEBUG__
+				// 	// 正規化しない場合の結果と比較
+				// 	std::vector<int> a = segments;
+				// 	sampler::mt.seed(seed);
+				// 	_model->_lattice->blocked_gibbs(sentence, segments, false);
+				// 	std::vector<int> b = segments;
+				// 	assert(a.size() == b.size());
+				// 	for(int i = 0;i < a.size();i++){
+				// 		assert(a[i] == b[i]);
+				// 	}
+				// #endif
 
 				// 以前の分割結果と現在の分割結果の確率を求める
 				// 本来は分割を一定数サンプリングして平均をとるべき

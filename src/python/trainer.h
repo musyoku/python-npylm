@@ -26,7 +26,7 @@ namespace npylm {
 	public:
 		Trainer(Dataset* dataset, Model* model, bool always_accept_new_segmentation);
 		void remove_all_data();
-		boost::python::list gibbs();
+		boost::python::list gibbs(int seed=-1);
 		void sample_hpylm_vpylm_hyperparameters();
 		void sample_lambda();
 		wchar_t sample_word_from_vpylm_given_context(wchar_t* context_ids, int context_length, int sample_t, bool skip_eow = false);
