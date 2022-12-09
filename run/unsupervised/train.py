@@ -126,7 +126,7 @@ def main():
     # 学習ループ
     for epoch in range(1, args.epochs + 1):
         start = time.time()
-        trainer.gibbs()  # ギブスサンプリング
+        trainer.gibbs(-1)  # ギブスサンプリング
         trainer.sample_hpylm_vpylm_hyperparameters(
         )  # HPYLMとVPYLMのハイパーパラメータの更新
         trainer.sample_lambda()  # λの更新
