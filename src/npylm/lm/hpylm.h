@@ -12,9 +12,10 @@ namespace npylm {
 			friend class boost::serialization::access;
 			template <class Archive>
 			void serialize(Archive& archive, unsigned int version);
-		public:
+		public:           
 			HPYLM(int ngram = 2);
 			~HPYLM();
+            void initialize(); // 本当はリスコフの置換原則に違反してるのでよくない
 		};
 	}
 }

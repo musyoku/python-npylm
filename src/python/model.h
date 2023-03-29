@@ -26,6 +26,14 @@ namespace npylm {
 		void set_initial_lambda_b(double lambda);
 		void set_vpylm_beta_stop(double stop);
 		void set_vpylm_beta_pass(double pass);
+
+        void set_hpylm_beta_hypers(double beta_a, double beta_b);
+        void set_hpylm_gamma_hypers(double gamma_alpha, double gamma_beta);
+        void set_vpylm_beta_hypers(double beta_a, double beta_b);
+        void set_vpylm_gamma_hypers(double gamma_alpha, double gamma_beta);
+        void set_vpylm_orderbeta_hypers(double stop, double pass);
+        void set_vpylm_poisson_hypers(double lambda_a, double lambda_b);
+
 		double compute_log_forward_probability(std::wstring sentence_str, bool use_scaling = true);
 		bool load(std::string filename);
 		bool save(std::string filename);

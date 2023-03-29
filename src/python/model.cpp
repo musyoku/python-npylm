@@ -72,6 +72,38 @@ void Model::set_vpylm_beta_pass(double pass)
 {
     _npylm->_vpylm->_beta_pass = pass;
 }
+
+// Added by Horie ///////////////////////
+void Model::set_hpylm_beta_hypers(double beta_a, double beta_b){
+    _npylm->_hpylm->_pylm_beta_a = beta_a;
+    _npylm->_hpylm->_pylm_beta_b = beta_b;
+    _npylm->_hpylm->initialize();
+}
+void Model::set_hpylm_gamma_hypers(double gamma_alpha, double gamma_beta){
+    _npylm->_hpylm->_pylm_gamma_alpha = gamma_alpha;
+    _npylm->_hpylm->_pylm_gamma_beta = gamma_beta;
+    _npylm->_hpylm->initialize();
+}
+void Model::set_vpylm_beta_hypers(double beta_a, double beta_b){
+    _npylm->_vpylm->_pylm_beta_a = beta_a;
+    _npylm->_vpylm->_pylm_beta_b = beta_b;
+}
+void Model::set_vpylm_gamma_hypers(double gamma_alpha, double gamma_beta){
+    _npylm->_vpylm->_pylm_gamma_alpha = gamma_alpha;
+    _npylm->_vpylm->_pylm_gamma_beta = gamma_beta;
+}
+void Model::set_vpylm_orderbeta_hypers(double stop, double pass){
+    _npylm->_vpylm->_beta_stop = stop;
+    _npylm->_vpylm->_beta_pass = pass;
+}
+void Model::set_vpylm_poisson_hypers(double lambda_a, double lambda_b){
+    _npylm->_lambda_a = lambda_a;
+    _npylm->_lambda_b = lambda_b;
+    _npylm->sample_lambda_with_initial_params();
+}
+/////////////////////////////////////////
+
+
 bool Model::load(std::string filename)
 {
     bool success = false;

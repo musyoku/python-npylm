@@ -164,7 +164,12 @@ namespace npylm {
 		assert(num_sentences > 0);
 		int max_sentence_length = _dataset->get_max_sentence_length();
 		std::vector<int> segments;		// 分割の一時保存用
-		shuffle(_rand_indices_train.begin(), _rand_indices_train.end(), sampler::mt);		// データをシャッフル
+
+		if(seed < 0){
+			seed = (unsigned int)time(NULL);
+		}
+		sampler::mt.seed(seed);
+		shuffle(_rand_indices_train.begin(), _rand_indices_train.end(), sampler::mt); // データをシャッフル
 		int* old_segments = new int[max_sentence_length + 3];
 		int num_old_segments;
 
@@ -224,10 +229,7 @@ namespace npylm {
 				// 	int seed = (unsigned int)time(NULL);
 				// 	sampler::mt.seed(seed);
 				// #endif
-				if(seed < 0){
-					seed = (unsigned int)time(NULL);
-				}
-				sampler::mt.seed(seed);
+
 
 				// 新しい分割を取得
 				_model->_lattice->blocked_gibbs(sentence, segments, true);
