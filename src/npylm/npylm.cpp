@@ -293,12 +293,14 @@ namespace npylm {
 				for(int u = substr_char_t_start;u <= substr_char_t_end;u++){
 					std::wcout << characters[u];
 				}
-				std::wcout << std::endl;
-				std::cout << pw << std::endl;
-				std::cout << poisson << std::endl;
-				std::cout << p_k_given_vpylm << std::endl;
-				std::cout << g0 << std::endl;
-				std::cout << word_length << std::endl;
+				// std::wcout << std::endl;
+				// std::cout << pw << std::endl;
+				// std::cout << poisson << std::endl;
+				// std::cout << p_k_given_vpylm << std::endl;
+				// std::cout << g0 << std::endl;
+				// std::cout << word_length << std::endl;
+				std::cout << "Caution: g0 ==" << g0 << " due to Poisson correction. Probability is corrected as 1.0-epsilon";
+				g0 = 1.0 - 10e-10;
 			}
 			assert(0 < g0 && g0 < 1);
 			_g0_cache[word_t_id] = g0;
