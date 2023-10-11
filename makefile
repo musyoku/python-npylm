@@ -1,7 +1,7 @@
 CC = g++
-BOOST = /home/takafumihorie/compiled_boost
+BOOST = /setupspace/boost
 INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
-LDFLAGS = `python3-config --ldflags --embed` -lboost_serialization -lboost_python38 -L$(BOOST)/lib
+LDFLAGS = `python3-config --ldflags --embed` -lboost_serialization -lboost_python310 -L$(BOOST)/lib
 SOFLAGS = -shared -fPIC -march=native
 TESTFLAGS = -O0 -g -Wall
 SOURCES = src/python/*.cpp src/npylm/*.cpp src/npylm/lm/*.cpp

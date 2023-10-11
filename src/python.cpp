@@ -33,7 +33,9 @@ BOOST_PYTHON_MODULE(npylm)
         .def("update_p_k_given_vpylm", &Trainer::update_p_k_given_vpylm)
         .def("compute_perplexity_train", &Trainer::compute_perplexity_train)
         .def("compute_perplexity_dev", &Trainer::compute_perplexity_dev)
-        .def("gibbs", &Trainer::gibbs);
+        .def("gibbs", &Trainer::gibbs)
+        .def("gibbs_with_probabilities", &Trainer::gibbs_with_probabilities)
+        .def("calculate_sentences_logprobs", &Trainer::calculate_sentences_logprobs);
 
     boost::python::class_<Model>("model", boost::python::init<Dataset*, int>())
         .def(boost::python::init<std::string>())

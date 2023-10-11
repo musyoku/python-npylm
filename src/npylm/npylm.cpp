@@ -320,6 +320,9 @@ namespace npylm {
 		_hpylm->sample_hyperparams();
 		_vpylm->sample_hyperparams();
 	}
+
+
+	// p(w_{1:I}) = \prod p(w_i|h) の対数を計算する．
 	double NPYLM::compute_log_p_w(Sentence* sentence){
 		double pw = 0;
 		for(int t = 2;t < sentence->get_num_segments();t++){
@@ -327,6 +330,9 @@ namespace npylm {
 		}
 		return pw;
 	}
+
+
+	// p(w_{1:I}) = \prod p(w_i|h) を計算する．
 	double NPYLM::compute_p_w(Sentence* sentence){
 		double pw = 1;
 		for(int t = 2;t < sentence->get_num_segments();t++){
@@ -342,6 +348,9 @@ namespace npylm {
 		int substr_char_t_end = sentence->_start[word_t_index] + sentence->_segments[word_t_index] - 1;
 		return compute_p_w_given_h(sentence->_characters, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_char_t_start, substr_char_t_end);
 	}
+
+
+	// 単語 w_i が文脈 h = w_{1:i-1} の下で生成される確率を計算する
 	double NPYLM::compute_p_w_given_h(
 			wchar_t const* characters, int character_ids_length, 
 			id const* word_ids, int word_ids_length, 
@@ -357,13 +366,17 @@ namespace npylm {
 				assert(a == word_id);
 			#endif
 		}
-		// ノードを探しながら_hpylm_parent_pw_cacheをセット
+
+		// p(w|h) を求める
+		// ノードを探しながら_hpylm_parent_pw_cacheをセットしたうえで，
+		// 効率のため親の確率のキャッシュから計算する
 		Node<id>* node = find_node_by_tracing_back_context_from_time_t(characters, character_ids_length, word_ids, word_ids_length, word_t_index, substr_char_t_start, substr_char_t_end, _hpylm_parent_pw_cache, false, true);
 		assert(node != NULL);
 		double parent_pw = _hpylm_parent_pw_cache[node->_depth];
-		// 効率のため親の確率のキャッシュから計算
 		return node->compute_p_w_with_parent_p_w(word_id, parent_pw, _hpylm->_d_m, _hpylm->_theta_m);
 	}
+
+
 	template <class Archive>
 	void NPYLM::serialize(Archive &archive, unsigned int version)
 	{

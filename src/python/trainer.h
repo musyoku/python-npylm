@@ -23,10 +23,14 @@ namespace npylm {
 		void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
 		double _compute_perplexity(std::vector<Sentence*> &dataset);
 		double _compute_log_likelihood(std::vector<Sentence*> &dataset);
+		std::vector<boost::python::list> _execute_gibbs(int seed=-1);
+
 	public:
 		Trainer(Dataset* dataset, Model* model, bool always_accept_new_segmentation);
 		void remove_all_data();
+		float calculate_sentences_logprobs(boost::python::str py_sentence, boost::python::list py_segmentation);
 		boost::python::list gibbs(int seed=-1);
+		boost::python::object gibbs_with_probabilities(int seed);
 		void sample_hpylm_vpylm_hyperparameters();
 		void sample_lambda();
 		wchar_t sample_word_from_vpylm_given_context(wchar_t* context_ids, int context_length, int sample_t, bool skip_eow = false);

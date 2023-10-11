@@ -155,10 +155,10 @@ namespace npylm {
 		delete[] wrapped_character_ids;
 	}
 
-	// 単語分割のギブスサンプリング
-	// モデル同士を接続するために, 分節結果をリターンする
-	boost::python::list Trainer::gibbs(int seed){
-		/// ---- 準備 ----
+	// 単語分割のギブスサンプリングと，その確率を計算する
+	// モデル同士を接続するために, 分節結果・確率をリターンする
+	std::vector<boost::python::list> Trainer::_execute_gibbs(int seed){
+		/// ---- 0. 準備 ----
 		// ギブスサンプリングに関するパラメータ
 		int num_sentences = _dataset->_sentence_sequences_train.size();
 		assert(num_sentences > 0);
@@ -173,13 +173,15 @@ namespace npylm {
 		int* old_segments = new int[max_sentence_length + 3];
 		int num_old_segments;
 
-		// 分節結果のリターンに関するパラメータ
+		// 分節結果，およびその確率の保持用変数 (Added for connection)
 		std::vector<boost::python::list> gibbs_segment_results(num_sentences);
+		std::vector<double> gibbs_segment_posterior_logprobs(num_sentences);
+		std::vector<double> gibbs_segment_prior_logprobs(num_sentences);
 
-		/// ---- モデルパラメータを更新 ----
+		/// ---- 1. モデルパラメータの更新 ----
 		for(int step = 1;step <= num_sentences;step++){
 			if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
-				return boost::python::list();		
+				return std::vector<boost::python::list>{boost::python::list(),boost::python::list(),boost::python::list()};
 			}
 			// 訓練データを一つ取り出す
 			int data_index = _rand_indices_train[step - 1];
@@ -204,6 +206,7 @@ namespace npylm {
 				_added_to_npylm_train[data_index] = true;
 				continue;
 			}
+
 			// 教師なし
 			// モデルに追加されているかチェック
 			if(_added_to_npylm_train[data_index] == true){
@@ -232,7 +235,10 @@ namespace npylm {
 
 
 				// 新しい分割を取得
-				_model->_lattice->blocked_gibbs(sentence, segments, true);
+				// Modified for connection: 対数確率を取得するよう変更
+				gibbs_segment_posterior_logprobs[data_index] = (
+					_model->_lattice->blocked_gibbs(sentence, segments, true)
+				);
 				sentence->split(segments);
 				
 				// #ifdef __DEBUG__
@@ -269,7 +275,7 @@ namespace npylm {
 			}
 			_added_to_npylm_train[data_index] = true;
 
-			// 選択結果を保持しておく
+			// 選択結果・確率を保持しておく
 			// データはシャッフルされているので, 元の順番に戻しておく
 			boost::python::list gibbs_segment_now_result;
 			for (int n = 0; n < sentence->get_num_segments_without_special_tokens(); n++) {
@@ -277,18 +283,60 @@ namespace npylm {
 				gibbs_segment_now_result.append(word);
 			}
 			gibbs_segment_results[data_index] = gibbs_segment_now_result;
+			gibbs_segment_prior_logprobs[data_index] = _model->_npylm->compute_log_p_w(sentence);
 		}
 
 		/// ---- 事後処理 ----
 		// 客数チェックとデータセーブ
 		assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
 		delete[] old_segments;
+
+		// python のリストに変換する
 		boost::python::list dishuffled_result;
+		boost::python::list dishuffled_prior_logprobs;
+		boost::python::list dishuffled_posterior_logprobs;
+
 		for (int step = 0; step < num_sentences; step++){
 			dishuffled_result.append(gibbs_segment_results[step]);
+			dishuffled_prior_logprobs.append(gibbs_segment_prior_logprobs[step]);
+			dishuffled_posterior_logprobs.append(gibbs_segment_posterior_logprobs[step]);
 		}
-		return dishuffled_result;
+
+		return std::vector<boost::python::list>{
+			dishuffled_result,
+			dishuffled_prior_logprobs,
+			dishuffled_posterior_logprobs
+		};
 	}
+
+	// Added for connection
+	// 後方互換性のため，分節化結果のみを返す関数を残した
+	boost::python::list Trainer::gibbs(int seed){
+		return _execute_gibbs(seed)[0];
+	}
+
+	// Added for connection
+	// return: (分節化結果, 事前確率, 事後確率)
+	boost::python::object Trainer::gibbs_with_probabilities(int seed){
+		std::vector<boost::python::list> gibbs_result = _execute_gibbs(seed);
+		return boost::python::make_tuple(gibbs_result[0], gibbs_result[1], gibbs_result[2]);
+	}
+
+
+	// Added for connection
+	// 与えられた文の対数確率を計算する
+	float Trainer::calculate_sentences_logprobs(boost::python::str py_sentence, boost::python::list py_segmentation){
+		Sentence* sentence = new Sentence(boost::python::extract<std::wstring>(py_sentence));
+
+		// 文節位置のデータを py_segmentation から取得
+		std::vector<int> segmentation(boost::python::len(py_segmentation));
+		for (int i = 0; i < boost::python::len(py_segmentation); i++) {
+			segmentation[i] = boost::python::extract<int>(py_segmentation[i]);
+		}
+		sentence->split(segmentation);
+		return _model->_npylm->compute_log_p_w(sentence);
+	}
+
 	double Trainer::compute_perplexity_train(){
 		return _compute_perplexity(_dataset->_sentence_sequences_train);
 	}

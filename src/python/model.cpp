@@ -73,7 +73,7 @@ void Model::set_vpylm_beta_pass(double pass)
     _npylm->_vpylm->_beta_pass = pass;
 }
 
-// Added by Horie ///////////////////////
+// Added for connection ///////////////////////
 void Model::set_hpylm_beta_hypers(double beta_a, double beta_b){
     _npylm->_hpylm->_pylm_beta_a = beta_a;
     _npylm->_hpylm->_pylm_beta_b = beta_b;

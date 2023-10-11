@@ -28,7 +28,7 @@ namespace npylm {
 		~Lattice();
 		void reserve(int max_word_length, int max_sentence_length);
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
-		void blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool use_scaling = true);
+		double blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool use_scaling = true);
 		void viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j);
 		void viterbi_forward(Sentence* sentence);
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);
@@ -37,8 +37,8 @@ namespace npylm {
 		double compute_log_forward_probability(Sentence* sentence, bool use_scaling);
 		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double* scaling, bool use_scaling);
 		void _sum_alpha_t_k_j(Sentence* sentence, double*** alpha, double**** pw_h_t_k_j_i, int t, int k, int j, double prod_scaling);
-		void _forward_filtering(Sentence* sentence, double*** alpha, double* scaling, double**** pw_h_t_k_j_i, bool use_scaling = true);
-		void _backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** alpha, double**** pw_h_t_k_j_i);
-		void _sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** pw_h_t_k_j_i, int t, int next_word_length, int &sampled_k, int &sampled_j);
+		void _forward_filtering(Sentence* sentenfloatce, double*** alpha, double* scaling, double**** pw_h_t_k_j_i, bool use_scaling = true);
+		double _backward_sampling(Sentence* sentence, std::vector<int> &segments, double*** alpha, double**** pw_h_t_k_j_i);
+		double _sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** pw_h_t_k_j_i, int t, int next_word_length, int &sampled_k, int &sampled_j);
 	};
 } // namespace npylm

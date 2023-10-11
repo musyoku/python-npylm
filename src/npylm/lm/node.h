@@ -322,7 +322,8 @@ namespace npylm {
 				double second_coeff = (theta_u + d_u * t_u) / (theta_u + c_u);
 				return first_term + second_coeff * parent_pw;
 			}
-			// 再帰計算を防ぐ
+
+			// 再帰計算を防ぐため親の確率のキャッシュを使う ver.
 			double compute_p_w_with_parent_p_w(T token_id, double parent_pw, std::vector<double> &d_m, std::vector<double> &theta_m){
 				init_hyperparameters_at_depth_if_needed(_depth, d_m, theta_m);
 				double d_u = d_m[_depth];

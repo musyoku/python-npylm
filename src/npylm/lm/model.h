@@ -18,7 +18,7 @@ namespace npylm {
 			int _depth;					// 最大の深さ. HPYLMは固定
 			double _g0;					// ゼログラム確率
 
-            // Added by Horie
+            // Added for connection
             double _pylm_beta_a = HPYLM_BETA_A;
             double _pylm_beta_b = HPYLM_BETA_B;
             double _pylm_gamma_alpha = HPYLM_GAMMA_ALPHA;
