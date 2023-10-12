@@ -299,7 +299,7 @@ namespace npylm {
 				// std::cout << p_k_given_vpylm << std::endl;
 				// std::cout << g0 << std::endl;
 				// std::cout << word_length << std::endl;
-				std::cout << "Caution: g0 ==" << g0 << " due to Poisson correction. Probability is corrected as 1.0-epsilon";
+				std::cout << "Caution: g0 ==" << g0 << " due to Poisson correction. Probability is corrected as 1.0-epsilon" << std::endl;;
 				g0 = 1.0 - 10e-10;
 			}
 			assert(0 < g0 && g0 < 1);
