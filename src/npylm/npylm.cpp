@@ -257,6 +257,12 @@ namespace npylm {
 			assert(a == word_t_id);
 		#endif
 
+		// Added for Connection
+		// 十倍までは許容しているがこれより長い場合についてはエラーを出す．「十倍」基準については今後変更する可能性がある．
+		if (!(substr_char_t_end < _max_sentence_length)){
+			std::cout << substr_char_t_end << ">=" << _max_sentence_length << std::endl;
+			std::cout << "Inputed sentences is longer than 10*[the longest sentence in training dataset]." << std::endl;
+		}
 		assert(substr_char_t_end < _max_sentence_length);
 		assert(substr_char_t_start >= 0);
 		assert(substr_char_t_end >= substr_char_t_start);
@@ -299,7 +305,7 @@ namespace npylm {
 				// std::cout << p_k_given_vpylm << std::endl;
 				// std::cout << g0 << std::endl;
 				// std::cout << word_length << std::endl;
-				std::cout << "Caution: g0 ==" << g0 << " due to Poisson correction. Probability is corrected as 1.0-epsilon" << std::endl;;
+				std::cout << "Caution: g0 ==" << g0 << " due to Poisson correction. Probability is corrected as 1.0-epsilon" << std::endl;
 				g0 = 1.0 - 10e-10;
 			}
 			assert(0 < g0 && g0 < 1);

@@ -61,6 +61,9 @@ namespace npylm {
 			sum_sentence_length += sentence_str.size();
 		}
 		_avg_sentence_length = sum_sentence_length / (double)corpus->get_num_sentences();
+
+		// Added for connection: データセットにない文章の確率を計算できるよう，最大長を長めに撮っておく
+		_max_sentence_length *= 10;
 	}
 	Dataset::~Dataset(){
 		for(int n = 0;n < _sentence_sequences_train.size();n++){
